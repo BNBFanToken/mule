@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuleWallet 管理后台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --primary:#4f46e5;--primary-light:#6366f1;--primary-bg:#eef2ff;
+            --success:#059669;--success-bg:#ecfdf5;
+            --warning:#d97706;--warning-bg:#fffbeb;
+            --danger:#dc2626;--danger-bg:#fef2f2;
+            --bg:#f8fafc;--card:#ffffff;
+            --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+            --border:#e2e8f0;--border-light:#f1f5f9;
+            --shadow:0 1px 3px rgb(0 0 0/.06),0 1px 2px rgb(0 0 0/.04);
+            --shadow-md:0 4px 6px -1px rgb(0 0 0/.07),0 2px 4px -2px rgb(0 0 0/.05);
+            --shadow-lg:0 10px 15px -3px rgb(0 0 0/.08),0 4px 6px -4px rgb(0 0 0/.05);
+            --radius:12px;
+        }
+        body{font-family:'Noto Sans SC',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+
+        /* 顶栏 */
+        .header{background:var(--card);border-bottom:1px solid var(--border);padding:0 2rem;height:64px;position:sticky;top:0;z-index:100;display:flex;align-items:center;box-shadow:var(--shadow)}
+        .header-inner{max-width:1280px;margin:0 auto;width:100%;display:flex;justify-content:space-between;align-items:center}
+        .logo{display:flex;align-items:center;gap:.625rem;font-size:1.25rem;font-weight:700;color:var(--text);text-decoration:none}
+        .logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.875rem;letter-spacing:-.5px}
+        .wallet-area{display:flex;align-items:center;gap:.75rem}
+        .wallet-badge{display:flex;align-items:center;gap:.5rem;padding:.375rem .875rem;background:var(--success-bg);border:1px solid #a7f3d0;border-radius:8px;font-size:.8125rem;font-family:'JetBrains Mono',monospace;color:#065f46}
+        .wallet-dot{width:7px;height:7px;background:var(--success);border-radius:50%;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+        /* 按钮 */
+        .btn{padding:.5rem 1.125rem;border-radius:8px;font-size:.8125rem;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid transparent;display:inline-flex;align-items:center;gap:.375rem;font-family:inherit;line-height:1.4}
+        .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+        .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+        .btn-primary:hover:not(:disabled){background:#4338ca;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+        .btn-outline{background:var(--card);color:var(--text2);border-color:var(--border)}
+        .btn-outline:hover{background:var(--border-light);color:var(--text)}
+        .btn-success{background:var(--success);color:#fff;border-color:var(--success)}
+        .btn-success:hover:not(:disabled){background:#047857;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+        .btn-danger{background:var(--card);color:var(--danger);border-color:#fecaca}
+        .btn-danger:hover:not(:disabled){background:var(--danger);color:#fff;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+        .btn-ghost{background:transparent;color:var(--text2);border:none;padding:.375rem .625rem}
+        .btn-ghost:hover{background:var(--border-light);color:var(--text)}
+
+        /* 布局 */
+        .container{max-width:1280px;margin:0 auto;padding:1.5rem 2rem 3rem}
+
+        /* 标签页 */
+        .tabs{display:flex;gap:.25rem;background:var(--card);padding:.375rem;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1.5rem;border:1px solid var(--border)}
+        .tab{flex:1;padding:.625rem 1rem;border:none;background:transparent;color:var(--text3);font-size:.8125rem;font-weight:500;cursor:pointer;border-radius:8px;transition:all .15s;font-family:inherit}
+        .tab:hover{color:var(--text2);background:var(--border-light)}
+        .tab.active{background:var(--primary);color:#fff;box-shadow:0 1px 3px rgb(79 70 229/.3)}
+        .tab-panel{display:none;animation:fadeUp .25s ease}
+        .tab-panel.active{display:block}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+        /* 统计卡片 */
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+        .stat{background:var(--card);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border:1px solid var(--border);transition:all .2s}
+        .stat:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+        .stat-label{font-size:.75rem;color:var(--text3);font-weight:500;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.5px}
+        .stat-value{font-size:1.5rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);line-height:1.2}
+        .stat-unit{font-size:.75rem;color:var(--text3);font-weight:400;margin-left:.25rem}
+        .stat-sub{font-size:.6875rem;color:var(--text3);margin-top:.25rem}
+
+        /* 卡片 */
+        .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:1.25rem;overflow:hidden}
+        .card-head{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;border-bottom:1px solid var(--border-light)}
+        .card-title{font-size:.9375rem;font-weight:600}
+        .card-body{padding:1.25rem}
+
+        /* 提示条 */
+        .notice{padding:.875rem 1rem;border-radius:10px;display:flex;align-items:flex-start;gap:.625rem;font-size:.8125rem;line-height:1.5;margin-bottom:1.25rem}
+        .notice-info{background:var(--primary-bg);color:#3730a3;border:1px solid #c7d2fe}
+        .notice-warn{background:var(--warning-bg);color:#92400e;border:1px solid #fde68a}
+        .notice-icon{flex-shrink:0;font-size:1rem;line-height:1.4}
+
+        /* 分组 */
+        .group-block{margin-bottom:1.25rem}
+        .group-block:last-child{margin-bottom:0}
+        .group-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+        .group-tag{padding:.1875rem .5rem;border-radius:6px;font-size:.6875rem;font-weight:600;letter-spacing:.3px}
+        .group-tag.a{background:#eef2ff;color:var(--primary)}
+        .group-tag.b{background:#ecfdf5;color:var(--success)}
+        .group-tag.c{background:#fff7ed;color:#c2410c}
+        .group-count{font-size:.8125rem;color:var(--text3)}
+
+        /* 成员列表 */
+        .members{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.5rem}
+        .member{display:flex;align-items:center;justify-content:space-between;padding:.5rem .75rem;background:var(--border-light);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:.75rem;transition:all .15s;border:1px solid transparent}
+        .member:hover{background:var(--card);border-color:var(--border)}
+        .member-addr{color:var(--text);word-break:break-all}
+        .member-del{width:24px;height:24px;border-radius:6px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;background:#fee2e2;color:var(--danger);transition:all .15s;flex-shrink:0;margin-left:.5rem}
+        .member-del:hover{background:var(--danger);color:#fff}
+
+        /* 空状态 */
+        .empty{text-align:center;padding:2rem 1rem;color:var(--text3);font-size:.8125rem}
+
+        /* 表单 */
+        .field{margin-bottom:1rem}
+        .field-label{display:block;font-size:.8125rem;font-weight:500;color:var(--text2);margin-bottom:.375rem}
+        .field-input,.field-select{width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.8125rem;font-family:inherit;transition:all .15s;background:var(--card);color:var(--text)}
+        .field-input:focus,.field-select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgb(79 70 229/.1)}
+        .field-input::placeholder{color:var(--text3)}
+        .field-row{display:grid;grid-template-columns:120px 1fr;gap:.75rem;align-items:end}
+
+        /* 加载动画 */
+        .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* 提示弹窗 */
+        .toast-wrap{position:fixed;top:80px;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
+        .toast{padding:.75rem 1rem;background:var(--card);border-radius:10px;box-shadow:var(--shadow-lg);border:1px solid var(--border);display:flex;align-items:center;gap:.5rem;font-size:.8125rem;animation:slideR .25s ease;max-width:360px}
+        .toast.ok{border-left:3px solid var(--success)}
+        .toast.err{border-left:3px solid var(--danger)}
+        .toast.msg{border-left:3px solid var(--primary)}
+        @keyframes slideR{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+        .hidden{display:none!important}
+
+        @media(max-width:768px){
+            .header{padding:0 1rem}
+            .container{padding:1rem}
+            .tabs{flex-wrap:wrap}
+            .tab{flex:1 1 calc(50% - .125rem)}
+            .stats{grid-template-columns:1fr 1fr}
+            .members{grid-template-columns:1fr}
+            .field-row{grid-template-columns:1fr}
+        }
+        @media(max-width:480px){
+            .stats{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a class="logo" href="#">
+                <div class="logo-mark">MW</div>
+                <span>MuleWallet</span>
+            </a>
+            <div class="wallet-area">
+                <div id="walletBadge" class="wallet-badge hidden">
+                    <div class="wallet-dot"></div>
+                    <span id="walletAddr">-</span>
+                </div>
+                <button id="connectBtn" class="btn btn-primary">连接钱包</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" data-tab="overview">数据概览</button>
+            <button class="tab" data-tab="whitelist">白名单管理</button>
+            <button class="tab" data-tab="distribute">执行分配</button>
+            <button class="tab owner-only hidden" data-tab="emergency">紧急操作</button>
+        </div>
+
+        <!-- 数据概览 -->
+        <div id="overview" class="tab-panel active">
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">合约余额</div>
+                    <div class="stat-value" id="vBalance">0.0000<span class="stat-unit">BNB</span></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">总成员数</div>
+                    <div class="stat-value" id="vTotal">0<span class="stat-unit">/ 200</span></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">A 组</div>
+                    <div class="stat-value" id="vA">0</div>
+                    <div class="stat-sub">个地址</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">B 组</div>
+                    <div class="stat-value" id="vB">0</div>
+                    <div class="stat-sub">个地址</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">C 组</div>
+                    <div class="stat-value" id="vC">0</div>
+                    <div class="stat-sub">个地址</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">合约所有者</div>
+                    <div class="stat-value" id="vOwner" style="font-size:.8125rem;font-family:'JetBrains Mono',monospace">-</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-head">
+                    <span class="card-title">合约信息</span>
+                    <button class="btn btn-outline" onclick="loadAll()">刷新数据</button>
+                </div>
+                <div class="card-body">
+                    <div class="notice notice-info">
+                        <span class="notice-icon">i</span>
+                        <div>
+                            <strong>合约地址：</strong>0xe9af1d19b1fBE143f095e53344A507302c6242f7<br>
+                            <strong>部署网络：</strong>BSC 主网（链 ID：56）
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 白名单管理 -->
+        <div id="whitelist" class="tab-panel">
+            <div id="addSection" class="card owner-only hidden">
+                <div class="card-head">
+                    <span class="card-title">添加白名单</span>
+                </div>
+                <div class="card-body">
+                    <div class="field-row">
+                        <div class="field">
+                            <label class="field-label">选择分组</label>
+                            <select id="selGroup" class="field-select">
+                                <option value="0">A 组</option>
+                                <option value="1">B 组</option>
+                                <option value="2">C 组</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="field-label">钱包地址</label>
+                            <div style="display:flex;gap:.5rem">
+                                <input type="text" id="inpAddr" class="field-input" placeholder="输入 0x 开头的地址">
+                                <button class="btn btn-primary" onclick="doAdd(e)">添加</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head">
+                    <span class="card-title">白名单列表</span>
+                    <button class="btn btn-outline" onclick="loadAll()">刷新</button>
+                </div>
+                <div class="card-body">
+                    <div class="group-block">
+                        <div class="group-head">
+                            <span class="group-tag a">A 组</span>
+                            <span class="group-count" id="tA">0 个地址</span>
+                        </div>
+                        <div id="listA" class="members"><div class="empty">暂无成员</div></div>
+                    </div>
+                    <div class="group-block">
+                        <div class="group-head">
+                            <span class="group-tag b">B 组</span>
+                            <span class="group-count" id="tB">0 个地址</span>
+                        </div>
+                        <div id="listB" class="members"><div class="empty">暂无成员</div></div>
+                    </div>
+                    <div class="group-block">
+                        <div class="group-head">
+                            <span class="group-tag c">C 组</span>
+                            <span class="group-count" id="tC">0 个地址</span>
+                        </div>
+                        <div id="listC" class="members"><div class="empty">暂无成员</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 执行分配 -->
+        <div id="distribute" class="tab-panel">
+            <div class="card">
+                <div class="card-head">
+                    <span class="card-title">执行分配</span>
+                </div>
+                <div class="card-body">
+                    <div class="notice notice-info">
+                        <span class="notice-icon">i</span>
+                        <div>
+                            任何人都可以执行分配操作，调用者支付 gas 费用。<br>
+                            合约余额按 A / B / C 三组平均分配（各 1/3），组内地址再平均分配该组份额。<br>
+                            如果某组无地址，该组份额将转给合约所有者。
+                        </div>
+                    </div>
+                    <div class="stats" style="margin-bottom:1.25rem">
+                        <div class="stat">
+                            <div class="stat-label">当前余额</div>
+                            <div class="stat-value" id="vDistBal">0.0000<span class="stat-unit">BNB</span></div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">每组分配</div>
+                            <div class="stat-value" id="vDistShare">0.0000<span class="stat-unit">BNB</span></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" style="width:100%;justify-content:center;padding:.75rem" onclick="doDistribute(e)">执行分配</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 紧急操作 -->
+        <div id="emergency" class="tab-panel owner-only hidden">
+            <div class="notice notice-warn">
+                <span class="notice-icon">!</span>
+                <div><strong>警告：</strong>以下操作仅限合约所有者，请谨慎操作！</div>
+            </div>
+
+            <div class="card">
+                <div class="card-head"><span class="card-title">提取全部 BNB</span></div>
+                <div class="card-body">
+                    <p style="color:var(--text2);font-size:.8125rem;margin-bottom:1rem">将合约内所有 BNB 提取到合约所有者地址</p>
+                    <button class="btn btn-danger" onclick="doWithdrawBNB(e)">提取全部 BNB</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head"><span class="card-title">提取 ERC20 代币</span></div>
+                <div class="card-body">
+                    <div class="field">
+                        <label class="field-label">代币合约地址</label>
+                        <input type="text" id="inpToken" class="field-input" placeholder="输入代币合约地址 0x...">
+                    </div>
+                    <button class="btn btn-danger" onclick="doWithdrawERC20(e)">提取代币</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head"><span class="card-title">转移合约所有权</span></div>
+                <div class="card-body">
+                    <div class="field">
+                        <label class="field-label">新所有者地址</label>
+                        <input type="text" id="inpNewOwner" class="field-input" placeholder="输入新所有者地址 0x...">
+                    </div>
+                    <button class="btn btn-danger" onclick="doTransferOwner(e)">转移所有权</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastWrap" class="toast-wrap"></div>
+
+    <script>
+        const CONTRACT = '0xe9af1d19b1fBE143f095e53344A507302c6242f7';
+        const BSC_CHAIN = '0x38';
+        const ABI = [
+            "function owner() view returns (address)",
+            "function totalMembers() view returns (uint256)",
+            "function getBalance() view returns (uint256)",
+            "function getGroupCount(uint8) view returns (uint256)",
+            "function getGroupMembers(uint8) view returns (address[])",
+            "function addToWhitelist(uint8, address)",
+            "function removeFromWhitelist(address)",
+            "function distribute()",
+            "function emergencyWithdrawBNB()",
+            "function emergencyWithdrawERC20(address)",
+            "function transferOwnership(address)"
+        ];
+
+        let readC, writeC, isMeOwner = false, busy = false;
+
+        function getRead() {
+            if (!readC) {
+                const p = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
+                readC = new ethers.Contract(CONTRACT, ABI, p);
+            }
+            return readC;
+        }
+        function getWrite() { return writeC; }
+
+        function toast(text, type) {
+            const wrap = document.getElementById('toastWrap');
+            const el = document.createElement('div');
+            el.className = 'toast ' + (type === 'ok' ? 'ok' : type === 'err' ? 'err' : 'msg');
+            const span = document.createElement('span');
+            span.textContent = text;
+            el.appendChild(span);
+            wrap.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(100%)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }, 3500);
+        }
+
+        function setLoading(btn, on) {
+            if (!btn) return;
+            if (on) {
+                btn.dataset.orig = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner"></span> 处理中...';
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = btn.dataset.orig || btn.innerHTML;
+                btn.disabled = false;
+            }
+        }
+
+        // 加载链上数据
+        async function loadData() {
+            try {
+                const c = getRead();
+                const bal = await c.getBalance();
+                const total = await c.totalMembers();
+                const a = await c.getGroupCount(0);
+                const b = await c.getGroupCount(1);
+                const cc = await c.getGroupCount(2);
+                const owner = await c.owner();
+
+                document.getElementById('vBalance').innerHTML = parseFloat(ethers.utils.formatEther(bal)).toFixed(4) + '<span class="stat-unit">BNB</span>';
+                document.getElementById('vTotal').innerHTML = total.toString() + '<span class="stat-unit">/ 200</span>';
+                document.getElementById('vA').textContent = a.toString();
+                document.getElementById('vB').textContent = b.toString();
+                document.getElementById('vC').textContent = cc.toString();
+                document.getElementById('vOwner').textContent = owner.slice(0, 10) + '...' + owner.slice(-8);
+
+                document.getElementById('vDistBal').innerHTML = parseFloat(ethers.utils.formatEther(bal)).toFixed(4) + '<span class="stat-unit">BNB</span>';
+                const share = bal.div(3);
+                document.getElementById('vDistShare').innerHTML = parseFloat(ethers.utils.formatEther(share)).toFixed(4) + '<span class="stat-unit">BNB</span>';
+            } catch (err) {
+                console.error(err);
+                toast('加载数据失败：' + err.message, 'err');
+            }
+        }
+
+        async function loadList() {
+            try {
+                const c = getRead();
+                const ga = await c.getGroupMembers(0);
+                const gb = await c.getGroupMembers(1);
+                const gc = await c.getGroupMembers(2);
+                renderList('listA', ga, 'tA');
+                renderList('listB', gb, 'tB');
+                renderList('listC', gc, 'tC');
+            } catch (err) {
+                console.error(err);
+                toast('加载白名单失败：' + err.message, 'err');
+            }
+        }
+
+        function renderList(id, members, titleId) {
+            const box = document.getElementById(id);
+            document.getElementById(titleId).textContent = members.length + ' 个地址';
+            box.innerHTML = '';
+            if (members.length === 0) {
+                box.innerHTML = '<div class="empty">暂无成员</div>';
+                return;
+            }
+            members.forEach(addr => {
+                const row = document.createElement('div');
+                row.className = 'member';
+                const span = document.createElement('span');
+                span.className = 'member-addr';
+                span.textContent = addr;
+                row.appendChild(span);
+                if (isMeOwner) {
+                    const del = document.createElement('button');
+                    del.className = 'member-del';
+                    del.textContent = '\u2715';
+                    del.title = '移除';
+                    del.onclick = () => doRemove(addr);
+                    row.appendChild(del);
+                }
+                box.appendChild(row);
+            });
+        }
+
+        async function loadAll() { await loadData(); await loadList(); }
+
+        // 连接钱包
+        async function connect() {
+            try {
+                if (typeof window.ethereum === 'undefined') { toast('请先安装 MetaMask 钱包', 'err'); return; }
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const cid = await window.ethereum.request({ method: 'eth_chainId' });
+                if (cid !== BSC_CHAIN) {
+                    try {
+                        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: BSC_CHAIN }] });
+                    } catch (sw) {
+                        if (sw.code === 4902) {
+                            await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: BSC_CHAIN, chainName: 'BNB Smart Chain', nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 }, rpcUrls: ['https://bsc-dataseed.binance.org/'], blockExplorerUrls: ['https://bscscan.com/'] }] });
+                        }
+                    }
+                }
+                const prov = new ethers.providers.Web3Provider(window.ethereum);
+                const sig = prov.getSigner();
+                const addr = await sig.getAddress();
+                writeC = new ethers.Contract(CONTRACT, ABI, sig);
+
+                document.getElementById('walletAddr').textContent = addr.slice(0, 6) + '...' + addr.slice(-4);
+                document.getElementById('walletBadge').classList.remove('hidden');
+                document.getElementById('connectBtn').classList.add('hidden');
+
+                const owner = await getRead().owner();
+                isMeOwner = owner.toLowerCase() === addr.toLowerCase();
+                if (isMeOwner) {
+                    document.querySelectorAll('.owner-only').forEach(el => el.classList.remove('hidden'));
+                }
+
+                await loadAll();
+                toast('钱包已连接', 'ok');
+            } catch (err) {
+                console.error(err);
+                toast('连接失败：' + err.message, 'err');
+            }
+        }
+
+        // 添加白名单
+        async function doAdd(e) {
+            if (busy) return;
+            const w = getWrite();
+            if (!w) { toast('请先连接钱包', 'err'); return; }
+            const group = parseInt(document.getElementById('selGroup').value);
+            const addr = document.getElementById('inpAddr').value.trim();
+            if (!ethers.utils.isAddress(addr)) { toast('地址格式无效', 'err'); return; }
+            busy = true;
+            const btn = e.target.closest('.btn');
+            setLoading(btn, true);
+            try {
+                const tx = await w.addToWhitelist(group, addr);
+                toast('交易已提交，等待确认...', 'msg');
+                await tx.wait();
+                toast('添加成功', 'ok');
+                document.getElementById('inpAddr').value = '';
+                await loadAll();
+            } catch (err) {
+                console.error(err);
+                toast('添加失败：' + (err.reason || err.message), 'err');
+            } finally {
+                busy = false;
+                setLoading(btn, false);
+            }
+        }
+
+        // 移除白名单
+        async function doRemove(addr) {
+            if (busy) return;
+            const w = getWrite();
+            if (!w) { toast('请先连接钱包', 'err'); return; }
+            if (!confirm('确定要移除地址 ' + addr + ' 吗？')) return;
+            busy = true;
+            try {
+                const tx = await w.removeFromWhitelist(addr);
+                toast('交易已提交，等待确认...', 'msg');
+                await tx.wait();
+                toast('移除成功', 'ok');
+                await loadAll();
+            } catch (err) {
+                console.error(err);
+                toast('移除失败：' + (err.reason || err.message), 'err');
+            } finally {
+                busy = false;
+            }
+        }
+
+        // 执行分配
+        async function doDistribute(e) {
+            if (busy) return;
+            const w = getWrite();
+            if (!w) { toast('请先连接钱包', 'err'); return; }
+            busy = true;
+            const btn = e.target.closest('.btn');
+            setLoading(btn, true);
+            try {
+                const tx = await w.distribute();
+                toast('交易已提交，等待确认...', 'msg');
+                await tx.wait();
+                toast('分配成功', 'ok');
+                await loadData();
+            } catch (err) {
+                console.error(err);
+                toast('分配失败：' + (err.reason || err.message), 'err');
+            } finally {
+                busy = false;
+                setLoading(btn, false);
+            }
+        }
+
+        // 提取 BNB
+        async function doWithdrawBNB(e) {
+            if (busy) return;
+            const w = getWrite();
+            if (!w) { toast('请先连接钱包', 'err'); return; }
+            if (!confirm('确定要提取合约内全部 BNB 吗？此操作不可撤销！')) return;
+            busy = true;
+            const btn = e.target.closest('.btn');
+            setLoading(btn, true);
+            try {
+                const tx = await w.emergencyWithdrawBNB();
+                toast('交易已提交，等待确认...', 'msg');
+                await tx.wait();
+                toast('提取成功', 'ok');
+                await loadData();
+            } catch (err) {
+                console.error(err);
+                toast('提取失败：' + (err.reason || err.message), 'err');
+            } finally {
+                busy = false;
+                setLoading(btn, false);
+            }
+        }
+
+        // 提取 ERC20
+        async function doWithdrawERC20(e) {
+            if (busy) return;
+            const w = getWrite();
+            if (!w) { toast('请先连接钱包', 'err'); return; }
+            const token = document.getElementById('inpToken').value.trim();
+            if (!ethers.utils.isAddress(token)) { toast('代币地址格式无效', 'err'); return; }
+            if (!confirm('确定要提取该代币的全部余额吗？此操作不可撤销！')) return;
+            busy = true;
+            const btn = e.target.closest('.btn');
+            setLoading(btn, true);
+            try {
+                const tx = await w.emergencyWithdrawERC20(token);
+                toast('交易已提交，等待确认...', 'msg');
+                await tx.wait();
+                toast('提取成功', 'ok');
+                document.getElementById('inpToken').value = '';
+            } catch (err) {
+                console.error(err);
+                toast('提取失败：' + (err.reason || err.message), 'err');
+            } finally {
+                busy = false;
+                setLoading(btn, false);
+            }
+        }
+
+        // 转移所有权
+        async function doTransferOwner(e) {
+            if (busy) return;
+            const w = getWrite();
+            if (!w) { toast('请先连接钱包', 'err'); return; }
+            const addr = document.getElementById('inpNewOwner').value.trim();
+            if (!ethers.utils.isAddress(addr)) { toast('地址格式无效', 'err'); return; }
+            if (!confirm('确定要将合约所有权转移到此地址吗？此操作不可撤销！')) return;
+            busy = true;
+            const btn = e.target.closest('.btn');
+            setLoading(btn, true);
+            try {
+                const tx = await w.transferOwnership(addr);
+                toast('交易已提交，等待确认...', 'msg');
+                await tx.wait();
+                toast('所有权已转移', 'ok');
+                document.getElementById('inpNewOwner').value = '';
+                await loadData();
+            } catch (err) {
+                console.error(err);
+                toast('转移失败：' + (err.reason || err.message), 'err');
+            } finally {
+                busy = false;
+                setLoading(btn, false);
+            }
+        }
+
+        // 标签页切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // 钱包事件监听
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.on('accountsChanged', () => window.location.reload());
+            window.ethereum.on('chainChanged', () => window.location.reload());
+        }
+
+        document.getElementById('connectBtn').addEventListener('click', connect);
+
+        // 启动
+        loadAll();
+    </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920" integrity="sha512-L0ha0OXavK/8okipN9F8BtP84dg9DUhPERbBXzwI6dgTA55d2+yweo3pn5CSFYs45/r8md2+xvUPtTdvTNRfjA==" data-cf-beacon='{"version":"2024.11.0","token":"75124c326cb447fe934cde04713ae013","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
