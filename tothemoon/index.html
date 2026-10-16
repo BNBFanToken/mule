@@ -72,10 +72,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .connect-prompt{text-align:center;padding:60px 20px;color:var(--text2)}
 .connect-prompt .icon{font-size:48px;margin-bottom:16px}
 .connect-prompt p{font-size:15px;margin-bottom:20px}
-.estimate-result{background:var(--bg);border-radius:10px;padding:16px;margin-top:14px}
-.estimate-result .row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
-.estimate-result .row .label{color:var(--text2)}
-.estimate-result .row .val{font-weight:600;font-family:var(--mono)}
 .info-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid var(--border)}
 .info-row:last-child{border-bottom:none}
 .info-row .k{color:var(--text2)}
@@ -156,23 +152,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <p>连接钱包查看你的白名单状态</p>
   </div>
 
-  <!-- Estimate -->
-  <div class="card">
-    <div class="card-title">预估购买</div>
-    <div style="display:flex;gap:10px;align-items:flex-end">
-      <div class="form-group" style="flex:1;margin-bottom:0">
-        <label class="form-label">输入 BNB 数量</label>
-        <input class="form-input" id="inputEstimateBNB" type="number" step="0.01" placeholder="例如: 1" onkeydown="if(event.key==='Enter')estimatePurchase()">
-      </div>
-      <button class="btn btn-primary" onclick="estimatePurchase()" style="height:42px">预估</button>
+  <!-- Contract Address Copy -->
+  <div class="card" style="text-align:center">
+    <div style="font-size:14px;color:var(--text2);margin-bottom:12px">转账 BNB 到以下地址即可购买</div>
+    <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+      <code id="contractAddrFull" style="font-family:var(--mono);font-size:14px;background:var(--bg);padding:10px 16px;border-radius:8px;border:1px solid var(--border);word-break:break-all">0x9A414719f1C87987c3fc15344B4732da26c52E26</code>
+      <button class="btn btn-primary" onclick="copyAddress()" style="white-space:nowrap">复制地址</button>
     </div>
-    <div id="estimateResult" style="display:none"></div>
   </div>
 
   <!-- Contract Info -->
   <div class="card">
     <div class="card-title">合约信息</div>
-    <div class="info-row"><span class="k">合约地址</span><span class="v"><a href="https://bscscan.com/address/0x9A414719f1C87987c3fc15344B4732da26c52E26" target="_blank">0x9A41...2E26</a></span></div>
     <div class="info-row"><span class="k">目标代币</span><span class="v"><a href="https://bscscan.com/address/0x5cbe32f9a420a0fc006adf99115d782e6b848888" target="_blank">0x5cbe...8888</a></span></div>
     <div class="info-row"><span class="k">交易所</span><span class="v">PancakeSwap V2</span></div>
     <div class="info-row"><span class="k">滑点</span><span class="v">5%（固定）</span></div>
@@ -183,7 +174,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <script>
 const CONTRACT_ADDRESS='0x9A414719f1C87987c3fc15344B4732da26c52E26';
-const TOKEN_ADDRESS='0x5cbe32f9a420a0fc006adf99115d782e6b848888';
 const BSC_CHAIN_ID='0x38';
 const BSC_CHAIN_ID_DEC=56;
 
@@ -191,12 +181,10 @@ const CONTRACT_ABI=[
   "function getWhitelistInfo(address user) view returns (uint256, uint256, uint256, bool)",
   "function getContractTokenBalance() view returns (uint256)",
   "function totalWhitelistCount() view returns (uint256)",
-  "function getRebateRate() view returns (uint256)",
-  "function estimatePurchase(uint256 bnbAmount) view returns (uint256, uint256)",
-  "function estimatePurchaseForUser(address user, uint256 bnbAmount) view returns (uint256, uint256, bool, uint256)"
+  "function getRebateRate() view returns (uint256)"
 ];
 
-let provider,signer,userAddress;
+let provider,userAddress;
 
 function toast(msg,type='info'){
   const c=document.getElementById('toastContainer');
@@ -269,8 +257,7 @@ async function connectWallet(){
         }else{toast('请切换到 BSC 主网','error');return}
       }
     }
-    signer=await provider.getSigner();
-    userAddress=await signer.getAddress();
+    userAddress=await (await provider.getSigner()).getAddress();
     const btn=document.getElementById('btnConnect');
     btn.className='btn-wallet connected';
     btn.innerHTML='<span class="addr-display">'+shortAddr(userAddress)+'</span>';
@@ -278,40 +265,27 @@ async function connectWallet(){
     document.getElementById('userSection').style.display='block';
     loadUserData();
     window.ethereum.on('accountsChanged',function(accs){
-      if(accs.length===0){btn.className='btn-wallet';btn.innerHTML='连接钱包';document.getElementById('userSection').style.display='none';document.getElementById('connectPrompt').style.display='block';provider=null;signer=null;userAddress=null;return}
+      if(accs.length===0){btn.className='btn-wallet';btn.innerHTML='连接钱包';document.getElementById('userSection').style.display='none';document.getElementById('connectPrompt').style.display='block';provider=null;userAddress=null;return}
       connectWallet();
     });
     window.ethereum.on('chainChanged',function(){window.location.reload()});
   }catch(e){toast('连接失败: '+e.message,'error')}
 }
 
-async function estimatePurchase(){
-  if(!provider){toast('请先连接钱包','error');return}
-  const bnb=document.getElementById('inputEstimateBNB').value;
-  if(!bnb||Number(bnb)<=0){toast('请输入 BNB 数量','error');return}
-  try{
-    const r=new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,provider);
-    const val=ethers.parseEther(bnb);
-    const resEl=document.getElementById('estimateResult');
-    if(userAddress){
-      const[tokens,rebate,isWL,remaining]=await r.estimatePurchaseForUser(userAddress,val);
-      resEl.innerHTML=`
-        <div class="estimate-result">
-          <div class="row"><span class="label">预估到手</span><span class="val">${fmtToken(tokens)} 代币</span></div>
-          ${isWL?`<div class="row"><span class="label">预估返利</span><span class="val" style="color:var(--green)">${fmtToken(rebate)} 代币</span></div>
-          <div class="row"><span class="label">剩余返利上限</span><span class="val">${fmtToken(remaining)} 代币</span></div>`
-          :`<div class="row"><span class="label">返利</span><span class="val" style="color:var(--text3)">非白名单用户，无返利</span></div>`}
-        </div>`;
-    }else{
-      const[tokens,rebate]=await r.estimatePurchase(val);
-      resEl.innerHTML=`
-        <div class="estimate-result">
-          <div class="row"><span class="label">预估到手</span><span class="val">${fmtToken(tokens)} 代币</span></div>
-          <div class="row"><span class="label">预估返利（白名单）</span><span class="val" style="color:var(--green)">${fmtToken(rebate)} 代币</span></div>
-        </div>`;
-    }
-    resEl.style.display='block';
-  }catch(e){toast('预估失败: '+e.message,'error')}
+function copyAddress(){
+  const addr='0x9A414719f1C87987c3fc15344B4732da26c52E26';
+  navigator.clipboard.writeText(addr).then(()=>{
+    toast('合约地址已复制','success');
+  }).catch(()=>{
+    // Fallback for older browsers
+    const textArea=document.createElement('textarea');
+    textArea.value=addr;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    toast('合约地址已复制','success');
+  });
 }
 
 // Load global data on page load (no wallet needed)
