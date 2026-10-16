@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MulePro</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f4f6fb;--card:#fff;--border:#e2e8f0;
+  --text:#1a202c;--text2:#64748b;--text3:#94a3b8;
+  --accent:#2563eb;--accent2:#1d4ed8;--accent-light:#eff6ff;
+  --green:#10b981;--green-light:#ecfdf5;
+  --red:#ef4444;--red-light:#fef2f2;
+  --orange:#f59e0b;--orange-light:#fffbeb;
+  --purple:#8b5cf6;--purple-light:#f5f3ff;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.08);
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.header{background:#fff;border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px}
+.header-title{font-size:18px;font-weight:700}
+.header-right{display:flex;align-items:center;gap:12px}
+.network-badge{background:var(--orange-light);color:var(--orange);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.network-badge::before{content:'';width:8px;height:8px;background:var(--orange);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-wallet{background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s}
+.btn-wallet:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.btn-wallet.connected{background:var(--green-light);color:var(--green);border:1px solid #d1fae5}
+.addr-display{font-family:var(--mono);font-size:13px}
+.container{max-width:800px;margin:0 auto;padding:24px 32px}
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+.card-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow);text-align:center}
+.stat-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:4px}
+.stat-value{font-size:20px;font-weight:700;font-family:var(--mono)}
+.stat-value.blue{color:var(--accent)}
+.stat-value.green{color:var(--green)}
+.stat-value.purple{color:var(--purple)}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.form-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);background:#fff;color:var(--text);transition:border-color .2s}
+.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.btn{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--accent2);transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toast-container{position:fixed;top:80px;right:24px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:14px 20px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);animation:slideIn .3s ease;max-width:400px}
+.toast.success{background:var(--green-light);color:#065f46;border:1px solid #a7f3d0}
+.toast.error{background:var(--red-light);color:#991b1b;border:1px solid #fecaca}
+.toast.info{background:var(--accent-light);color:#1e40af;border:1px solid #bfdbfe}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.wl-status{padding:20px;border-radius:12px;text-align:center;margin-bottom:20px}
+.wl-status.yes{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #6ee7b7}
+.wl-status.no{background:linear-gradient(135deg,#fef2f2,#fecaca);border:2px solid #fca5a5}
+.wl-status .big{font-size:28px;font-weight:700;margin-bottom:4px}
+.wl-status.yes .big{color:#059669}
+.wl-status.no .big{color:#dc2626}
+.wl-status .sub{font-size:13px;color:var(--text2)}
+.wl-details{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.wl-detail-item{background:#fff;border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)}
+.wl-detail-item .label{font-size:12px;color:var(--text2);margin-bottom:4px}
+.wl-detail-item .value{font-size:18px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.connect-prompt{text-align:center;padding:60px 20px;color:var(--text2)}
+.connect-prompt .icon{font-size:48px;margin-bottom:16px}
+.connect-prompt p{font-size:15px;margin-bottom:20px}
+.estimate-result{background:var(--bg);border-radius:10px;padding:16px;margin-top:14px}
+.estimate-result .row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.estimate-result .row .label{color:var(--text2)}
+.estimate-result .row .val{font-weight:600;font-family:var(--mono)}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-row .k{color:var(--text2)}
+.info-row .v{font-family:var(--mono);font-weight:500}
+.progress-bar{width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--accent));border-radius:4px;transition:width .5s ease}
+@media(max-width:640px){
+  .container{padding:16px}
+  .header{padding:0 16px}
+  .stats{grid-template-columns:1fr}
+  .wl-details{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-left">
+    <div class="logo">M</div>
+    <div class="header-title">MulePro</div>
+  </div>
+  <div class="header-right">
+    <div class="network-badge">BSC</div>
+    <button class="btn-wallet" id="btnConnect" onclick="connectWallet()">连接钱包</button>
+  </div>
+</header>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="container">
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">返利比例</div>
+      <div class="stat-value blue" id="statRate">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">白名单人数</div>
+      <div class="stat-value green" id="statCount">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">返利池余额</div>
+      <div class="stat-value purple" id="statBalance">--</div>
+    </div>
+  </div>
+
+  <!-- User Status (shown after connect) -->
+  <div id="userSection" style="display:none">
+    <div id="wlStatus" class="wl-status no">
+      <div class="big" id="wlBig">查询中...</div>
+      <div class="sub" id="wlSub">正在查询白名单状态</div>
+    </div>
+    <div id="wlDetails" class="wl-details" style="display:none">
+      <div class="wl-detail-item">
+        <div class="label">预售额度</div>
+        <div class="value" id="wlQuota">--</div>
+      </div>
+      <div class="wl-detail-item">
+        <div class="label">已获返利</div>
+        <div class="value" id="wlClaimed">--</div>
+      </div>
+      <div class="wl-detail-item">
+        <div class="label">剩余可返利</div>
+        <div class="value" id="wlRemaining">--</div>
+      </div>
+    </div>
+    <div id="wlProgress" style="display:none;margin-top:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2)">
+        <span>返利进度</span>
+        <span id="wlProgressText">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="wlProgressBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Connect Prompt -->
+  <div id="connectPrompt" class="connect-prompt">
+    <div class="icon">&#x1F517;</div>
+    <p>连接钱包查看你的白名单状态</p>
+  </div>
+
+  <!-- Estimate -->
+  <div class="card">
+    <div class="card-title">预估购买</div>
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div class="form-group" style="flex:1;margin-bottom:0">
+        <label class="form-label">输入 BNB 数量</label>
+        <input class="form-input" id="inputEstimateBNB" type="number" step="0.01" placeholder="例如: 1" onkeydown="if(event.key==='Enter')estimatePurchase()">
+      </div>
+      <button class="btn btn-primary" onclick="estimatePurchase()" style="height:42px">预估</button>
+    </div>
+    <div id="estimateResult" style="display:none"></div>
+  </div>
+
+  <!-- Contract Info -->
+  <div class="card">
+    <div class="card-title">合约信息</div>
+    <div class="info-row"><span class="k">合约地址</span><span class="v"><a href="https://bscscan.com/address/0x9A414719f1C87987c3fc15344B4732da26c52E26" target="_blank">0x9A41...2E26</a></span></div>
+    <div class="info-row"><span class="k">目标代币</span><span class="v"><a href="https://bscscan.com/address/0x5cbe32f9a420a0fc006adf99115d782e6b848888" target="_blank">0x5cbe...8888</a></span></div>
+    <div class="info-row"><span class="k">交易所</span><span class="v">PancakeSwap V2</span></div>
+    <div class="info-row"><span class="k">滑点</span><span class="v">5%（固定）</span></div>
+    <div class="info-row"><span class="k">买入税</span><span class="v">3%</span></div>
+    <div class="info-row"><span class="k">返利上限</span><span class="v">额度 × 2</span></div>
+  </div>
+</div>
+
+<script>
+const CONTRACT_ADDRESS='0x9A414719f1C87987c3fc15344B4732da26c52E26';
+const TOKEN_ADDRESS='0x5cbe32f9a420a0fc006adf99115d782e6b848888';
+const BSC_CHAIN_ID='0x38';
+const BSC_CHAIN_ID_DEC=56;
+
+const CONTRACT_ABI=[
+  "function getWhitelistInfo(address user) view returns (uint256, uint256, uint256, bool)",
+  "function getContractTokenBalance() view returns (uint256)",
+  "function totalWhitelistCount() view returns (uint256)",
+  "function getRebateRate() view returns (uint256)",
+  "function estimatePurchase(uint256 bnbAmount) view returns (uint256, uint256)",
+  "function estimatePurchaseForUser(address user, uint256 bnbAmount) view returns (uint256, uint256, bool, uint256)"
+];
+
+let provider,signer,userAddress;
+
+function toast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');
+  t.className='toast '+type;t.textContent=msg;c.appendChild(t);
+  setTimeout(()=>t.remove(),4000);
+}
+function shortAddr(a){return a?a.slice(0,6)+'...'+a.slice(-4):'--'}
+function fmtToken(v){return parseFloat(ethers.formatEther(v)).toLocaleString('zh-CN',{maximumFractionDigits:2})}
+
+async function loadGlobalData(){
+  try{
+    const r=new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org/'));
+    const[bal,count,rate]=await Promise.all([r.getContractTokenBalance(),r.totalWhitelistCount(),r.getRebateRate()]);
+    document.getElementById('statRate').textContent=(Number(rate)/100).toFixed(2)+'%';
+    document.getElementById('statCount').textContent=count.toString();
+    document.getElementById('statBalance').textContent=fmtToken(bal);
+  }catch(e){console.error(e)}
+}
+
+async function loadUserData(){
+  if(!provider||!userAddress)return;
+  try{
+    const r=new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,provider);
+    const[amount,claimed,remaining,isWL]=await r.getWhitelistInfo(userAddress);
+    const statusEl=document.getElementById('wlStatus');
+    const bigEl=document.getElementById('wlBig');
+    const subEl=document.getElementById('wlSub');
+    const detailsEl=document.getElementById('wlDetails');
+    const progressEl=document.getElementById('wlProgress');
+
+    if(isWL){
+      statusEl.className='wl-status yes';
+      bigEl.textContent='白名单用户';
+      subEl.textContent='你享有购买返利资格';
+      detailsEl.style.display='grid';
+      progressEl.style.display='block';
+      document.getElementById('wlQuota').textContent=fmtToken(amount);
+      document.getElementById('wlClaimed').textContent=fmtToken(claimed);
+      document.getElementById('wlRemaining').textContent=fmtToken(remaining);
+      const cap=parseFloat(ethers.formatEther(amount))*2;
+      const claimedF=parseFloat(ethers.formatEther(claimed));
+      const pct=cap>0?Math.min(100,(claimedF/cap*100)):0;
+      document.getElementById('wlProgressText').textContent=pct.toFixed(1)+'%';
+      document.getElementById('wlProgressBar').style.width=pct+'%';
+    }else{
+      statusEl.className='wl-status no';
+      bigEl.textContent='非白名单用户';
+      subEl.textContent='你可以通过转 BNB 到合约地址购买代币（无返利）';
+      detailsEl.style.display='none';
+      progressEl.style.display='none';
+    }
+  }catch(e){toast('查询失败: '+e.message,'error')}
+}
+
+async function connectWallet(){
+  if(!window.ethereum){toast('请先安装 MetaMask','error');return}
+  try{
+    provider=new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts',[]);
+    const network=await provider.getNetwork();
+    if(Number(network.chainId)!==BSC_CHAIN_ID_DEC){
+      try{
+        await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:BSC_CHAIN_ID}]});
+        provider=new ethers.BrowserProvider(window.ethereum);
+      }catch(e){
+        if(e.code===4902){
+          await window.ethereum.request({method:'wallet_addEthereumChain',params:[{chainId:BSC_CHAIN_ID,chainName:'BSC Mainnet',nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18},rpcUrls:['https://bsc-dataseed.binance.org/'],blockExplorerUrls:['https://bscscan.com/']}]});
+          provider=new ethers.BrowserProvider(window.ethereum);
+        }else{toast('请切换到 BSC 主网','error');return}
+      }
+    }
+    signer=await provider.getSigner();
+    userAddress=await signer.getAddress();
+    const btn=document.getElementById('btnConnect');
+    btn.className='btn-wallet connected';
+    btn.innerHTML='<span class="addr-display">'+shortAddr(userAddress)+'</span>';
+    document.getElementById('connectPrompt').style.display='none';
+    document.getElementById('userSection').style.display='block';
+    loadUserData();
+    window.ethereum.on('accountsChanged',function(accs){
+      if(accs.length===0){btn.className='btn-wallet';btn.innerHTML='连接钱包';document.getElementById('userSection').style.display='none';document.getElementById('connectPrompt').style.display='block';provider=null;signer=null;userAddress=null;return}
+      connectWallet();
+    });
+    window.ethereum.on('chainChanged',function(){window.location.reload()});
+  }catch(e){toast('连接失败: '+e.message,'error')}
+}
+
+async function estimatePurchase(){
+  if(!provider){toast('请先连接钱包','error');return}
+  const bnb=document.getElementById('inputEstimateBNB').value;
+  if(!bnb||Number(bnb)<=0){toast('请输入 BNB 数量','error');return}
+  try{
+    const r=new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,provider);
+    const val=ethers.parseEther(bnb);
+    const resEl=document.getElementById('estimateResult');
+    if(userAddress){
+      const[tokens,rebate,isWL,remaining]=await r.estimatePurchaseForUser(userAddress,val);
+      resEl.innerHTML=`
+        <div class="estimate-result">
+          <div class="row"><span class="label">预估到手</span><span class="val">${fmtToken(tokens)} 代币</span></div>
+          ${isWL?`<div class="row"><span class="label">预估返利</span><span class="val" style="color:var(--green)">${fmtToken(rebate)} 代币</span></div>
+          <div class="row"><span class="label">剩余返利上限</span><span class="val">${fmtToken(remaining)} 代币</span></div>`
+          :`<div class="row"><span class="label">返利</span><span class="val" style="color:var(--text3)">非白名单用户，无返利</span></div>`}
+        </div>`;
+    }else{
+      const[tokens,rebate]=await r.estimatePurchase(val);
+      resEl.innerHTML=`
+        <div class="estimate-result">
+          <div class="row"><span class="label">预估到手</span><span class="val">${fmtToken(tokens)} 代币</span></div>
+          <div class="row"><span class="label">预估返利（白名单）</span><span class="val" style="color:var(--green)">${fmtToken(rebate)} 代币</span></div>
+        </div>`;
+    }
+    resEl.style.display='block';
+  }catch(e){toast('预估失败: '+e.message,'error')}
+}
+
+// Load global data on page load (no wallet needed)
+loadGlobalData();
+</script>
+</body>
+</html>
