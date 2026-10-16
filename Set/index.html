@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MulePro 管理后台</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f4f6fb;--card:#fff;--border:#e2e8f0;
+  --text:#1a202c;--text2:#64748b;--text3:#94a3b8;
+  --accent:#2563eb;--accent2:#1d4ed8;--accent-light:#eff6ff;
+  --green:#10b981;--green-light:#ecfdf5;
+  --red:#ef4444;--red-light:#fef2f2;
+  --orange:#f59e0b;--orange-light:#fffbeb;
+  --purple:#8b5cf6;--purple-light:#f5f3ff;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.08);
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+
+/* Header */
+.header{background:#fff;border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px}
+.header-title{font-size:18px;font-weight:700;color:var(--text)}
+.header-subtitle{font-size:12px;color:var(--text3);font-weight:500}
+.header-right{display:flex;align-items:center;gap:12px}
+.network-badge{background:var(--orange-light);color:var(--orange);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.network-badge::before{content:'';width:8px;height:8px;background:var(--orange);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-wallet{background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s}
+.btn-wallet:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.btn-wallet.connected{background:var(--green-light);color:var(--green);border:1px solid #d1fae5}
+.addr-display{font-family:var(--mono);font-size:13px}
+
+/* Layout */
+.container{max-width:1280px;margin:0 auto;padding:24px 32px}
+.tabs{display:flex;gap:4px;background:#fff;border-radius:14px;padding:4px;border:1px solid var(--border);margin-bottom:24px;overflow-x:auto}
+.tab{padding:10px 20px;border-radius:10px;border:none;background:transparent;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;font-family:var(--font);white-space:nowrap;transition:all .2s}
+.tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.25)}
+.tab:hover:not(.active){background:var(--accent-light);color:var(--accent)}
+
+/* Cards */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:24px;box-shadow:var(--shadow)}
+.card-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title .icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+
+/* Stats Grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);transition:all .2s}
+.stat-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.stat-label{font-size:13px;color:var(--text2);font-weight:500;margin-bottom:6px}
+.stat-value{font-size:24px;font-weight:700;font-family:var(--mono)}
+.stat-value.blue{color:var(--accent)}
+.stat-value.green{color:var(--green)}
+.stat-value.purple{color:var(--purple)}
+.stat-value.orange{color:var(--orange)}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:4px}
+
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.form-input,.form-textarea{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);background:#fff;color:var(--text);transition:border-color .2s}
+.form-input:focus,.form-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.form-textarea{min-height:100px;resize:vertical;font-family:var(--mono);font-size:13px}
+.form-hint{font-size:12px;color:var(--text3);margin-top:4px}
+
+/* Buttons */
+.btn{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--accent2);transform:translateY(-1px)}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover:not(:disabled){background:#059669}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover:not(:disabled){background:#dc2626}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:6px 14px;font-size:13px}
+
+/* Grid Layout */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
+
+/* Tab panels */
+.panel{display:none}
+.panel.active{display:block}
+
+/* Toast */
+.toast-container{position:fixed;top:80px;right:24px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:14px 20px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);animation:slideIn .3s ease;max-width:400px}
+.toast.success{background:var(--green-light);color:#065f46;border:1px solid #a7f3d0}
+.toast.error{background:var(--red-light);color:#991b1b;border:1px solid #fecaca}
+.toast.info{background:var(--accent-light);color:#1e40af;border:1px solid #bfdbfe}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 14px;background:var(--bg);font-weight:600;color:var(--text2);font-size:13px;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px}
+tr:hover td{background:var(--accent-light)}
+
+/* Loading */
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;z-index:999;backdrop-filter:blur(4px)}
+.loading-overlay .spinner{width:40px;height:40px;border-width:4px;border-color:rgba(37,99,235,.2);border-top-color:var(--accent)}
+
+/* Empty state */
+.empty{text-align:center;padding:40px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+
+/* Responsive */
+@media(max-width:640px){
+  .container{padding:16px}
+  .header{padding:0 16px}
+  .stats{grid-template-columns:1fr 1fr}
+  .tabs{flex-wrap:nowrap;overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">M</div>
+    <div>
+      <div class="header-title">MulePro 管理后台</div>
+      <div class="header-subtitle">BSC 主网</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="network-badge">BSC 主网</div>
+    <button class="btn-wallet" id="btnConnect" onclick="connectWallet()">连接钱包</button>
+  </div>
+</header>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="loading-overlay" id="loadingOverlay" style="display:none"><div class="spinner"></div></div>
+
+<div class="container">
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">仪表盘</button>
+    <button class="tab" data-tab="ownership" onclick="switchTab('ownership')">所有权</button>
+    <button class="tab" data-tab="deposit" onclick="switchTab('deposit')">充值代币</button>
+    <button class="tab" data-tab="whitelist" onclick="switchTab('whitelist')">白名单</button>
+    <button class="tab" data-tab="rebate" onclick="switchTab('rebate')">返利设置</button>
+    <button class="tab" data-tab="withdraw" onclick="switchTab('withdraw')">提取资金</button>
+    <button class="tab" data-tab="query" onclick="switchTab('query')">查询工具</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">合约代币余额</div>
+        <div class="stat-value blue" id="statTokenBalance">--</div>
+        <div class="stat-sub">可用于返利的代币数量</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">白名单总人数</div>
+        <div class="stat-value green" id="statWhitelistCount">--</div>
+        <div class="stat-sub">已添加的白名单地址数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">当前返利比例</div>
+        <div class="stat-value purple" id="statRebateRate">--</div>
+        <div class="stat-sub">每次购买后的返利比例</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">合约 BNB 余额</div>
+        <div class="stat-value orange" id="statBNBBalance">--</div>
+        <div class="stat-sub">合约中剩余的 BNB</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">合约信息</div>
+        <table>
+          <tr><td style="color:var(--text2);font-family:var(--font)">合约地址</td><td id="infoContract">--</td></tr>
+          <tr><td style="color:var(--text2);font-family:var(--font)">目标代币</td><td id="infoToken">--</td></tr>
+          <tr><td style="color:var(--text2);font-family:var(--font)">Router</td><td>0x10ED...024E</td></tr>
+          <tr><td style="color:var(--text2);font-family:var(--font)">当前 Owner</td><td id="infoOwner">--</td></tr>
+          <tr><td style="color:var(--text2);font-family:var(--font)">返利上限倍数</td><td>2x（固定）</td></tr>
+          <tr><td style="color:var(--text2);font-family:var(--font)">滑点</td><td>5%（固定）</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">快速操作</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-primary" onclick="switchTab('deposit')">充值代币到合约</button>
+          <button class="btn btn-primary" onclick="switchTab('whitelist')">管理白名单</button>
+          <button class="btn btn-outline" onclick="refreshDashboard()">刷新数据</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ownership -->
+  <div class="panel" id="panel-ownership">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><div class="icon" style="background:var(--accent-light);color:var(--accent)">&#x1F511;</div>转让所有权</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">两步确认：先发起转让，新 Owner 需要接受才能生效。</p>
+        <div class="form-group">
+          <label class="form-label">新 Owner 地址</label>
+          <input class="form-input" id="inputNewOwner" placeholder="0x...">
+        </div>
+        <button class="btn btn-primary" onclick="transferOwnership()">发起转让</button>
+        <div style="margin-top:16px;padding:14px;background:var(--orange-light);border-radius:10px;font-size:13px;color:#92400e">
+          待确认 Owner: <span id="pendingOwner" style="font-family:var(--mono)">无</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="icon" style="background:var(--green-light);color:var(--green)">&#x2705;</div>接受所有权</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">如果你是待确认的新 Owner，点击此按钮接受所有权。</p>
+        <button class="btn btn-success" onclick="acceptOwnership()">接受所有权</button>
+        <div style="margin-top:16px;padding:14px;background:var(--green-light);border-radius:10px;font-size:13px;color:#065f46">
+          当前 Owner: <span id="currentOwner" style="font-family:var(--mono)">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deposit -->
+  <div class="panel" id="panel-deposit">
+    <div class="card" style="max-width:600px">
+      <div class="card-title"><div class="icon" style="background:var(--green-light);color:var(--green)">&#x1F4B0;</div>充值代币到合约</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">将目标代币充值到合约中，用于白名单用户的返利发放。充值前需要先 Approve。</p>
+      <div class="form-group">
+        <label class="form-label">充值数量（代币数量，自动换算18位精度）</label>
+        <input class="form-input" id="inputDepositAmount" placeholder="例如: 100000" type="number">
+        <div class="form-hint">合约当前余额: <span id="depositBalance">--</span> 代币</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" onclick="approveDeposit()">第一步: Approve</button>
+        <button class="btn btn-primary" onclick="depositTokens()">第二步: 充值</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Whitelist -->
+  <div class="panel" id="panel-whitelist">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><div class="icon" style="background:var(--green-light);color:var(--green)">&#x2795;</div>批量添加白名单</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">每批最多 200 个地址。地址和数量一一对应，用换行或逗号分隔。</p>
+        <div class="form-group">
+          <label class="form-label">地址列表（每行一个，或逗号分隔）</label>
+          <textarea class="form-textarea" id="inputWLAddresses" placeholder="0xAddress1&#10;0xAddress2&#10;0xAddress3"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">对应额度列表（每行一个，或逗号分隔，单位：代币个数）</label>
+          <textarea class="form-textarea" id="inputWLAmounts" placeholder="10000&#10;20000&#10;15000" style="min-height:80px"></textarea>
+        </div>
+        <button class="btn btn-success" onclick="addWhitelist()">添加白名单</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="icon" style="background:var(--red-light);color:var(--red)">&#x2796;</div>批量删除白名单</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">每批最多 200 个地址。删除后会清除该地址的所有白名单数据和返利记录。</p>
+        <div class="form-group">
+          <label class="form-label">要删除的地址列表（每行一个，或逗号分隔）</label>
+          <textarea class="form-textarea" id="inputWLRemoveAddresses" placeholder="0xAddress1&#10;0xAddress2"></textarea>
+        </div>
+        <button class="btn btn-danger" onclick="removeWhitelist()">删除白名单</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rebate -->
+  <div class="panel" id="panel-rebate">
+    <div class="card" style="max-width:600px">
+      <div class="card-title"><div class="icon" style="background:var(--purple-light);color:var(--purple)">&#x2699;</div>返利比例设置</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">设置每次购买后的返利比例，范围 0% - 15%。修改后立即生效，不影响已返利记录。</p>
+      <div class="form-group">
+        <label class="form-label">返利比例（%）</label>
+        <input class="form-input" id="inputRebateRate" type="number" min="0" max="15" step="0.01" placeholder="例如: 8">
+        <div class="form-hint">当前比例: <span id="currentRebateRate">--</span> | 范围: 0% - 15%</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('inputRebateRate').value='5'">5%</button>
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('inputRebateRate').value='8'">8%</button>
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('inputRebateRate').value='10'">10%</button>
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('inputRebateRate').value='12'">12%</button>
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('inputRebateRate').value='15'">15%</button>
+      </div>
+      <button class="btn btn-primary" onclick="setRebateRate()">确认修改</button>
+    </div>
+  </div>
+
+  <!-- Withdraw -->
+  <div class="panel" id="panel-withdraw">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><div class="icon" style="background:var(--accent-light);color:var(--accent)">&#x1F4B8;</div>提取代币</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">从合约中提取任意代币。可以是目标代币，也可以是其他误转入的代币。</p>
+        <div class="form-group">
+          <label class="form-label">代币地址</label>
+          <input class="form-input" id="inputWithdrawTokenAddr" placeholder="0x...">
+          <div class="form-hint">留空或填入目标代币地址提取目标代币</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">提取数量（代币个数）</label>
+          <input class="form-input" id="inputWithdrawTokenAmount" type="number" placeholder="例如: 50000">
+        </div>
+        <button class="btn btn-primary" onclick="withdrawTokens()">提取代币</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="icon" style="background:var(--orange-light);color:var(--orange)">&#x1F4B0;</div>提取 BNB</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">从合约中提取所有 BNB。正常情况下合约不应有 BNB 滞留。</p>
+        <div class="form-group">
+          <label class="form-label">提取数量（BNB）</label>
+          <input class="form-input" id="inputWithdrawBNB" type="number" step="0.001" placeholder="例如: 0.1">
+          <div class="form-hint">合约当前 BNB 余额: <span id="withdrawBNBBalance">--</span></div>
+        </div>
+        <button class="btn btn-primary" onclick="withdrawBNB()">提取 BNB</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Query -->
+  <div class="panel" id="panel-query">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">查询白名单信息</div>
+        <div class="form-group">
+          <label class="form-label">用户地址</label>
+          <input class="form-input" id="inputQueryAddr" placeholder="0x...">
+        </div>
+        <button class="btn btn-primary" onclick="queryWhitelist()">查询</button>
+        <div id="queryResult" style="margin-top:16px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">预估购买结果</div>
+        <div class="form-group">
+          <label class="form-label">用户地址（可选，用于精确预估）</label>
+          <input class="form-input" id="inputEstimateAddr" placeholder="0x...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">BNB 数量</label>
+          <input class="form-input" id="inputEstimateBNB" type="number" step="0.01" placeholder="例如: 1">
+        </div>
+        <button class="btn btn-primary" onclick="estimatePurchase()">预估</button>
+        <div id="estimateResult" style="margin-top:16px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// === CONFIG ===
+const CONTRACT_ADDRESS = '0x9A414719f1C87987c3fc15344B4732da26c52E26';
+const TOKEN_ADDRESS = '0x5cbe32f9a420a0fc006adf99115d782e6b848888';
+const BSC_CHAIN_ID = '0x38';
+const BSC_CHAIN_ID_DEC = 56;
+
+const CONTRACT_ABI = [
+  "function owner() view returns (address)",
+  "function pendingOwner() view returns (address)",
+  "function token() view returns (address)",
+  "function rebateRate() view returns (uint256)",
+  "function transferOwnership(address newOwner)",
+  "function acceptOwnership()",
+  "function deposit(uint256 amount)",
+  "function addWhitelistBatch(address[] calldata users, uint256[] calldata amounts)",
+  "function removeWhitelistBatch(address[] calldata users)",
+  "function setRebateRate(uint256 newRate)",
+  "function withdrawTokens(address tokenAddress, uint256 amount)",
+  "function withdrawBNB(uint256 amount)",
+  "function getWhitelistInfo(address user) view returns (uint256, uint256, uint256, bool)",
+  "function getContractTokenBalance() view returns (uint256)",
+  "function totalWhitelistCount() view returns (uint256)",
+  "function estimatePurchase(uint256 bnbAmount) view returns (uint256, uint256)",
+  "function estimatePurchaseForUser(address user, uint256 bnbAmount) view returns (uint256, uint256, bool, uint256)",
+  "function getRebateRate() view returns (uint256)",
+  "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)",
+  "event TokensPurchased(address indexed buyer, uint256 bnbAmount, uint256 tokenAmount, uint256 rebateAmount)"
+];
+
+const TOKEN_ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)"
+];
+
+let provider, signer, contract, tokenContract, userAddress;
+
+// === HELPERS ===
+function showLoading(){ document.getElementById('loadingOverlay').style.display='flex' }
+function hideLoading(){ document.getElementById('loadingOverlay').style.display='none' }
+
+function toast(msg, type='info'){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 5000);
+}
+
+function shortAddr(addr){
+  if(!addr || addr === '0x0000000000000000000000000000000000000000') return '无';
+  return addr.slice(0,6)+'...'+addr.slice(-4);
+}
+
+function formatToken(val){
+  return parseFloat(ethers.formatEther(val)).toLocaleString('zh-CN', {maximumFractionDigits:2});
+}
+
+function parseAddresses(str){
+  return str.split(/[\n,]+/).map(s=>s.trim()).filter(s=>s && ethers.isAddress(s));
+}
+
+function parseAmounts(str){
+  const parts = str.split(/[\n,]+/).map(s=>s.trim()).filter(s=>s);
+  return parts.map(s=>{
+    try{ return ethers.parseUnits(s, 18) }
+    catch(e){ throw new Error('额度格式错误: '+s) }
+  });
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.tab===name);
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+// === WALLET ===
+async function connectWallet(){
+  if(!window.ethereum){ toast('请先安装 MetaMask','error'); return }
+  try{
+    provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send('eth_requestAccounts', []);
+    const network = await provider.getNetwork();
+    if(Number(network.chainId) !== BSC_CHAIN_ID_DEC){
+      try{
+        await window.ethereum.request({
+          method:'wallet_switchEthereumChain',
+          params:[{chainId:BSC_CHAIN_ID}]
+        });
+        provider = new ethers.BrowserProvider(window.ethereum);
+      }catch(e){
+        if(e.code===4902){
+          await window.ethereum.request({
+            method:'wallet_addEthereumChain',
+            params:[{
+              chainId:BSC_CHAIN_ID,
+              chainName:'BSC Mainnet',
+              nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18},
+              rpcUrls:['https://bsc-dataseed.binance.org/'],
+              blockExplorerUrls:['https://bscscan.com/']
+            }]
+          });
+          provider = new ethers.BrowserProvider(window.ethereum);
+        } else { toast('请切换到 BSC 主网','error'); return }
+      }
+    }
+    signer = await provider.getSigner();
+    userAddress = await signer.getAddress();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    tokenContract = new ethers.Contract(TOKEN_ADDRESS, TOKEN_ABI, signer);
+
+    const btn = document.getElementById('btnConnect');
+    btn.className = 'btn-wallet connected';
+    btn.innerHTML = '<span class="addr-display">'+shortAddr(userAddress)+'</span>';
+    toast('钱包已连接: '+shortAddr(userAddress),'success');
+    refreshDashboard();
+
+    // Listen for account changes
+    window.ethereum.on('accountsChanged', function(accounts){
+      if(accounts.length === 0){
+        btn.className = 'btn-wallet';
+        btn.innerHTML = '连接钱包';
+        contract = null; tokenContract = null; signer = null; provider = null;
+        toast('钱包已断开','info');
+        return;
+      }
+      connectWallet();
+    });
+
+    // Listen for network changes
+    window.ethereum.on('chainChanged', function(){
+      window.location.reload();
+    });
+  }catch(e){ toast('连接失败: '+e.message,'error') }
+}
+
+// === DASHBOARD ===
+async function refreshDashboard(silent){
+  if(!contract){ if(!silent) toast('请先连接钱包','error'); return }
+  try{
+    const readOnly = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const [tokenBal, wlCount, rate, bnbBal, owner, pending] = await Promise.all([
+      readOnly.getContractTokenBalance(),
+      readOnly.totalWhitelistCount(),
+      readOnly.getRebateRate(),
+      provider.getBalance(CONTRACT_ADDRESS),
+      readOnly.owner(),
+      readOnly.pendingOwner()
+    ]);
+    document.getElementById('statTokenBalance').textContent = formatToken(tokenBal);
+    document.getElementById('statWhitelistCount').textContent = wlCount.toString();
+    document.getElementById('statRebateRate').textContent = (Number(rate)/100).toFixed(2)+'%';
+    document.getElementById('statBNBBalance').textContent = parseFloat(ethers.formatEther(bnbBal)).toFixed(6)+' BNB';
+    document.getElementById('infoContract').textContent = shortAddr(CONTRACT_ADDRESS);
+    document.getElementById('infoToken').textContent = shortAddr(TOKEN_ADDRESS);
+    document.getElementById('infoOwner').textContent = shortAddr(owner);
+    document.getElementById('currentOwner').textContent = shortAddr(owner);
+    document.getElementById('pendingOwner').textContent = shortAddr(pending);
+    document.getElementById('depositBalance').textContent = formatToken(tokenBal);
+    document.getElementById('withdrawBNBBalance').textContent = parseFloat(ethers.formatEther(bnbBal)).toFixed(6)+' BNB';
+    document.getElementById('currentRebateRate').textContent = (Number(rate)/100).toFixed(2)+'%';
+    if(!silent) toast('数据已刷新','success');
+  }catch(e){ toast('查询失败: '+e.message,'error') }
+}
+
+// === OWNERSHIP ===
+async function transferOwnership(){
+  if(!contract){ toast('请先连接钱包','error'); return }
+  const addr = document.getElementById('inputNewOwner').value.trim();
+  if(!ethers.isAddress(addr)){ toast('地址格式错误','error'); return }
+  try{
+    showLoading();
+    const tx = await contract.transferOwnership(addr);
+    toast('交易已提交，等待确认...','info');
+    await tx.wait();
+    toast('转让已发起，等待新 Owner 接受','success');
+    refreshDashboard(true);
+  }catch(e){ toast('失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+async function acceptOwnership(){
+  if(!contract){ toast('请先连接钱包','error'); return }
+  try{
+    showLoading();
+    const tx = await contract.acceptOwnership();
+    toast('交易已提交，等待确认...','info');
+    await tx.wait();
+    toast('所有权已接受！','success');
+    refreshDashboard(true);
+  }catch(e){ toast('失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+// === DEPOSIT ===
+async function approveDeposit(){
+  if(!tokenContract){ toast('请先连接钱包','error'); return }
+  const amount = document.getElementById('inputDepositAmount').value;
+  if(!amount || Number(amount)<=0){ toast('请输入有效数量','error'); return }
+  try{
+    showLoading();
+    const val = ethers.parseUnits(amount, 18);
+    const tx = await tokenContract.approve(CONTRACT_ADDRESS, val);
+    toast('Approve 交易已提交...','info');
+    await tx.wait();
+    toast('Approve 成功！可以进行充值了','success');
+  }catch(e){ toast('Approve 失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+async function depositTokens(){
+  if(!contract){ toast('请先连接钱包','error'); return }
+  const amount = document.getElementById('inputDepositAmount').value;
+  if(!amount || Number(amount)<=0){ toast('请输入有效数量','error'); return }
+  try{
+    showLoading();
+    const val = ethers.parseUnits(amount, 18);
+    const tx = await contract.deposit(val);
+    toast('充值交易已提交...','info');
+    await tx.wait();
+    toast('充值成功！','success');
+    refreshDashboard(true);
+  }catch(e){ toast('充值失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+// === WHITELIST ===
+async function addWhitelist(){
+  if(!contract){ toast('请先连接钱包','error'); return }
+  const addrs = parseAddresses(document.getElementById('inputWLAddresses').value);
+  const amountsStr = document.getElementById('inputWLAmounts').value.trim();
+  if(addrs.length===0){ toast('请输入有效地址','error'); return }
+  if(!amountsStr){ toast('请输入额度','error'); return }
+  if(addrs.length>200){ toast('每批最多 200 个地址','error'); return }
+  try{
+    const amounts = parseAmounts(amountsStr);
+    if(addrs.length!==amounts.length){ toast('地址和数量不匹配 ('+addrs.length+' vs '+amounts.length+')','error'); return }
+    showLoading();
+    const tx = await contract.addWhitelistBatch(addrs, amounts);
+    toast('交易已提交，添加 '+addrs.length+' 个地址...','info');
+    await tx.wait();
+    toast('白名单添加成功！','success');
+    document.getElementById('inputWLAddresses').value='';
+    document.getElementById('inputWLAmounts').value='';
+    refreshDashboard(true);
+  }catch(e){ toast('添加失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+async function removeWhitelist(){
+  if(!contract){ toast('请先连接钱包','error'); return }
+  const addrs = parseAddresses(document.getElementById('inputWLRemoveAddresses').value);
+  if(addrs.length===0){ toast('请输入有效地址','error'); return }
+  if(addrs.length>200){ toast('每批最多 200 个地址','error'); return }
+  try{
+    showLoading();
+    const tx = await contract.removeWhitelistBatch(addrs);
+    toast('交易已提交，删除 '+addrs.length+' 个地址...','info');
+    await tx.wait();
+    toast('白名单删除成功！','success');
+    document.getElementById('inputWLRemoveAddresses').value='';
+    refreshDashboard(true);
+  }catch(e){ toast('删除失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+// === REBATE ===
+async function setRebateRate(){
+  if(!contract){ toast('请先连接钱包','error'); return }
+  const val = parseFloat(document.getElementById('inputRebateRate').value);
+  if(isNaN(val) || val<0 || val>15){ toast('比例必须在 0-15 之间','error'); return }
+  const rateVal = Math.round(val * 100);
+  try{
+    showLoading();
+    const tx = await contract.setRebateRate(rateVal);
+    toast('交易已提交...','info');
+    await tx.wait();
+    toast('返利比例已修改为 '+val+'%','success');
+    refreshDashboard(true);
+  }catch(e){ toast('修改失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+// === WITHDRAW ===
+async function withdrawTokens(){
+  if(!contract){ toast('请先连接钱包','error'); return }
+  let tokenAddr = document.getElementById('inputWithdrawTokenAddr').value.trim();
+  const amount = document.getElementById('inputWithdrawTokenAmount').value;
+  if(!tokenAddr) tokenAddr = TOKEN_ADDRESS;
+  if(!ethers.isAddress(tokenAddr)){ toast('代币地址格式错误','error'); return }
+  if(!amount || Number(amount)<=0){ toast('请输入有效数量','error'); return }
+  try{
+    showLoading();
+    const val = ethers.parseUnits(amount, 18);
+    const tx = await contract.withdrawTokens(tokenAddr, val);
+    toast('交易已提交...','info');
+    await tx.wait();
+    toast('代币提取成功！','success');
+    refreshDashboard(true);
+  }catch(e){ toast('提取失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+async function withdrawBNB(){
+  if(!contract){ toast('请先连接钱包','error'); return }
+  const amount = document.getElementById('inputWithdrawBNB').value;
+  if(!amount || Number(amount)<=0){ toast('请输入有效数量','error'); return }
+  try{
+    showLoading();
+    const val = ethers.parseEther(amount);
+    const tx = await contract.withdrawBNB(val);
+    toast('交易已提交...','info');
+    await tx.wait();
+    toast('BNB 提取成功！','success');
+    refreshDashboard(true);
+  }catch(e){ toast('提取失败: '+e.message,'error') }
+  finally{ hideLoading() }
+}
+
+// === QUERY ===
+async function queryWhitelist(){
+  if(!provider){ toast('请先连接钱包','error'); return }
+  const addr = document.getElementById('inputQueryAddr').value.trim();
+  if(!ethers.isAddress(addr)){ toast('地址格式错误','error'); return }
+  try{
+    const readOnly = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const [amount, claimed, remaining, isWL] = await readOnly.getWhitelistInfo(addr);
+    const html = `
+      <div style="background:var(--bg);border-radius:10px;padding:16px">
+        <div style="margin-bottom:8px"><strong>是否白名单:</strong> <span style="color:${isWL?'var(--green)':'var(--red)'}">${isWL?'是':'否'}</span></div>
+        <div style="margin-bottom:8px"><strong>预售额度:</strong> ${formatToken(amount)} 代币</div>
+        <div style="margin-bottom:8px"><strong>已返利:</strong> ${formatToken(claimed)} 代币</div>
+        <div><strong>剩余可返利:</strong> <span style="color:var(--accent)">${formatToken(remaining)} 代币</span></div>
+      </div>`;
+    document.getElementById('queryResult').innerHTML = html;
+  }catch(e){ toast('查询失败: '+e.message,'error') }
+}
+
+async function estimatePurchase(){
+  if(!provider){ toast('请先连接钱包','error'); return }
+  const bnb = document.getElementById('inputEstimateBNB').value;
+  if(!bnb || Number(bnb)<=0){ toast('请输入 BNB 数量','error'); return }
+  const addr = document.getElementById('inputEstimateAddr').value.trim();
+  try{
+    const readOnly = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const val = ethers.parseEther(bnb);
+    let html;
+    if(addr && ethers.isAddress(addr)){
+      const [tokens, rebate, isWL, remaining] = await readOnly.estimatePurchaseForUser(addr, val);
+      html = `
+        <div style="background:var(--bg);border-radius:10px;padding:16px">
+          <div style="margin-bottom:8px"><strong>是否白名单:</strong> <span style="color:${isWL?'var(--green)':'var(--red)'}">${isWL?'是':'否'}</span></div>
+          <div style="margin-bottom:8px"><strong>预估到手代币:</strong> ${formatToken(tokens)}</div>
+          <div style="margin-bottom:8px"><strong>预估返利:</strong> <span style="color:var(--green)">${formatToken(rebate)} 代币</span></div>
+          <div><strong>剩余返利上限:</strong> ${formatToken(remaining)} 代币</div>
+        </div>`;
+    } else {
+      const [tokens, rebate] = await readOnly.estimatePurchase(val);
+      html = `
+        <div style="background:var(--bg);border-radius:10px;padding:16px">
+          <div style="margin-bottom:8px"><strong>预估到手代币:</strong> ${formatToken(tokens)}</div>
+          <div><strong>预估返利（白名单）:</strong> <span style="color:var(--green)">${formatToken(rebate)} 代币</span></div>
+        </div>`;
+    }
+    document.getElementById('estimateResult').innerHTML = html;
+  }catch(e){ toast('预估失败: '+e.message,'error') }
+}
+</script>
+</body>
+</html>
