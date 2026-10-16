@@ -196,13 +196,20 @@ function shortAddr(a){return a?a.slice(0,6)+'...'+a.slice(-4):'--'}
 function fmtToken(v){return parseFloat(ethers.formatEther(v)).toLocaleString('zh-CN',{maximumFractionDigits:2})}
 
 async function loadGlobalData(){
-  try{
-    const r=new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org/'));
-    const[bal,count,rate]=await Promise.all([r.getContractTokenBalance(),r.totalWhitelistCount(),r.getRebateRate()]);
-    document.getElementById('statRate').textContent=(Number(rate)/100).toFixed(2)+'%';
-    document.getElementById('statCount').textContent=count.toString();
-    document.getElementById('statBalance').textContent=fmtToken(bal);
-  }catch(e){console.error(e)}
+  const rpcs=['https://bsc-dataseed.binance.org/','https://bsc-dataseed1.defibit.io/','https://bsc-dataseed1.ninicoin.io/','https://bsc.publicnode.com'];
+  let p=null;
+  for(const rpc of rpcs){
+    try{
+      const test=new ethers.JsonRpcProvider(rpc);
+      await test.getBlockNumber();
+      p=test;break;
+    }catch(e){continue}
+  }
+  if(!p){console.error('All RPCs failed');return}
+  const r=new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,p);
+  try{const rate=await r.getRebateRate();document.getElementById('statRate').textContent=(Number(rate)/100).toFixed(2)+'%'}catch(e){console.error('rate',e)}
+  try{const count=await r.totalWhitelistCount();document.getElementById('statCount').textContent=count.toString()}catch(e){console.error('count',e)}
+  try{const bal=await r.getContractTokenBalance();document.getElementById('statBalance').textContent=fmtToken(bal)}catch(e){console.error('balance',e)}
 }
 
 async function loadUserData(){
