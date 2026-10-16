@@ -553,52 +553,15 @@ function handleTxError(err) {
 }
 
 // ========== 钱包连接 ==========
-let isConnecting = false;
-
-function resetWalletState() {
-  userAddress = null;
-  signer = null;
-  provider = null;
-  factoryContractSigned = null;
-  isOwner = false;
-  document.getElementById('connectBtn').innerHTML = '<span class="btn-dot"></span>连接钱包';
-  document.getElementById('connectBtn').classList.remove('connected');
-  document.getElementById('ownerTab').style.display = 'none';
-  document.getElementById('myBuyMuleCard').style.display = 'none';
-}
-
 async function connectWallet() {
-  if (typeof window.ethereum === 'undefined') {
-    showToast('请安装 MetaMask 钱包', 'error');
-    return;
-  }
-
-  // 已连接 → 断开
-  if (userAddress) {
-    try {
-      // 真正断开 MetaMask 连接，这样下次连接会重新弹出账户选择
-      await window.ethereum.request({
-        method: 'wallet_revokePermissions',
-        params: [{ eth_accounts: {} }]
-      }).catch(() => {});
-    } catch (_) {}
-    resetWalletState();
-    showToast('已断开钱包');
-    return;
-  }
-
-  // 防重入
-  if (isConnecting) return;
-  isConnecting = true;
-
   try {
-    // 请求账户
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    if (!accounts || accounts.length === 0) {
-      showToast('未获取到账户', 'error');
-      isConnecting = false;
+    if (typeof window.ethereum === 'undefined') {
+      showToast('请安装 MetaMask 钱包', 'error');
       return;
     }
+
+    // 请求账户
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
 
     // 检查并切换到 BSC 网络
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
@@ -620,26 +583,20 @@ async function connectWallet() {
               blockExplorerUrls: ['https://bscscan.com']
             }]
           });
-        } else {
-          // 用户拒绝切换网络
-          isConnecting = false;
-          return;
         }
       }
     }
 
-    // 每次连接都重新创建 provider，避免缓存旧账户
-    provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
-    // 确保 provider 检测到最新网络
-    await provider.ready;
+    // 创建 provider 和 signer
+    provider = new ethers.providers.Web3Provider(window.ethereum);
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
 
-    // 只读合约（复用全局公共 RPC）
+    // 只读合约
     if (!publicProvider) publicProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
     factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, publicProvider);
 
-    // 签名合约（用于写操作）
+    // 签名合约
     factoryContractSigned = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
 
     // 检查是否是 owner
@@ -659,47 +616,23 @@ async function connectWallet() {
   } catch (err) {
     console.error(err);
     showToast('连接失败: ' + handleTxError(err), 'error');
-  } finally {
-    isConnecting = false;
   }
 }
 
-// 监听账户变化：直接刷新，不走断开/重连流程
+// 监听账户/网络变化
 if (typeof window.ethereum !== 'undefined') {
   if (window.ethereum.on) {
-    window.ethereum.on('accountsChanged', async (accounts) => {
-      // 用户在 MetaMask 切换了账户，直接刷新状态
-      if (!accounts || accounts.length === 0) {
-        // 所有账户都断开了
-        resetWalletState();
-        showToast('钱包已断开');
-        return;
-      }
-      // 重新创建 provider/signer 获取新账户
-      try {
-        provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
-        await provider.ready;
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress();
-        factoryContractSigned = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
-
-        // 重新检查 owner
-        const ownerAddr = await factoryContract.owner();
-        isOwner = (ownerAddr.toLowerCase() === userAddress.toLowerCase());
-        document.getElementById('ownerTab').style.display = isOwner ? '' : 'none';
-
-        // 更新按钮
-        const btn = document.getElementById('connectBtn');
-        btn.innerHTML = `<span class="btn-dot"></span>${shortAddr(userAddress)}`;
-        btn.classList.add('connected');
-
-        showToast('账户已切换' + (isOwner ? ' (Owner)' : ''));
-        loadOverview();
-        loadMyBuyMule();
-      } catch (err) {
-        console.error('accountsChanged 刷新失败:', err);
-        resetWalletState();
-      }
+    window.ethereum.on('accountsChanged', () => {
+      userAddress = null;
+      signer = null;
+      provider = null;
+      factoryContractSigned = null;
+      isOwner = false;
+      document.getElementById('ownerTab').style.display = 'none';
+      document.getElementById('myBuyMuleCard').style.display = 'none';
+      document.getElementById('connectBtn').innerHTML = '<span class="btn-dot"></span>连接钱包';
+      document.getElementById('connectBtn').classList.remove('connected');
+      connectWallet();
     });
     window.ethereum.on('chainChanged', () => window.location.reload());
   }
