@@ -349,6 +349,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
         确认购买
       </button>
     </div>
+
+    <div class="buy-card" style="margin-top:20px">
+      <h3 style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:4px">创建 BuyMule</h3>
+      <p class="card-desc">使用当前连接的钱包地址创建 BuyMule（每个地址只能创建一个）</p>
+      <button class="btn-primary" id="createBuyMuleBtn" style="width:100%;margin-top:12px;padding:12px">创建 BuyMule</button>
+    </div>
   </section>
 
   <!-- TAB: Owner 管理 -->
@@ -395,12 +401,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
           <div class="result-row"><span>当前 Buyer 奖励</span><span id="ow-currentBuyer">--</span></div>
           <div class="result-row"><span>当前 Creator 奖励</span><span id="ow-currentCreator">--</span></div>
         </div>
-      </div>
-      <!-- 创建 BuyMule -->
-      <div class="owner-card">
-        <h3>创建 BuyMule</h3>
-        <p class="card-desc">使用当前连接的钱包地址创建 BuyMule（每个地址只能创建一个）</p>
-        <button class="btn-primary">创建 BuyMule</button>
       </div>
       <!-- 紧急操作 -->
       <div class="owner-card danger">
@@ -985,6 +985,9 @@ document.querySelectorAll('.amount-presets button').forEach(btn => {
 // 购买按钮
 document.getElementById('buyBtn').addEventListener('click', executeBuy);
 
+// 创建 BuyMule（面向所有用户）
+document.getElementById('createBuyMuleBtn').addEventListener('click', createBuyMule);
+
 // Owner 管理按钮
 const ownerCards = document.querySelectorAll('#tab-owner .owner-card');
 // 奖励设置
@@ -994,12 +997,10 @@ ownerCards[0].querySelectorAll('.btn-primary')[1].addEventListener('click', setC
 ownerCards[1].querySelector('.btn-secondary').addEventListener('click', approvePool);
 ownerCards[1].querySelector('.btn-primary').addEventListener('click', depositPool);
 ownerCards[1].querySelector('.btn-warn').addEventListener('click', withdrawPool);
-// 创建 BuyMule
-ownerCards[3].querySelector('.btn-primary').addEventListener('click', createBuyMule);
 // 紧急操作
-ownerCards[4].querySelectorAll('.btn-warn')[0].addEventListener('click', rescueBNB);
-ownerCards[4].querySelectorAll('.btn-warn')[1].addEventListener('click', rescueFactoryBNB);
-ownerCards[4].querySelector('.btn-danger').addEventListener('click', transferOwner);
+ownerCards[3].querySelectorAll('.btn-warn')[0].addEventListener('click', rescueBNB);
+ownerCards[3].querySelectorAll('.btn-warn')[1].addEventListener('click', rescueFactoryBNB);
+ownerCards[3].querySelector('.btn-danger').addEventListener('click', transferOwner);
 
 // ========== 初始化 ==========
 // 页面加载时自动加载概览数据（不需要连接钱包）
