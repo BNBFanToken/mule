@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MULE - BuyMule 管理平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<style>
+:root {
+  --bg: #F5F3EF;
+  --surface: #FFFFFF;
+  --surface-alt: #FAF9F6;
+  --border: #E8E4DD;
+  --border-light: #F0EDE8;
+  --text: #1A1A1A;
+  --text-secondary: #6B6560;
+  --text-muted: #9E9890;
+  --accent: #E8723A;
+  --accent-dark: #C55A28;
+  --green: #2E9E6A;
+  --green-light: #E8F8F0;
+  --red: #D94452;
+  --blue: #3B7DDD;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+  --font: 'Noto Sans SC', 'Outfit', sans-serif;
+  --font-display: 'Outfit', 'Noto Sans SC', sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 0.88em; }
+
+/* Header */
+.app-header {
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.92);
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto;
+  padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo-group { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent), #F4A261);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 20px;
+  box-shadow: 0 2px 8px rgba(232,114,58,0.3);
+}
+.logo-text {
+  font-family: var(--font-display); font-weight: 700; font-size: 22px;
+  letter-spacing: -0.5px; color: var(--text);
+}
+.logo-sub {
+  font-size: 13px; color: var(--text-muted);
+  padding-left: 12px; border-left: 1px solid var(--border);
+}
+
+.connect-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 50px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font); font-size: 14px; font-weight: 500;
+  color: var(--text); cursor: pointer;
+  transition: all 0.2s;
+}
+.connect-btn:hover { border-color: var(--accent); color: var(--accent); }
+.connect-btn.connected { border-color: var(--green); background: var(--green-light); color: var(--green); }
+.btn-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 0.2s;
+}
+.connect-btn.connected .btn-dot { background: var(--green); }
+
+/* Tab Nav */
+.tab-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.tab-nav-inner {
+  max-width: 1200px; margin: 0 auto;
+  padding: 0 24px;
+  display: flex; gap: 4px;
+}
+.tab-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 12px 18px;
+  border: none; background: none;
+  font-family: var(--font); font-size: 14px; font-weight: 500;
+  color: var(--text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text-secondary); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-btn svg { opacity: 0.7; }
+.tab-btn.active svg { opacity: 1; }
+
+/* Main */
+.main-content {
+  max-width: 1200px; margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+.tab-panel { display: none; animation: fadeIn 0.3s ease; }
+.tab-panel.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+.panel-header { margin-bottom: 24px; }
+.panel-header h2 {
+  font-family: var(--font-display); font-size: 24px; font-weight: 700;
+  letter-spacing: -0.3px; margin-bottom: 4px;
+}
+.panel-desc { font-size: 14px; color: var(--text-secondary); }
+
+/* Stats Grid */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px; margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.stat-card.accent { border-left: 3px solid var(--accent); }
+.stat-card.highlight { border-left: 3px solid var(--blue); }
+.stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.stat-value { font-size: 15px; font-weight: 600; word-break: break-all; }
+
+.refresh-row { display: flex; align-items: center; gap: 16px; }
+.last-update { font-size: 12px; color: var(--text-muted); }
+
+/* Buttons */
+.btn-primary {
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  background: var(--accent); color: #fff;
+  border: none; font-family: var(--font); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary {
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); font-family: var(--font); font-size: 13px;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-warn {
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  background: #FFF3E0; color: #E65100;
+  border: 1px solid #FFE0B2; font-family: var(--font); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-warn:hover { background: #FFE0B2; }
+
+.btn-danger {
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  background: var(--red); color: #fff;
+  border: none; font-family: var(--font); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-danger:hover { background: #C13442; }
+
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Inputs */
+.input-group { margin-bottom: 14px; }
+.input-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+.input-field {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font); font-size: 14px;
+  background: var(--surface); color: var(--text);
+  transition: border-color 0.15s;
+}
+.input-field:focus { outline: none; border-color: var(--accent); }
+.input-field::placeholder { color: var(--text-muted); }
+
+.input-row { display: flex; gap: 10px; align-items: center; }
+.input-row .input-field { flex: 1; }
+
+/* Query Cards */
+.query-sections, .owner-sections { display: flex; flex-direction: column; gap: 18px; }
+.query-card, .owner-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+}
+.query-card h3, .owner-card h3 {
+  font-family: var(--font-display); font-size: 16px; font-weight: 600;
+  margin-bottom: 4px;
+}
+.card-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+.owner-card.danger { border-left: 3px solid var(--red); }
+
+/* Result Box */
+.result-box {
+  margin-top: 14px; padding: 14px 16px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+}
+.result-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; font-size: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+.result-row:last-child { border-bottom: none; }
+.result-row span:first-child { color: var(--text-secondary); }
+.result-row span:last-child { font-weight: 500; word-break: break-all; text-align: right; max-width: 60%; }
+
+/* Data Table */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th {
+  text-align: left; padding: 8px 10px;
+  font-weight: 600; color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.data-table td {
+  padding: 8px 10px; border-bottom: 1px solid var(--border-light);
+  word-break: break-all;
+}
+.data-table tr:hover td { background: var(--surface-alt); }
+
+/* Buy Card */
+.buy-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow);
+  max-width: 520px;
+}
+.amount-row { display: flex; gap: 10px; align-items: center; }
+.amount-row .input-field { flex: 1; }
+.amount-presets { display: flex; gap: 4px; }
+.amount-presets button {
+  padding: 6px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface-alt);
+  font-size: 12px; cursor: pointer; transition: all 0.15s;
+  font-family: var(--font);
+}
+.amount-presets button:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-buy {
+  width: 100%; margin-top: 18px;
+  padding: 14px; border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent), #F4A261);
+  color: #fff; border: none;
+  font-family: var(--font); font-size: 16px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(232,114,58,0.25);
+}
+.btn-buy:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,114,58,0.35); }
+.btn-buy:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.buy-info { margin-top: 14px; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+  padding: 12px 24px; border-radius: 50px;
+  background: var(--text); color: #fff;
+  font-size: 14px; font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  transition: transform 0.3s ease;
+  z-index: 999; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+
+/* Footer */
+.app-footer {
+  text-align: center; padding: 24px;
+  font-size: 12px; color: var(--text-muted);
+  border-top: 1px solid var(--border-light);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-inner { padding: 12px 16px; }
+  .logo-sub { display: none; }
+  .tab-nav-inner { padding: 0 12px; overflow-x: auto; }
+  .tab-btn { padding: 10px 12px; font-size: 13px; white-space: nowrap; }
+  .main-content { padding: 20px 16px 40px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .input-row { flex-direction: column; }
+  .input-row .btn-primary { width: 100%; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<!-- === HEADER === -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="logo-group">
+      <div class="logo-icon">M</div>
+      <span class="logo-text">MULE</span>
+      <span class="logo-sub">BuyMule 管理平台</span>
+    </div>
+    <button id="connectBtn" class="connect-btn" onclick="connectWallet()">
+      <span class="btn-dot"></span>
+      连接钱包
+    </button>
+  </div>
+</header>
+
+<!-- === TAB NAV === -->
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      合约概览
+    </button>
+    <button class="tab-btn" data-tab="query" onclick="switchTab('query')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      数据查询
+    </button>
+    <button class="tab-btn" data-tab="buy" onclick="switchTab('buy')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      购买入口
+    </button>
+    <button class="tab-btn" data-tab="owner" id="ownerTab" onclick="switchTab('owner')" style="display:none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Owner 管理
+    </button>
+  </div>
+</nav>
+
+<!-- === MAIN CONTENT === -->
+<main class="main-content">
+
+  <!-- TAB: 合约概览 -->
+  <section id="tab-overview" class="tab-panel active">
+    <div class="panel-header">
+      <h2>合约概览</h2>
+      <p class="panel-desc">BuyMuleFactory 合约基本信息与实时状态</p>
+    </div>
+    <div class="stats-grid" id="overviewGrid">
+      <div class="stat-card"><div class="stat-label">合约地址</div><div class="stat-value mono" id="ov-contract">0x33a9...9715</div></div>
+      <div class="stat-card"><div class="stat-label">Owner 地址</div><div class="stat-value mono" id="ov-owner">加载中...</div></div>
+      <div class="stat-card"><div class="stat-label">奖励代币</div><div class="stat-value mono" id="ov-token">加载中...</div></div>
+      <div class="stat-card"><div class="stat-label">DEX 路由</div><div class="stat-value mono" id="ov-router">加载中...</div></div>
+      <div class="stat-card accent"><div class="stat-label">Buyer 奖励比例</div><div class="stat-value" id="ov-buyerBps">--</div></div>
+      <div class="stat-card accent"><div class="stat-label">Creator 奖励比例</div><div class="stat-value" id="ov-creatorBps">--</div></div>
+      <div class="stat-card highlight"><div class="stat-label">BuyMule 总数</div><div class="stat-value" id="ov-total">--</div></div>
+      <div class="stat-card highlight"><div class="stat-label">奖励池余额（代币）</div><div class="stat-value" id="ov-pool">--</div></div>
+    </div>
+    <div class="refresh-row">
+      <button class="btn-secondary" onclick="loadOverview()">刷新数据</button>
+      <span class="last-update" id="lastUpdate"></span>
+    </div>
+  </section>
+
+  <!-- TAB: 数据查询 -->
+  <section id="tab-query" class="tab-panel">
+    <div class="panel-header">
+      <h2>数据查询</h2>
+      <p class="panel-desc">查询 BuyMule 信息、购买记录和余额</p>
+    </div>
+    <div class="query-sections">
+      <!-- 查询 BuyMule -->
+      <div class="query-card">
+        <h3>查询 BuyMule</h3>
+        <div class="input-row">
+          <input type="text" id="q-creatorAddr" class="input-field" placeholder="输入 Creator 地址 (0x...)">
+          <button class="btn-primary" onclick="queryBuyMule()">查询</button>
+        </div>
+        <div class="result-box" id="q-buyMuleResult" style="display:none">
+          <div class="result-row"><span>BuyMule 地址</span><span class="mono" id="q-bmAddr">--</span></div>
+          <div class="result-row"><span>BNB 余额</span><span id="q-bmBNB">--</span></div>
+        </div>
+      </div>
+      <!-- 查询购买记录 -->
+      <div class="query-card">
+        <h3>查询购买记录</h3>
+        <div class="input-group">
+          <div class="input-row">
+            <input type="text" id="q-buyMuleAddr" class="input-field" placeholder="BuyMule 合约地址">
+          </div>
+          <div class="input-row">
+            <input type="text" id="q-buyerAddr" class="input-field" placeholder="买家地址">
+            <button class="btn-primary" onclick="queryPurchaseRecord()">查询</button>
+          </div>
+        </div>
+        <div class="result-box" id="q-purchaseResult" style="display:none">
+          <div class="result-row"><span>购买记录</span><span id="q-purchaseData">--</span></div>
+        </div>
+      </div>
+      <!-- 查询 BuyMule 余额 -->
+      <div class="query-card">
+        <h3>查询 BuyMule 余额</h3>
+        <div class="input-row">
+          <input type="text" id="q-balanceAddr" class="input-field" placeholder="BuyMule 合约地址">
+          <button class="btn-primary" onclick="queryBuyMuleBalance()">查询</button>
+        </div>
+        <div class="result-box" id="q-balanceResult" style="display:none">
+          <div class="result-row"><span>BNB 余额</span><span id="q-balBNB">--</span></div>
+          <div class="result-row"><span>代币余额</span><span id="q-balToken">--</span></div>
+        </div>
+      </div>
+      <!-- 遍历所有 BuyMule -->
+      <div class="query-card">
+        <h3>所有 BuyMule 列表</h3>
+        <button class="btn-primary" onclick="loadAllBuyMules()">加载列表</button>
+        <div class="result-box" id="q-allList" style="display:none">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>BuyMule 地址</th><th>Creator</th><th>BNB 余额</th></tr></thead>
+            <tbody id="q-allBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: 购买入口 -->
+  <section id="tab-buy" class="tab-panel">
+    <div class="panel-header">
+      <h2>购买入口</h2>
+      <p class="panel-desc">向指定 BuyMule 合约发送 BNB 进行购买</p>
+    </div>
+    <div class="buy-card">
+      <div class="input-group">
+        <label class="input-label">BuyMule 合约地址</label>
+        <input type="text" id="buy-target" class="input-field" placeholder="0x...">
+      </div>
+      <div class="input-group">
+        <label class="input-label">支付 BNB 数量</label>
+        <div class="amount-row">
+          <input type="number" id="buy-amount" class="input-field" placeholder="0.0" step="0.001" min="0">
+          <div class="amount-presets">
+            <button onclick="setBuyAmount('0.01')">0.01</button>
+            <button onclick="setBuyAmount('0.05')">0.05</button>
+            <button onclick="setBuyAmount('0.1')">0.1</button>
+            <button onclick="setBuyAmount('0.5')">0.5</button>
+            <button onclick="setBuyAmount('1')">1</button>
+          </div>
+        </div>
+      </div>
+      <div class="buy-info" id="buy-info">
+        <div class="result-row"><span>当前 Buyer 奖励比例</span><span id="buy-reward">加载中...</span></div>
+      </div>
+      <button class="btn-buy" id="buyBtn" onclick="executeBuy()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        确认购买
+      </button>
+    </div>
+  </section>
+
+  <!-- TAB: Owner 管理 -->
+  <section id="tab-owner" class="tab-panel">
+    <div class="panel-header">
+      <h2>Owner 管理</h2>
+      <p class="panel-desc">仅合约 Owner 可见的管理操作面板</p>
+    </div>
+    <div class="owner-sections">
+      <!-- 奖励设置 -->
+      <div class="owner-card">
+        <h3>奖励比例设置</h3>
+        <p class="card-desc">设置 Buyer 和 Creator 的奖励比例（单位：基点 bps，10000 = 100%）</p>
+        <div class="input-group">
+          <label class="input-label">Buyer 奖励 (bps)</label>
+          <input type="number" id="ow-buyerBps" class="input-field" placeholder="例如: 100 = 1%">
+        </div>
+        <button class="btn-primary" onclick="setBuyerReward()">设置 Buyer 奖励</button>
+        <div class="input-group" style="margin-top:16px">
+          <label class="input-label">Creator 奖励 (bps)</label>
+          <input type="number" id="ow-creatorBps" class="input-field" placeholder="例如: 100 = 1%">
+        </div>
+        <button class="btn-primary" onclick="setCreatorReward()">设置 Creator 奖励</button>
+      </div>
+      <!-- 奖励池管理 -->
+      <div class="owner-card">
+        <h3>奖励池管理</h3>
+        <p class="card-desc">向奖励池注入或提取代币（存入前需先授权代币）</p>
+        <div class="input-group">
+          <label class="input-label">操作数量（代币最小单位）</label>
+          <input type="text" id="ow-poolAmount" class="input-field" placeholder="例如: 1000000000000000000">
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="approvePool()">1. 授权代币</button>
+          <button class="btn-primary" onclick="depositPool()">2. 存入奖励池</button>
+          <button class="btn-warn" onclick="withdrawPool()">提取奖励池</button>
+        </div>
+      </div>
+      <!-- 分发奖励说明 -->
+      <div class="owner-card">
+        <h3>奖励分发说明</h3>
+        <p class="card-desc">奖励分发由 BuyMule 合约在用户购买时自动调用，无需手动操作。Owner 可通过调整奖励比例来控制分配。</p>
+        <div class="result-box" style="margin-top:0">
+          <div class="result-row"><span>当前 Buyer 奖励</span><span id="ow-currentBuyer">--</span></div>
+          <div class="result-row"><span>当前 Creator 奖励</span><span id="ow-currentCreator">--</span></div>
+        </div>
+      </div>
+      <!-- 创建 BuyMule -->
+      <div class="owner-card">
+        <h3>创建 BuyMule</h3>
+        <p class="card-desc">使用当前连接的钱包地址创建 BuyMule（每个地址只能创建一个）</p>
+        <button class="btn-primary" onclick="createBuyMule()">创建 BuyMule</button>
+      </div>
+      <!-- 紧急操作 -->
+      <div class="owner-card danger">
+        <h3>紧急操作</h3>
+        <p class="card-desc">Rescue BNB 和转移所有权</p>
+        <div class="input-group">
+          <label class="input-label">Rescue BNB - BuyMule 地址</label>
+          <input type="text" id="ow-rescueAddr" class="input-field" placeholder="0x...">
+        </div>
+        <button class="btn-warn" onclick="rescueBNB()">Rescue BNB (BuyMule)</button>
+        <button class="btn-warn" onclick="rescueFactoryBNB()" style="margin-top:8px">Rescue Factory BNB</button>
+        <div class="input-group" style="margin-top:16px">
+          <label class="input-label">转移所有权 - 新 Owner 地址</label>
+          <input type="text" id="ow-newOwner" class="input-field" placeholder="0x...">
+        </div>
+        <button class="btn-danger" onclick="transferOwner()">转移所有权</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Footer -->
+<footer class="app-footer">
+  <span>MULE Platform &middot; BSC Mainnet &middot; BuyMuleFactory</span>
+</footer>
+
+<script>
+// ========== 配置 ==========
+const FACTORY_ADDRESS = '0x33a9ab98e2b6c505b65db767953c00290fae9715';
+const BSC_CHAIN_ID = '0x38'; // 56
+const BSC_RPC = 'https://bsc-dataseed.binance.org/';
+
+// ========== ABI 定义 ==========
+const FACTORY_ABI = [
+  "function owner() view returns (address)",
+  "function token() view returns (address)",
+  "function router() view returns (address)",
+  "function buyerRewardBps() view returns (uint256)",
+  "function creatorRewardBps() view returns (uint256)",
+  "function allBuyMulesLength() view returns (uint256)",
+  "function allBuyMules(uint256) view returns (address)",
+  "function getBuyMule(address) view returns (address)",
+  "function getCreator(address) view returns (address)",
+  "function getBuyMuleByCreator(address) view returns (address)",
+  "function getCreatorOf(address) view returns (address)",
+  "function getBuyMuleBNBBalance(address) view returns (uint256)",
+  "function getRewardPoolBalance() view returns (uint256)",
+  "function transferOwnership(address)",
+  "function setBuyerRewardBps(uint256)",
+  "function setCreatorRewardBps(uint256)",
+  "function depositRewardPool(uint256)",
+  "function withdrawRewardPool(uint256)",
+  "function distributeRewards(address,address,uint256)",
+  "function rescueBNB(address)",
+  "function rescueFactoryBNB()",
+  "function createBuyMule() returns (address)"
+];
+
+const ERC20_ABI = [
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)"
+];
+
+const BUYMULE_ABI = [
+  "function buy() payable",
+  "function rescueBNB()",
+  "function getPurchaseRecord(address) view returns (uint256)",
+  "function getBNBBalance() view returns (uint256)",
+  "function getTokenBalance() view returns (uint256)"
+];
+
+// ========== 状态 ==========
+let provider = null;
+let signer = null;
+let userAddress = null;
+let factoryContract = null;      // 只读
+let factoryContractSigned = null; // 签名（用于写操作）
+let isOwner = false;
+let publicProvider = null;       // 公共只读 provider
+
+// ========== 工具函数 ==========
+function shortAddr(addr) {
+  if (!addr) return '--';
+  return addr.slice(0, 6) + '...' + addr.slice(-4);
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function formatBNB(wei) {
+  return ethers.utils.formatEther(wei) + ' BNB';
+}
+
+function formatToken(wei) {
+  return ethers.utils.formatEther(wei) + ' 代币';
+}
+
+function formatBps(bps) {
+  // 安全地处理大数，避免 toNumber() 溢出
+  const bpsStr = bps.toString();
+  const bpsNum = parseFloat(bpsStr);
+  const percent = (bpsNum / 100).toFixed(2);
+  return bpsStr + ' bps (' + percent + '%)';
+}
+
+function handleTxError(err) {
+  // 用户拒绝交易
+  if (err.code === 4001 || err.code === 'ACTION_REJECTED') {
+    return '用户取消了交易';
+  }
+  // ethers v5 合约调用错误
+  if (err.reason) return err.reason;
+  // 嵌套的 revert 消息
+  if (err.error && err.error.message) return err.error.message.slice(0, 120);
+  if (err.data && err.data.message) return err.data.message.slice(0, 120);
+  // 直接的错误消息
+  if (err.message) {
+    // 尝试从消息中提取 revert 原因
+    const match = err.message.match(/reverted with reason string '([^']+)'/);
+    if (match) return match[1];
+    return err.message.slice(0, 120);
+  }
+  return '未知错误';
+}
+
+// ========== 钱包连接 ==========
+async function connectWallet() {
+  if (userAddress) {
+    // 已连接，断开
+    userAddress = null; signer = null; provider = null;
+    factoryContractSigned = null;
+    isOwner = false;
+    document.getElementById('connectBtn').innerHTML = '<span class="btn-dot"></span>连接钱包';
+    document.getElementById('connectBtn').classList.remove('connected');
+    document.getElementById('ownerTab').style.display = 'none';
+    showToast('已断开钱包');
+    return;
+  }
+
+  if (typeof window.ethereum === 'undefined') {
+    showToast('请安装 MetaMask 钱包', 'error');
+    return;
+  }
+
+  try {
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+    // 检查并切换到 BSC 网络
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (chainId !== BSC_CHAIN_ID) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: BSC_CHAIN_ID }]
+        });
+      } catch (e) {
+        if (e.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: BSC_CHAIN_ID,
+              chainName: 'BNB Smart Chain',
+              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+              rpcUrls: ['https://bsc-dataseed.binance.org/'],
+              blockExplorerUrls: ['https://bscscan.com']
+            }]
+          });
+        }
+      }
+    }
+
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    signer = provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    // 只读合约（复用全局公共 RPC）
+    if (!publicProvider) publicProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+    factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, publicProvider);
+
+    // 签名合约（用于写操作）
+    factoryContractSigned = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
+
+    // 检查是否是 owner
+    const ownerAddr = await factoryContract.owner();
+    isOwner = (ownerAddr.toLowerCase() === userAddress.toLowerCase());
+    document.getElementById('ownerTab').style.display = isOwner ? '' : 'none';
+
+    // 更新按钮
+    const btn = document.getElementById('connectBtn');
+    btn.innerHTML = `<span class="btn-dot"></span>${shortAddr(userAddress)}`;
+    btn.classList.add('connected');
+
+    showToast('钱包已连接' + (isOwner ? ' (Owner)' : ''));
+    loadOverview();
+
+  } catch (err) {
+    console.error(err);
+    showToast('连接失败: ' + handleTxError(err), 'error');
+  }
+}
+
+// 监听账户/网络变化
+if (typeof window.ethereum !== 'undefined') {
+  if (window.ethereum.on) {
+    window.ethereum.on('accountsChanged', () => {
+      userAddress = null; signer = null; provider = null;
+      factoryContractSigned = null;
+      isOwner = false;
+      document.getElementById('ownerTab').style.display = 'none';
+      connectWallet();
+    });
+    window.ethereum.on('chainChanged', () => window.location.reload());
+  }
+}
+
+// ========== Tab 切换 ==========
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+}
+
+// ========== 合约概览 ==========
+async function loadOverview() {
+  if (!factoryContract) {
+    publicProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+    factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, publicProvider);
+  }
+  try {
+    const [owner, token, router, buyerBps, creatorBps, total, pool] = await Promise.all([
+      factoryContract.owner(),
+      factoryContract.token(),
+      factoryContract.router(),
+      factoryContract.buyerRewardBps(),
+      factoryContract.creatorRewardBps(),
+      factoryContract.allBuyMulesLength(),
+      factoryContract.getRewardPoolBalance()
+    ]);
+
+    document.getElementById('ov-contract').textContent = FACTORY_ADDRESS;
+    document.getElementById('ov-owner').textContent = shortAddr(owner);
+    document.getElementById('ov-owner').title = owner;
+    document.getElementById('ov-token').textContent = shortAddr(token);
+    document.getElementById('ov-token').title = token;
+    document.getElementById('ov-router').textContent = shortAddr(router);
+    document.getElementById('ov-router').title = router;
+    document.getElementById('ov-buyerBps').textContent = formatBps(buyerBps);
+    document.getElementById('ov-creatorBps').textContent = formatBps(creatorBps);
+    document.getElementById('ov-total').textContent = total.toString();
+    document.getElementById('ov-pool').textContent = formatToken(pool);
+    // 同步更新 Owner 面板的当前奖励显示
+    const owBuyerEl = document.getElementById('ow-currentBuyer');
+    const owCreatorEl = document.getElementById('ow-currentCreator');
+    if (owBuyerEl) owBuyerEl.textContent = formatBps(buyerBps);
+    if (owCreatorEl) owCreatorEl.textContent = formatBps(creatorBps);
+    // 更新购买页的奖励显示
+    const buyRewardEl = document.getElementById('buy-reward');
+    if (buyRewardEl) buyRewardEl.textContent = formatBps(buyerBps);
+    document.getElementById('lastUpdate').textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN');
+  } catch (err) {
+    console.error(err);
+    showToast('加载概览失败', 'error');
+  }
+}
+
+// ========== 数据查询 ==========
+async function queryBuyMule() {
+  const creator = document.getElementById('q-creatorAddr').value.trim();
+  if (!ethers.utils.isAddress(creator)) { showToast('请输入有效地址', 'error'); return; }
+  try {
+    const bmAddr = await factoryContract.getBuyMuleByCreator(creator);
+    const box = document.getElementById('q-buyMuleResult');
+    box.style.display = 'block';
+    if (bmAddr === ethers.constants.AddressZero) {
+      document.getElementById('q-bmAddr').textContent = '未找到';
+      document.getElementById('q-bmBNB').textContent = '--';
+    } else {
+      document.getElementById('q-bmAddr').textContent = bmAddr;
+      const bnb = await factoryContract.getBuyMuleBNBBalance(bmAddr);
+      document.getElementById('q-bmBNB').textContent = formatBNB(bnb);
+    }
+  } catch (err) {
+    showToast('查询失败: ' + (handleTxError(err)), 'error');
+  }
+}
+
+async function queryPurchaseRecord() {
+  const bmAddr = document.getElementById('q-buyMuleAddr').value.trim();
+  const buyer = document.getElementById('q-buyerAddr').value.trim();
+  if (!ethers.utils.isAddress(bmAddr) || !ethers.utils.isAddress(buyer)) { showToast('请输入有效地址', 'error'); return; }
+  try {
+    if (!publicProvider) publicProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+    const bm = new ethers.Contract(bmAddr, BUYMULE_ABI, publicProvider);
+    const record = await bm.getPurchaseRecord(buyer);
+    const box = document.getElementById('q-purchaseResult');
+    box.style.display = 'block';
+    document.getElementById('q-purchaseData').textContent = formatToken(record);
+  } catch (err) {
+    showToast('查询失败: ' + (handleTxError(err)), 'error');
+  }
+}
+
+async function queryBuyMuleBalance() {
+  const addr = document.getElementById('q-balanceAddr').value.trim();
+  if (!ethers.utils.isAddress(addr)) { showToast('请输入有效地址', 'error'); return; }
+  try {
+    if (!publicProvider) publicProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+    const bm = new ethers.Contract(addr, BUYMULE_ABI, publicProvider);
+    const [bnb, tok] = await Promise.all([bm.getBNBBalance(), bm.getTokenBalance()]);
+    const box = document.getElementById('q-balanceResult');
+    box.style.display = 'block';
+    document.getElementById('q-balBNB').textContent = formatBNB(bnb);
+    document.getElementById('q-balToken').textContent = formatToken(tok);
+  } catch (err) {
+    showToast('查询失败: ' + (handleTxError(err)), 'error');
+  }
+}
+
+async function loadAllBuyMules() {
+  try {
+    const total = await factoryContract.allBuyMulesLength();
+    const count = parseInt(total.toString());
+    if (count === 0) { showToast('暂无 BuyMule'); return; }
+    const tbody = document.getElementById('q-allBody');
+    tbody.innerHTML = '<tr><td colspan="4">加载中...</td></tr>';
+    document.getElementById('q-allList').style.display = 'block';
+
+    const batchSize = Math.min(count, 50); // 最多显示50个
+    const addresses = [];
+    for (let i = 0; i < batchSize; i++) {
+      addresses.push(factoryContract.allBuyMules(i));
+    }
+    const resolvedAddrs = await Promise.all(addresses);
+
+    const queries = resolvedAddrs.map(async (addr, i) => {
+      const [creator, bnb] = await Promise.all([
+        factoryContract.getCreatorOf(addr),
+        factoryContract.getBuyMuleBNBBalance(addr).catch(() => ethers.BigNumber.from(0))
+      ]);
+      return { index: i, addr, creator, bnb: formatBNB(bnb) };
+    });
+    const results = await Promise.all(queries);
+
+    const rows = results.map(r =>
+      `<tr><td>${r.index}</td><td class="mono">${shortAddr(r.addr)}</td><td class="mono">${shortAddr(r.creator)}</td><td>${r.bnb}</td></tr>`
+    );
+    tbody.innerHTML = rows.join('');
+    if (count > 50) tbody.innerHTML += `<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">仅显示前 50 个，共 ${count} 个</td></tr>`;
+  } catch (err) {
+    showToast('加载失败: ' + (handleTxError(err)), 'error');
+  }
+}
+
+// ========== 购买 ==========
+function setBuyAmount(val) {
+  document.getElementById('buy-amount').value = val;
+}
+
+async function executeBuy() {
+  if (!signer) { showToast('请先连接钱包', 'error'); return; }
+  const target = document.getElementById('buy-target').value.trim();
+  const amount = document.getElementById('buy-amount').value.trim();
+  if (!ethers.utils.isAddress(target)) { showToast('请输入有效的 BuyMule 地址', 'error'); return; }
+  if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) { showToast('请输入有效的 BNB 数量', 'error'); return; }
+
+  try {
+    const bm = new ethers.Contract(target, BUYMULE_ABI, signer);
+    const tx = await bm.buy({ value: ethers.utils.parseEther(amount) });
+    showToast('交易已提交，等待确认...');
+    const receipt = await tx.wait();
+    showToast('购买成功!', 'success');
+  } catch (err) {
+    if (err.message && (err.message.includes('invalid') || err.message.includes('fractional'))) {
+      showToast('BNB 数量格式不正确', 'error');
+    } else {
+      showToast('购买失败: ' + (handleTxError(err)), 'error');
+    }
+  }
+}
+
+// ========== Owner 操作 ==========
+async function setBuyerReward() {
+  if (!isOwner) { showToast('仅 Owner 可操作', 'error'); return; }
+  const val = document.getElementById('ow-buyerBps').value.trim();
+  if (!val || isNaN(val) || !Number.isInteger(Number(val)) || Number(val) < 0) {
+    showToast('请输入有效的非负整数', 'error'); return;
+  }
+  if (Number(val) > 300) {
+    showToast('Buyer 奖励不能超过 300 bps (3%)', 'error'); return;
+  }
+  try {
+    const tx = await factoryContractSigned.setBuyerRewardBps(parseInt(val));
+    showToast('交易已提交...');
+    await tx.wait();
+    showToast('Buyer 奖励已更新', 'success');
+    loadOverview();
+  } catch (err) { showToast('操作失败: ' + handleTxError(err), 'error'); }
+}
+
+async function setCreatorReward() {
+  if (!isOwner) { showToast('仅 Owner 可操作', 'error'); return; }
+  const val = document.getElementById('ow-creatorBps').value.trim();
+  if (!val || isNaN(val) || !Number.isInteger(Number(val)) || Number(val) < 0) {
+    showToast('请输入有效的非负整数', 'error'); return;
+  }
+  if (Number(val) > 300) {
+    showToast('Creator 奖励不能超过 300 bps (3%)', 'error'); return;
+  }
+  try {
+    const tx = await factoryContractSigned.setCreatorRewardBps(parseInt(val));
+    showToast('交易已提交...');
+    await tx.wait();
+    showToast('Creator 奖励已更新', 'success');
+    loadOverview();
+  } catch (err) { showToast('操作失败: ' + handleTxError(err), 'error'); }
+}
+
+async function depositPool() {
+  if (!isOwner) { showToast('仅 Owner 可操作', 'error'); return; }
+  const val = document.getElementById('ow-poolAmount').value.trim();
+  if (!val) { showToast('请输入数量', 'error'); return; }
+  try {
+    const amount = ethers.BigNumber.from(val);
+    if (amount.lte(0)) { showToast('数量必须大于 0', 'error'); return; }
+    const tx = await factoryContractSigned.depositRewardPool(amount);
+    showToast('交易已提交...');
+    await tx.wait();
+    showToast('存入成功', 'success');
+    loadOverview();
+  } catch (err) {
+    if (err.message && err.message.includes('invalid BigNumber')) {
+      showToast('请输入有效的数字', 'error');
+    } else {
+      showToast('操作失败: ' + (handleTxError(err)), 'error');
+    }
+  }
+}
+
+async function withdrawPool() {
+  if (!isOwner) { showToast('仅 Owner 可操作', 'error'); return; }
+  const val = document.getElementById('ow-poolAmount').value.trim();
+  if (!val) { showToast('请输入数量', 'error'); return; }
+  try {
+    const amount = ethers.BigNumber.from(val);
+    if (amount.lte(0)) { showToast('数量必须大于 0', 'error'); return; }
+    const tx = await factoryContractSigned.withdrawRewardPool(amount);
+    showToast('交易已提交...');
+    await tx.wait();
+    showToast('提取成功', 'success');
+    loadOverview();
+  } catch (err) {
+    if (err.message && err.message.includes('invalid BigNumber')) {
+      showToast('请输入有效的数字', 'error');
+    } else {
+      showToast('操作失败: ' + (handleTxError(err)), 'error');
+    }
+  }
+}
+
+async function approvePool() {
+  if (!isOwner) { showToast('仅 Owner 可操作', 'error'); return; }
+  const val = document.getElementById('ow-poolAmount').value.trim();
+  if (!val) { showToast('请输入数量', 'error'); return; }
+  try {
+    const amount = ethers.BigNumber.from(val);
+    if (amount.lte(0)) { showToast('数量必须大于 0', 'error'); return; }
+    
+    const tokenAddr = await factoryContract.token();
+    const tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
+    
+    // 先检查当前 allowance
+    const currentAllowance = await tokenContract.allowance(userAddress, FACTORY_ADDRESS);
+    if (currentAllowance.gte(amount)) {
+      showToast('授权额度已足够，无需重复授权', 'success');
+      return;
+    }
+    
+    // 某些代币（如 USDT）要求先设为 0 才能设新值
+    if (currentAllowance.gt(0)) {
+      showToast('需要先重置授权额度...');
+      const resetTx = await tokenContract.approve(FACTORY_ADDRESS, 0);
+      await resetTx.wait();
+    }
+    
+    const tx = await tokenContract.approve(FACTORY_ADDRESS, amount);
+    showToast('授权交易已提交...');
+    await tx.wait();
+    showToast('代币授权成功，可以存入了', 'success');
+  } catch (err) {
+    if (err.message && err.message.includes('invalid BigNumber')) {
+      showToast('请输入有效的数字', 'error');
+    } else {
+      showToast('授权失败: ' + handleTxError(err), 'error');
+    }
+  }
+}
+    
+    const tx = await tokenContract.approve(FACTORY_ADDRESS, amount);
+    showToast('授权交易已提交...');
+    await tx.wait();
+    showToast('代币授权成功，可以存入了', 'success');
+  } catch (err) {
+    if (err.message && err.message.includes('invalid BigNumber')) {
+      showToast('请输入有效的数字', 'error');
+    } else {
+      showToast('授权失败: ' + (handleTxError(err)), 'error');
+    }
+  }
+}
+
+async function createBuyMule() {
+  if (!signer) { showToast('请先连接钱包', 'error'); return; }
+  try {
+    const tx = await factoryContractSigned.createBuyMule();
+    showToast('交易已提交...');
+    const receipt = await tx.wait();
+    showToast('BuyMule 创建成功', 'success');
+    loadOverview();
+  } catch (err) { showToast('创建失败: ' + (handleTxError(err)), 'error'); }
+}
+
+async function rescueBNB() {
+  if (!isOwner) { showToast('仅 Owner 可操作', 'error'); return; }
+  const addr = document.getElementById('ow-rescueAddr').value.trim();
+  if (!ethers.utils.isAddress(addr)) { showToast('请输入有效地址', 'error'); return; }
+  if (!confirm('确认从 BuyMule 中 Rescue BNB？')) return;
+  try {
+    const tx = await factoryContractSigned.rescueBNB(addr);
+    showToast('交易已提交...');
+    await tx.wait();
+    showToast('Rescue 成功', 'success');
+  } catch (err) { showToast('操作失败: ' + (handleTxError(err)), 'error'); }
+}
+
+async function rescueFactoryBNB() {
+  if (!isOwner) { showToast('仅 Owner 可操作', 'error'); return; }
+  if (!confirm('确认从 Factory 中 Rescue BNB？')) return;
+  try {
+    const tx = await factoryContractSigned.rescueFactoryBNB();
+    showToast('交易已提交...');
+    await tx.wait();
+    showToast('Rescue 成功', 'success');
+  } catch (err) { showToast('操作失败: ' + (handleTxError(err)), 'error'); }
+}
+
+async function transferOwner() {
+  if (!isOwner) { showToast('仅 Owner 可操作', 'error'); return; }
+  const addr = document.getElementById('ow-newOwner').value.trim();
+  if (!ethers.utils.isAddress(addr)) { showToast('请输入有效地址', 'error'); return; }
+  if (!confirm('确认转移所有权到 ' + shortAddr(addr) + '？此操作不可逆！')) return;
+  try {
+    const tx = await factoryContractSigned.transferOwnership(addr);
+    showToast('交易已提交...');
+    await tx.wait();
+    showToast('所有权已转移', 'success');
+    isOwner = false;
+    document.getElementById('ownerTab').style.display = 'none';
+    switchTab('overview');
+    loadOverview();
+  } catch (err) { showToast('操作失败: ' + (handleTxError(err)), 'error'); }
+}
+
+// ========== 初始化 ==========
+// 页面加载时自动加载概览数据（不需要连接钱包）
+(function init() {
+  publicProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+  factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, publicProvider);
+  loadOverview();
+})();
+</script>
+</body>
+</html>
