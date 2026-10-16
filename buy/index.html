@@ -268,7 +268,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
         <h3>查询 BuyMule</h3>
         <div class="input-row">
           <input type="text" id="q-creatorAddr" class="input-field" placeholder="输入 Creator 地址 (0x...)">
-          <button class="btn-primary">查询</button>
+          <button class="btn-primary" id="q-btn-buyMule">查询</button>
         </div>
         <div class="result-box" id="q-buyMuleResult" style="display:none">
           <div class="result-row"><span>BuyMule 地址</span><span class="mono" id="q-bmAddr">--</span></div>
@@ -284,7 +284,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
           </div>
           <div class="input-row">
             <input type="text" id="q-buyerAddr" class="input-field" placeholder="买家地址">
-            <button class="btn-primary">查询</button>
+            <button class="btn-primary" id="q-btn-purchase">查询</button>
           </div>
         </div>
         <div class="result-box" id="q-purchaseResult" style="display:none">
@@ -296,7 +296,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
         <h3>查询 BuyMule 余额</h3>
         <div class="input-row">
           <input type="text" id="q-balanceAddr" class="input-field" placeholder="BuyMule 合约地址">
-          <button class="btn-primary">查询</button>
+          <button class="btn-primary" id="q-btn-balance">查询</button>
         </div>
         <div class="result-box" id="q-balanceResult" style="display:none">
           <div class="result-row"><span>BNB 余额</span><span id="q-balBNB">--</span></div>
@@ -306,7 +306,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
       <!-- 遍历所有 BuyMule -->
       <div class="query-card">
         <h3>所有 BuyMule 列表</h3>
-        <button class="btn-primary">加载列表</button>
+        <button class="btn-primary" id="q-btn-all">加载列表</button>
         <div class="result-box" id="q-allList" style="display:none">
           <table class="data-table">
             <thead><tr><th>#</th><th>BuyMule 地址</th><th>Creator</th><th>BNB 余额</th></tr></thead>
@@ -323,6 +323,24 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
       <h2>购买入口</h2>
       <p class="panel-desc">向指定 BuyMule 合约发送 BNB 进行购买</p>
     </div>
+
+    <!-- 我的 BuyMule -->
+    <div class="buy-card" id="myBuyMuleCard" style="margin-bottom:20px;display:none">
+      <h3 style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:4px">我的 BuyMule</h3>
+      <p class="card-desc">你创建的 BuyMule 合约地址</p>
+      <div class="result-box" style="margin-top:12px">
+        <div class="result-row">
+          <span>BuyMule 地址</span>
+          <span class="mono" id="myBuyMuleAddr" style="display:flex;align-items:center;gap:8px">--</span>
+        </div>
+        <div class="result-row">
+          <span>BNB 余额</span>
+          <span id="myBuyMuleBalance">--</span>
+        </div>
+      </div>
+      <button class="btn-secondary" id="copyMyBuyMuleBtn" style="margin-top:12px;width:100%">复制地址</button>
+    </div>
+
     <div class="buy-card">
       <div class="input-group">
         <label class="input-label">BuyMule 合约地址</label>
@@ -372,12 +390,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
           <label class="input-label">Buyer 奖励 (bps)</label>
           <input type="number" id="ow-buyerBps" class="input-field" placeholder="例如: 100 = 1%">
         </div>
-        <button class="btn-primary">设置 Buyer 奖励</button>
+        <button class="btn-primary" id="ow-btn-setBuyer">设置 Buyer 奖励</button>
         <div class="input-group" style="margin-top:16px">
           <label class="input-label">Creator 奖励 (bps)</label>
           <input type="number" id="ow-creatorBps" class="input-field" placeholder="例如: 100 = 1%">
         </div>
-        <button class="btn-primary">设置 Creator 奖励</button>
+        <button class="btn-primary" id="ow-btn-setCreator">设置 Creator 奖励</button>
       </div>
       <!-- 奖励池管理 -->
       <div class="owner-card">
@@ -388,9 +406,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
           <input type="text" id="ow-poolAmount" class="input-field" placeholder="例如: 1000000000000000000">
         </div>
         <div class="btn-row">
-          <button class="btn-secondary">1. 授权代币</button>
-          <button class="btn-primary">2. 存入奖励池</button>
-          <button class="btn-warn">提取奖励池</button>
+          <button class="btn-secondary" id="ow-btn-approve">1. 授权代币</button>
+          <button class="btn-primary" id="ow-btn-deposit">2. 存入奖励池</button>
+          <button class="btn-warn" id="ow-btn-withdraw">提取奖励池</button>
         </div>
       </div>
       <!-- 分发奖励说明 -->
@@ -410,13 +428,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
           <label class="input-label">Rescue BNB - BuyMule 地址</label>
           <input type="text" id="ow-rescueAddr" class="input-field" placeholder="0x...">
         </div>
-        <button class="btn-warn">Rescue BNB (BuyMule)</button>
-        <button class="btn-warn" style="margin-top:8px">Rescue Factory BNB</button>
+        <button class="btn-warn" id="ow-btn-rescue">Rescue BNB (BuyMule)</button>
+        <button class="btn-warn" id="ow-btn-rescueFactory" style="margin-top:8px">Rescue Factory BNB</button>
         <div class="input-group" style="margin-top:16px">
           <label class="input-label">转移所有权 - 新 Owner 地址</label>
           <input type="text" id="ow-newOwner" class="input-field" placeholder="0x...">
         </div>
-        <button class="btn-danger">转移所有权</button>
+        <button class="btn-danger" id="ow-btn-transfer">转移所有权</button>
       </div>
     </div>
   </section>
@@ -544,6 +562,7 @@ async function connectWallet() {
     document.getElementById('connectBtn').innerHTML = '<span class="btn-dot"></span>连接钱包';
     document.getElementById('connectBtn').classList.remove('connected');
     document.getElementById('ownerTab').style.display = 'none';
+    document.getElementById('myBuyMuleCard').style.display = 'none';
     showToast('已断开钱包');
     return;
   }
@@ -603,6 +622,7 @@ async function connectWallet() {
 
     showToast('钱包已连接' + (isOwner ? ' (Owner)' : ''));
     loadOverview();
+    loadMyBuyMule();
 
   } catch (err) {
     console.error(err);
@@ -673,6 +693,57 @@ async function loadOverview() {
     console.error(err);
     showToast('加载概览失败', 'error');
   }
+}
+
+// ========== 我的 BuyMule ==========
+async function loadMyBuyMule() {
+  const card = document.getElementById('myBuyMuleCard');
+  if (!userAddress || !factoryContract) {
+    card.style.display = 'none';
+    return;
+  }
+  try {
+    const bmAddr = await factoryContract.getBuyMuleByCreator(userAddress);
+    if (bmAddr === ethers.constants.AddressZero) {
+      card.style.display = 'none';
+      return;
+    }
+    // 显示卡片
+    card.style.display = 'block';
+    document.getElementById('myBuyMuleAddr').textContent = bmAddr;
+    // 查询 BNB 余额
+    const bnb = await factoryContract.getBuyMuleBNBBalance(bmAddr);
+    document.getElementById('myBuyMuleBalance').textContent = formatBNB(bnb);
+    // 自动填充到购买输入框
+    document.getElementById('buy-target').value = bmAddr;
+  } catch (err) {
+    console.error(err);
+    card.style.display = 'none';
+  }
+}
+
+function copyMyBuyMuleAddr() {
+  const addr = document.getElementById('myBuyMuleAddr').textContent;
+  if (!addr || addr === '--') {
+    showToast('没有可复制的地址', 'error');
+    return;
+  }
+  navigator.clipboard.writeText(addr).then(() => {
+    showToast('地址已复制', 'success');
+  }).catch(() => {
+    // 降级方案
+    const textArea = document.createElement('textarea');
+    textArea.value = addr;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      showToast('地址已复制', 'success');
+    } catch (err) {
+      showToast('复制失败', 'error');
+    }
+    document.body.removeChild(textArea);
+  });
 }
 
 // ========== 数据查询 ==========
@@ -915,6 +986,7 @@ async function createBuyMule() {
     const receipt = await tx.wait();
     showToast('BuyMule 创建成功', 'success');
     loadOverview();
+    loadMyBuyMule();
   } catch (err) { showToast('创建失败: ' + (handleTxError(err)), 'error'); }
 }
 
@@ -971,11 +1043,10 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
 document.querySelector('#tab-overview .btn-secondary').addEventListener('click', loadOverview);
 
 // 数据查询按钮
-const queryCards = document.querySelectorAll('#tab-query .query-card');
-queryCards[0].querySelector('.btn-primary').addEventListener('click', queryBuyMule);
-queryCards[1].querySelector('.btn-primary').addEventListener('click', queryPurchaseRecord);
-queryCards[2].querySelector('.btn-primary').addEventListener('click', queryBuyMuleBalance);
-queryCards[3].querySelector('.btn-primary').addEventListener('click', loadAllBuyMules);
+document.getElementById('q-btn-buyMule').addEventListener('click', queryBuyMule);
+document.getElementById('q-btn-purchase').addEventListener('click', queryPurchaseRecord);
+document.getElementById('q-btn-balance').addEventListener('click', queryBuyMuleBalance);
+document.getElementById('q-btn-all').addEventListener('click', loadAllBuyMules);
 
 // 购买金额预设按钮
 document.querySelectorAll('.amount-presets button').forEach(btn => {
@@ -988,19 +1059,18 @@ document.getElementById('buyBtn').addEventListener('click', executeBuy);
 // 创建 BuyMule（面向所有用户）
 document.getElementById('createBuyMuleBtn').addEventListener('click', createBuyMule);
 
+// 复制我的 BuyMule 地址
+document.getElementById('copyMyBuyMuleBtn').addEventListener('click', copyMyBuyMuleAddr);
+
 // Owner 管理按钮
-const ownerCards = document.querySelectorAll('#tab-owner .owner-card');
-// 奖励设置
-ownerCards[0].querySelectorAll('.btn-primary')[0].addEventListener('click', setBuyerReward);
-ownerCards[0].querySelectorAll('.btn-primary')[1].addEventListener('click', setCreatorReward);
-// 奖励池管理
-ownerCards[1].querySelector('.btn-secondary').addEventListener('click', approvePool);
-ownerCards[1].querySelector('.btn-primary').addEventListener('click', depositPool);
-ownerCards[1].querySelector('.btn-warn').addEventListener('click', withdrawPool);
-// 紧急操作
-ownerCards[3].querySelectorAll('.btn-warn')[0].addEventListener('click', rescueBNB);
-ownerCards[3].querySelectorAll('.btn-warn')[1].addEventListener('click', rescueFactoryBNB);
-ownerCards[3].querySelector('.btn-danger').addEventListener('click', transferOwner);
+document.getElementById('ow-btn-setBuyer').addEventListener('click', setBuyerReward);
+document.getElementById('ow-btn-setCreator').addEventListener('click', setCreatorReward);
+document.getElementById('ow-btn-approve').addEventListener('click', approvePool);
+document.getElementById('ow-btn-deposit').addEventListener('click', depositPool);
+document.getElementById('ow-btn-withdraw').addEventListener('click', withdrawPool);
+document.getElementById('ow-btn-rescue').addEventListener('click', rescueBNB);
+document.getElementById('ow-btn-rescueFactory').addEventListener('click', rescueFactoryBNB);
+document.getElementById('ow-btn-transfer').addEventListener('click', transferOwner);
 
 // ========== 初始化 ==========
 // 页面加载时自动加载概览数据（不需要连接钱包）
