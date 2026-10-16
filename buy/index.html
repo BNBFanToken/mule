@@ -1,333 +1,197 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MULE - BuyMule 管理平台</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-<style>
-:root {
-  --bg: #F5F3EF;
-  --surface: #FFFFFF;
-  --surface-alt: #FAF9F6;
-  --border: #E8E4DD;
-  --border-light: #F0EDE8;
-  --text: #1A1A1A;
-  --text-secondary: #6B6560;
-  --text-muted: #9E9890;
-  --accent: #E8723A;
-  --accent-dark: #C55A28;
-  --green: #2E9E6A;
-  --green-light: #E8F8F0;
-  --red: #D94452;
-  --blue: #3B7DDD;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-  --shadow: 0 2px 12px rgba(0,0,0,0.06);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
-  --font: 'Noto Sans SC', 'Outfit', sans-serif;
-  --font-display: 'Outfit', 'Noto Sans SC', sans-serif;
-}
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style rel="stylesheet" type="text/css">@charset "utf-8";
 
-* { margin:0; padding:0; box-sizing:border-box; }
+:root { --bg: #F5F3EF; --surface: #FFFFFF; --surface-alt: #FAF9F6; --border: #E8E4DD; --border-light: #F0EDE8; --text: #1A1A1A; --text-secondary: #6B6560; --text-muted: #9E9890; --accent: #E8723A; --accent-dark: #C55A28; --green: #2E9E6A; --green-light: #E8F8F0; --red: #D94452; --blue: #3B7DDD; --radius: 12px; --radius-sm: 8px; --radius-lg: 16px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.04); --shadow: 0 2px 12px rgba(0,0,0,0.06); --shadow-lg: 0 8px 32px rgba(0,0,0,0.08); --font: 'Noto Sans SC', 'Outfit', sans-serif; --font-display: 'Outfit', 'Noto Sans SC', sans-serif; }
 
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
+* { margin: 0px; padding: 0px; box-sizing: border-box; }
 
-.mono { font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 0.88em; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-/* Header */
-.app-header {
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 100;
-  backdrop-filter: blur(12px);
-  background: rgba(255,255,255,0.92);
-}
-.header-inner {
-  max-width: 1200px; margin: 0 auto;
-  padding: 14px 24px;
-  display: flex; align-items: center; justify-content: space-between;
-}
+.mono { font-family: "SF Mono", "Cascadia Code", Consolas, monospace; font-size: 0.88em; }
+
+.app-header { border-bottom: 1px solid var(--border); position: sticky; top: 0px; z-index: 100; backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.92); }
+
+.header-inner { max-width: 1200px; margin: 0px auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
+
 .logo-group { display: flex; align-items: center; gap: 12px; }
-.logo-icon {
-  width: 40px; height: 40px;
-  background: linear-gradient(135deg, var(--accent), #F4A261);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 20px;
-  box-shadow: 0 2px 8px rgba(232,114,58,0.3);
-}
-.logo-text {
-  font-family: var(--font-display); font-weight: 700; font-size: 22px;
-  letter-spacing: -0.5px; color: var(--text);
-}
-.logo-sub {
-  font-size: 13px; color: var(--text-muted);
-  padding-left: 12px; border-left: 1px solid var(--border);
-}
 
-.connect-btn {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 20px; border-radius: 50px;
-  border: 1.5px solid var(--border);
-  background: var(--surface);
-  font-family: var(--font); font-size: 14px; font-weight: 500;
-  color: var(--text); cursor: pointer;
-  transition: all 0.2s;
-}
+.logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent), #F4A261); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: rgb(255, 255, 255); font-family: var(--font-display); font-weight: 800; font-size: 20px; box-shadow: rgba(232, 114, 58, 0.3) 0px 2px 8px; }
+
+.logo-text { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -0.5px; color: var(--text); }
+
+.logo-sub { font-size: 13px; color: var(--text-muted); padding-left: 12px; border-left: 1px solid var(--border); }
+
+.connect-btn { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--surface); font-family: var(--font); font-size: 14px; font-weight: 500; color: var(--text); cursor: pointer; transition: 0.2s; }
+
 .connect-btn:hover { border-color: var(--accent); color: var(--accent); }
+
 .connect-btn.connected { border-color: var(--green); background: var(--green-light); color: var(--green); }
-.btn-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--text-muted);
-  transition: background 0.2s;
-}
+
+.btn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); transition: background 0.2s; }
+
 .connect-btn.connected .btn-dot { background: var(--green); }
 
-/* Tab Nav */
-.tab-nav {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-.tab-nav-inner {
-  max-width: 1200px; margin: 0 auto;
-  padding: 0 24px;
-  display: flex; gap: 4px;
-}
-.tab-btn {
-  display: flex; align-items: center; gap: 7px;
-  padding: 12px 18px;
-  border: none; background: none;
-  font-family: var(--font); font-size: 14px; font-weight: 500;
-  color: var(--text-muted); cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-}
+.tab-nav { background: var(--surface); border-bottom: 1px solid var(--border); }
+
+.tab-nav-inner { max-width: 1200px; margin: 0px auto; padding: 0px 24px; display: flex; gap: 4px; }
+
+.tab-btn { display: flex; align-items: center; gap: 7px; padding: 12px 18px; border-width: medium medium 2px; border-style: none none solid; border-color: currentcolor currentcolor transparent; border-image: none; background: none; font-family: var(--font); font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+
 .tab-btn:hover { color: var(--text-secondary); }
-.tab-btn.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
+
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
 .tab-btn svg { opacity: 0.7; }
+
 .tab-btn.active svg { opacity: 1; }
 
-/* Main */
-.main-content {
-  max-width: 1200px; margin: 0 auto;
-  padding: 28px 24px 60px;
-}
-.tab-panel { display: none; animation: fadeIn 0.3s ease; }
+.main-content { max-width: 1200px; margin: 0px auto; padding: 28px 24px 60px; }
+
+.tab-panel { display: none; animation: 0.3s ease 0s 1 normal none running fadeIn; }
+
 .tab-panel.active { display: block; }
-@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+@keyframes fadeIn { 
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
 
 .panel-header { margin-bottom: 24px; }
-.panel-header h2 {
-  font-family: var(--font-display); font-size: 24px; font-weight: 700;
-  letter-spacing: -0.3px; margin-bottom: 4px;
-}
+
+.panel-header h2 { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
+
 .panel-desc { font-size: 14px; color: var(--text-secondary); }
 
-/* Stats Grid */
-.stats-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px; margin-bottom: 20px;
-}
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.15s, box-shadow 0.15s;
-}
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 20px; }
+
+.stat-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow-sm); transition: transform 0.15s, box-shadow 0.15s; }
+
 .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
 .stat-card.accent { border-left: 3px solid var(--accent); }
+
 .stat-card.highlight { border-left: 3px solid var(--blue); }
+
 .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+
 .stat-value { font-size: 15px; font-weight: 600; word-break: break-all; }
 
 .refresh-row { display: flex; align-items: center; gap: 16px; }
+
 .last-update { font-size: 12px; color: var(--text-muted); }
 
-/* Buttons */
-.btn-primary {
-  padding: 10px 20px; border-radius: var(--radius-sm);
-  background: var(--accent); color: #fff;
-  border: none; font-family: var(--font); font-size: 14px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s;
-}
+.btn-primary { padding: 10px 20px; border-radius: var(--radius-sm); background: var(--accent); color: rgb(255, 255, 255); border-width: medium; border-style: none; border-color: currentcolor; border-image: none; font-family: var(--font); font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.15s; }
+
 .btn-primary:hover { background: var(--accent-dark); }
+
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.btn-secondary {
-  padding: 8px 16px; border-radius: var(--radius-sm);
-  background: var(--surface); color: var(--text);
-  border: 1px solid var(--border); font-family: var(--font); font-size: 13px;
-  cursor: pointer; transition: all 0.15s;
-}
+.btn-secondary { padding: 8px 16px; border-radius: var(--radius-sm); background: var(--surface); color: var(--text); border: 1px solid var(--border); font-family: var(--font); font-size: 13px; cursor: pointer; transition: 0.15s; }
+
 .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
-.btn-warn {
-  padding: 10px 20px; border-radius: var(--radius-sm);
-  background: #FFF3E0; color: #E65100;
-  border: 1px solid #FFE0B2; font-family: var(--font); font-size: 14px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s;
-}
-.btn-warn:hover { background: #FFE0B2; }
+.btn-warn { padding: 10px 20px; border-radius: var(--radius-sm); background: rgb(255, 243, 224); color: rgb(230, 81, 0); border: 1px solid rgb(255, 224, 178); font-family: var(--font); font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.15s; }
 
-.btn-danger {
-  padding: 10px 20px; border-radius: var(--radius-sm);
-  background: var(--red); color: #fff;
-  border: none; font-family: var(--font); font-size: 14px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s;
-}
-.btn-danger:hover { background: #C13442; }
+.btn-warn:hover { background: rgb(255, 224, 178); }
+
+.btn-danger { padding: 10px 20px; border-radius: var(--radius-sm); background: var(--red); color: rgb(255, 255, 255); border-width: medium; border-style: none; border-color: currentcolor; border-image: none; font-family: var(--font); font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.15s; }
+
+.btn-danger:hover { background: rgb(193, 52, 66); }
 
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
-/* Inputs */
 .input-group { margin-bottom: 14px; }
+
 .input-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
-.input-field {
-  width: 100%; padding: 10px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: var(--font); font-size: 14px;
-  background: var(--surface); color: var(--text);
-  transition: border-color 0.15s;
-}
+
+.input-field { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font); font-size: 14px; background: var(--surface); color: var(--text); transition: border-color 0.15s; }
+
 .input-field:focus { outline: none; border-color: var(--accent); }
+
 .input-field::placeholder { color: var(--text-muted); }
 
 .input-row { display: flex; gap: 10px; align-items: center; }
-.input-row .input-field { flex: 1; }
 
-/* Query Cards */
+.input-row .input-field { flex: 1 1 0%; }
+
 .query-sections, .owner-sections { display: flex; flex-direction: column; gap: 18px; }
-.query-card, .owner-card {
-  background: var(--surface);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding: 22px 24px;
-  box-shadow: var(--shadow-sm);
-}
-.query-card h3, .owner-card h3 {
-  font-family: var(--font-display); font-size: 16px; font-weight: 600;
-  margin-bottom: 4px;
-}
+
+.query-card, .owner-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow-sm); }
+
+.query-card h3, .owner-card h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+
 .card-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+
 .owner-card.danger { border-left: 3px solid var(--red); }
 
-/* Result Box */
-.result-box {
-  margin-top: 14px; padding: 14px 16px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-}
-.result-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 0; font-size: 14px;
-  border-bottom: 1px solid var(--border-light);
-}
-.result-row:last-child { border-bottom: none; }
+.result-box { margin-top: 14px; padding: 14px 16px; background: var(--surface-alt); border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
+
+.result-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0px; font-size: 14px; border-bottom: 1px solid var(--border-light); }
+
+.result-row:last-child { border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; }
+
 .result-row span:first-child { color: var(--text-secondary); }
+
 .result-row span:last-child { font-weight: 500; word-break: break-all; text-align: right; max-width: 60%; }
 
-/* Data Table */
 .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.data-table th {
-  text-align: left; padding: 8px 10px;
-  font-weight: 600; color: var(--text-secondary);
-  border-bottom: 2px solid var(--border);
-  font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;
-}
-.data-table td {
-  padding: 8px 10px; border-bottom: 1px solid var(--border-light);
-  word-break: break-all;
-}
+
+.data-table th { text-align: left; padding: 8px 10px; font-weight: 600; color: var(--text-secondary); border-bottom: 2px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+.data-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-light); word-break: break-all; }
+
 .data-table tr:hover td { background: var(--surface-alt); }
 
-/* Buy Card */
-.buy-card {
-  background: var(--surface);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  box-shadow: var(--shadow);
-  max-width: 520px;
-}
+.buy-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow); max-width: 520px; }
+
 .amount-row { display: flex; gap: 10px; align-items: center; }
-.amount-row .input-field { flex: 1; }
+
+.amount-row .input-field { flex: 1 1 0%; }
+
 .amount-presets { display: flex; gap: 4px; }
-.amount-presets button {
-  padding: 6px 10px; border-radius: 6px;
-  border: 1px solid var(--border); background: var(--surface-alt);
-  font-size: 12px; cursor: pointer; transition: all 0.15s;
-  font-family: var(--font);
-}
+
+.amount-presets button { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-alt); font-size: 12px; cursor: pointer; transition: 0.15s; font-family: var(--font); }
+
 .amount-presets button:hover { border-color: var(--accent); color: var(--accent); }
 
-.btn-buy {
-  width: 100%; margin-top: 18px;
-  padding: 14px; border-radius: var(--radius);
-  background: linear-gradient(135deg, var(--accent), #F4A261);
-  color: #fff; border: none;
-  font-family: var(--font); font-size: 16px; font-weight: 600;
-  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-  transition: all 0.2s;
-  box-shadow: 0 4px 16px rgba(232,114,58,0.25);
-}
-.btn-buy:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,114,58,0.35); }
+.btn-buy { width: 100%; margin-top: 18px; padding: 14px; border-radius: var(--radius); background: linear-gradient(135deg, var(--accent), #F4A261); color: rgb(255, 255, 255); border-width: medium; border-style: none; border-color: currentcolor; border-image: none; font-family: var(--font); font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; box-shadow: rgba(232, 114, 58, 0.25) 0px 4px 16px; }
+
+.btn-buy:hover { transform: translateY(-1px); box-shadow: rgba(232, 114, 58, 0.35) 0px 6px 20px; }
+
 .btn-buy:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 .buy-info { margin-top: 14px; }
 
-/* Toast */
-.toast {
-  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
-  padding: 12px 24px; border-radius: 50px;
-  background: var(--text); color: #fff;
-  font-size: 14px; font-weight: 500;
-  box-shadow: var(--shadow-lg);
-  transition: transform 0.3s ease;
-  z-index: 999; white-space: nowrap;
-}
-.toast.show { transform: translateX(-50%) translateY(0); }
+.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); padding: 12px 24px; border-radius: 50px; background: var(--text); color: rgb(255, 255, 255); font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); transition: transform 0.3s; z-index: 999; white-space: nowrap; }
+
+.toast.show { transform: translateX(-50%) translateY(0px); }
+
 .toast.success { background: var(--green); }
+
 .toast.error { background: var(--red); }
 
-/* Footer */
-.app-footer {
-  text-align: center; padding: 24px;
-  font-size: 12px; color: var(--text-muted);
-  border-top: 1px solid var(--border-light);
-}
+.app-footer { text-align: center; padding: 24px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border-light); }
 
-/* Responsive */
 @media (max-width: 768px) {
   .header-inner { padding: 12px 16px; }
   .logo-sub { display: none; }
-  .tab-nav-inner { padding: 0 12px; overflow-x: auto; }
+  .tab-nav-inner { padding: 0px 12px; overflow-x: auto; }
   .tab-btn { padding: 10px 12px; font-size: 13px; white-space: nowrap; }
   .main-content { padding: 20px 16px 40px; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .input-row { flex-direction: column; }
   .input-row .btn-primary { width: 100%; }
 }
+
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr; }
-}
-</style>
+}</style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MULE - BuyMule 管理平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&amp;family=Noto+Sans+SC:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
 </head>
 <body>
 <!-- === HEADER === -->
@@ -338,7 +202,7 @@ body {
       <span class="logo-text">MULE</span>
       <span class="logo-sub">BuyMule 管理平台</span>
     </div>
-    <button id="connectBtn" class="connect-btn" onclick="connectWallet()">
+    <button id="connectBtn" class="connect-btn">
       <span class="btn-dot"></span>
       连接钱包
     </button>
@@ -348,20 +212,20 @@ body {
 <!-- === TAB NAV === -->
 <nav class="tab-nav">
   <div class="tab-nav-inner">
-    <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <button class="tab-btn active" data-tab="overview">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
       合约概览
     </button>
-    <button class="tab-btn" data-tab="query" onclick="switchTab('query')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <button class="tab-btn" data-tab="query">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
       数据查询
     </button>
-    <button class="tab-btn" data-tab="buy" onclick="switchTab('buy')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <button class="tab-btn" data-tab="buy">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
       购买入口
     </button>
-    <button class="tab-btn" data-tab="owner" id="ownerTab" onclick="switchTab('owner')" style="display:none">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <button class="tab-btn" data-tab="owner" id="ownerTab" style="display:none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
       Owner 管理
     </button>
   </div>
@@ -387,7 +251,7 @@ body {
       <div class="stat-card highlight"><div class="stat-label">奖励池余额（代币）</div><div class="stat-value" id="ov-pool">--</div></div>
     </div>
     <div class="refresh-row">
-      <button class="btn-secondary" onclick="loadOverview()">刷新数据</button>
+      <button class="btn-secondary">刷新数据</button>
       <span class="last-update" id="lastUpdate"></span>
     </div>
   </section>
@@ -404,7 +268,7 @@ body {
         <h3>查询 BuyMule</h3>
         <div class="input-row">
           <input type="text" id="q-creatorAddr" class="input-field" placeholder="输入 Creator 地址 (0x...)">
-          <button class="btn-primary" onclick="queryBuyMule()">查询</button>
+          <button class="btn-primary">查询</button>
         </div>
         <div class="result-box" id="q-buyMuleResult" style="display:none">
           <div class="result-row"><span>BuyMule 地址</span><span class="mono" id="q-bmAddr">--</span></div>
@@ -420,7 +284,7 @@ body {
           </div>
           <div class="input-row">
             <input type="text" id="q-buyerAddr" class="input-field" placeholder="买家地址">
-            <button class="btn-primary" onclick="queryPurchaseRecord()">查询</button>
+            <button class="btn-primary">查询</button>
           </div>
         </div>
         <div class="result-box" id="q-purchaseResult" style="display:none">
@@ -432,7 +296,7 @@ body {
         <h3>查询 BuyMule 余额</h3>
         <div class="input-row">
           <input type="text" id="q-balanceAddr" class="input-field" placeholder="BuyMule 合约地址">
-          <button class="btn-primary" onclick="queryBuyMuleBalance()">查询</button>
+          <button class="btn-primary">查询</button>
         </div>
         <div class="result-box" id="q-balanceResult" style="display:none">
           <div class="result-row"><span>BNB 余额</span><span id="q-balBNB">--</span></div>
@@ -442,7 +306,7 @@ body {
       <!-- 遍历所有 BuyMule -->
       <div class="query-card">
         <h3>所有 BuyMule 列表</h3>
-        <button class="btn-primary" onclick="loadAllBuyMules()">加载列表</button>
+        <button class="btn-primary">加载列表</button>
         <div class="result-box" id="q-allList" style="display:none">
           <table class="data-table">
             <thead><tr><th>#</th><th>BuyMule 地址</th><th>Creator</th><th>BNB 余额</th></tr></thead>
@@ -469,19 +333,19 @@ body {
         <div class="amount-row">
           <input type="number" id="buy-amount" class="input-field" placeholder="0.0" step="0.001" min="0">
           <div class="amount-presets">
-            <button onclick="setBuyAmount('0.01')">0.01</button>
-            <button onclick="setBuyAmount('0.05')">0.05</button>
-            <button onclick="setBuyAmount('0.1')">0.1</button>
-            <button onclick="setBuyAmount('0.5')">0.5</button>
-            <button onclick="setBuyAmount('1')">1</button>
+            <button>0.01</button>
+            <button>0.05</button>
+            <button>0.1</button>
+            <button>0.5</button>
+            <button>1</button>
           </div>
         </div>
       </div>
       <div class="buy-info" id="buy-info">
         <div class="result-row"><span>当前 Buyer 奖励比例</span><span id="buy-reward">加载中...</span></div>
       </div>
-      <button class="btn-buy" id="buyBtn" onclick="executeBuy()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <button class="btn-buy" id="buyBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
         确认购买
       </button>
     </div>
@@ -502,12 +366,12 @@ body {
           <label class="input-label">Buyer 奖励 (bps)</label>
           <input type="number" id="ow-buyerBps" class="input-field" placeholder="例如: 100 = 1%">
         </div>
-        <button class="btn-primary" onclick="setBuyerReward()">设置 Buyer 奖励</button>
+        <button class="btn-primary">设置 Buyer 奖励</button>
         <div class="input-group" style="margin-top:16px">
           <label class="input-label">Creator 奖励 (bps)</label>
           <input type="number" id="ow-creatorBps" class="input-field" placeholder="例如: 100 = 1%">
         </div>
-        <button class="btn-primary" onclick="setCreatorReward()">设置 Creator 奖励</button>
+        <button class="btn-primary">设置 Creator 奖励</button>
       </div>
       <!-- 奖励池管理 -->
       <div class="owner-card">
@@ -518,9 +382,9 @@ body {
           <input type="text" id="ow-poolAmount" class="input-field" placeholder="例如: 1000000000000000000">
         </div>
         <div class="btn-row">
-          <button class="btn-secondary" onclick="approvePool()">1. 授权代币</button>
-          <button class="btn-primary" onclick="depositPool()">2. 存入奖励池</button>
-          <button class="btn-warn" onclick="withdrawPool()">提取奖励池</button>
+          <button class="btn-secondary">1. 授权代币</button>
+          <button class="btn-primary">2. 存入奖励池</button>
+          <button class="btn-warn">提取奖励池</button>
         </div>
       </div>
       <!-- 分发奖励说明 -->
@@ -536,7 +400,7 @@ body {
       <div class="owner-card">
         <h3>创建 BuyMule</h3>
         <p class="card-desc">使用当前连接的钱包地址创建 BuyMule（每个地址只能创建一个）</p>
-        <button class="btn-primary" onclick="createBuyMule()">创建 BuyMule</button>
+        <button class="btn-primary">创建 BuyMule</button>
       </div>
       <!-- 紧急操作 -->
       <div class="owner-card danger">
@@ -546,13 +410,13 @@ body {
           <label class="input-label">Rescue BNB - BuyMule 地址</label>
           <input type="text" id="ow-rescueAddr" class="input-field" placeholder="0x...">
         </div>
-        <button class="btn-warn" onclick="rescueBNB()">Rescue BNB (BuyMule)</button>
-        <button class="btn-warn" onclick="rescueFactoryBNB()" style="margin-top:8px">Rescue Factory BNB</button>
+        <button class="btn-warn">Rescue BNB (BuyMule)</button>
+        <button class="btn-warn" style="margin-top:8px">Rescue Factory BNB</button>
         <div class="input-group" style="margin-top:16px">
           <label class="input-label">转移所有权 - 新 Owner 地址</label>
           <input type="text" id="ow-newOwner" class="input-field" placeholder="0x...">
         </div>
-        <button class="btn-danger" onclick="transferOwner()">转移所有权</button>
+        <button class="btn-danger">转移所有权</button>
       </div>
     </div>
   </section>
@@ -564,7 +428,7 @@ body {
 
 <!-- Footer -->
 <footer class="app-footer">
-  <span>MULE Platform &middot; BSC Mainnet &middot; BuyMuleFactory</span>
+  <span>MULE Platform · BSC Mainnet · BuyMuleFactory</span>
 </footer>
 
 <script>
@@ -1042,19 +906,6 @@ async function approvePool() {
     }
   }
 }
-    
-    const tx = await tokenContract.approve(FACTORY_ADDRESS, amount);
-    showToast('授权交易已提交...');
-    await tx.wait();
-    showToast('代币授权成功，可以存入了', 'success');
-  } catch (err) {
-    if (err.message && err.message.includes('invalid BigNumber')) {
-      showToast('请输入有效的数字', 'error');
-    } else {
-      showToast('授权失败: ' + (handleTxError(err)), 'error');
-    }
-  }
-}
 
 async function createBuyMule() {
   if (!signer) { showToast('请先连接钱包', 'error'); return; }
@@ -1108,6 +959,48 @@ async function transferOwner() {
   } catch (err) { showToast('操作失败: ' + (handleTxError(err)), 'error'); }
 }
 
+// ========== 事件绑定 ==========
+document.getElementById('connectBtn').addEventListener('click', connectWallet);
+
+// Tab 切换
+document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+// 刷新数据
+document.querySelector('#tab-overview .btn-secondary').addEventListener('click', loadOverview);
+
+// 数据查询按钮
+const queryCards = document.querySelectorAll('#tab-query .query-card');
+queryCards[0].querySelector('.btn-primary').addEventListener('click', queryBuyMule);
+queryCards[1].querySelector('.btn-primary').addEventListener('click', queryPurchaseRecord);
+queryCards[2].querySelector('.btn-primary').addEventListener('click', queryBuyMuleBalance);
+queryCards[3].querySelector('.btn-primary').addEventListener('click', loadAllBuyMules);
+
+// 购买金额预设按钮
+document.querySelectorAll('.amount-presets button').forEach(btn => {
+  btn.addEventListener('click', () => setBuyAmount(btn.textContent));
+});
+
+// 购买按钮
+document.getElementById('buyBtn').addEventListener('click', executeBuy);
+
+// Owner 管理按钮
+const ownerCards = document.querySelectorAll('#tab-owner .owner-card');
+// 奖励设置
+ownerCards[0].querySelectorAll('.btn-primary')[0].addEventListener('click', setBuyerReward);
+ownerCards[0].querySelectorAll('.btn-primary')[1].addEventListener('click', setCreatorReward);
+// 奖励池管理
+ownerCards[1].querySelector('.btn-secondary').addEventListener('click', approvePool);
+ownerCards[1].querySelector('.btn-primary').addEventListener('click', depositPool);
+ownerCards[1].querySelector('.btn-warn').addEventListener('click', withdrawPool);
+// 创建 BuyMule
+ownerCards[3].querySelector('.btn-primary').addEventListener('click', createBuyMule);
+// 紧急操作
+ownerCards[4].querySelectorAll('.btn-warn')[0].addEventListener('click', rescueBNB);
+ownerCards[4].querySelectorAll('.btn-warn')[1].addEventListener('click', rescueFactoryBNB);
+ownerCards[4].querySelector('.btn-danger').addEventListener('click', transferOwner);
+
 // ========== 初始化 ==========
 // 页面加载时自动加载概览数据（不需要连接钱包）
 (function init() {
@@ -1116,5 +1009,6 @@ async function transferOwner() {
   loadOverview();
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
