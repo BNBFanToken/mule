@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>骡子批量转账 - BSC</title>
+<link rel="icon" href="https://raw.githubusercontent.com/BNBFanToken/mule/refs/heads/main/mulelalogo.png" type="image/png">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f7fb;--surface:#fff;--border:#e2e8f0;--text:#1a202c;--text2:#64748b;
+  --primary:#f0b90b;--primary-hover:#d4a20a;--primary-text:#1a1a1a;
+  --success:#16a34a;--danger:#dc2626;--info:#2563eb;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 12px rgba(0,0,0,.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+a{color:var(--info);text-decoration:none}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:40px;height:40px;border-radius:8px;object-fit:cover}
+.brand-title{display:flex;flex-direction:column}
+.brand-title strong{font-size:16px;color:var(--text)}
+.brand-title span{font-size:12px;color:var(--text2)}
+.wallet-cluster{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:6px;padding:6px 14px;background:#f1f5f9;border-radius:20px;font-size:13px;color:var(--text2)}
+.dot{width:8px;height:8px;border-radius:50%;background:#94a3b8}
+.dot.connected{background:var(--success)}
+
+/* BUTTONS */
+.btn{padding:8px 18px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:var(--primary-text)}
+.btn-primary:hover:not(:disabled){background:var(--primary-hover)}
+.btn-secondary{background:#f1f5f9;color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover:not(:disabled){background:#e2e8f0}
+
+/* HERO */
+.hero{text-align:center;padding:48px 24px 32px}
+.eyebrow{display:inline-block;padding:4px 14px;background:#fef3c7;color:#92400e;border-radius:20px;font-size:13px;font-weight:500;margin-bottom:12px}
+.hero h1{font-size:32px;font-weight:700;margin-bottom:8px}
+.hero p{color:var(--text2);font-size:15px;max-width:500px;margin:0 auto}
+
+/* APP SECTION */
+.app-section{max-width:680px;margin:0 auto;padding:0 20px 60px}
+.panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden}
+.panel-head{padding:20px 24px;border-bottom:1px solid var(--border)}
+.panel-head h2{font-size:18px;font-weight:600}
+.panel-body{padding:24px}
+
+/* FIELDS */
+.field{margin-bottom:20px}
+.field-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.field-top label{font-size:14px;font-weight:600;color:var(--text)}
+.field-top span{font-size:12px;color:var(--text2)}
+
+/* MODE SWITCH */
+.mode-switch{display:flex;gap:8px}
+.mode-option{flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--surface);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text2)}
+.mode-option.active{border-color:var(--primary);background:#fffbeb;color:var(--text)}
+.mode-hint{margin-top:8px;font-size:13px;color:var(--text2)}
+
+/* TOKEN ROW */
+.token-row{display:flex;gap:8px}
+.token-row input{flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;transition:border .15s}
+.token-row input:focus{border-color:var(--primary)}
+
+/* INLINE INFO */
+.inline-info{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.info-box{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.info-box span{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+.info-box strong{font-size:16px;color:var(--text)}
+
+/* TEXTAREA */
+textarea{width:100%;min-height:160px;padding:12px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:monospace;resize:vertical;outline:none;transition:border .15s}
+textarea:focus{border-color:var(--primary)}
+
+/* SUMMARY */
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.summary-card{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fde68a;border-radius:8px;padding:14px;text-align:center}
+.summary-card span{display:block;font-size:12px;color:#92400e;margin-bottom:4px}
+.summary-card strong{font-size:20px;color:var(--text)}
+
+/* ACTIONS */
+.actions{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.actions .btn{flex:1;min-width:120px}
+
+/* STATUS */
+.status-box{padding:14px 18px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text2);margin-bottom:20px;word-break:break-all}
+.status-box.success{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+.status-box.error{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.status-box.loading{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+
+/* LOG */
+.log{max-height:300px;overflow-y:auto}
+.log-row{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.log-row:last-child{border-bottom:none}
+.log-row .log-type{font-weight:600;white-space:nowrap}
+.log-row .log-hash{color:var(--info);font-family:monospace;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-row .log-time{color:var(--text2);font-size:12px;white-space:nowrap}
+.log-empty{padding:20px;text-align:center;color:var(--text2);font-size:14px}
+
+/* FOOTER */
+.footer{text-align:center;padding:24px;color:var(--text2);font-size:13px;border-top:1px solid var(--border)}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .topbar{flex-direction:column;gap:12px;padding:12px 16px}
+  .wallet-cluster{width:100%;justify-content:center}
+  .hero h1{font-size:24px}
+  .inline-info,.summary{grid-template-columns:1fr}
+  .actions{flex-direction:column}
+  .actions .btn{min-width:100%}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="brand">
+    <img class="brand-mark" src="https://raw.githubusercontent.com/BNBFanToken/mule/refs/heads/main/mulelalogo.png" alt="Logo">
+    <div class="brand-title">
+      <strong>骡子批量转账</strong>
+      <span>BSC Mainnet</span>
+    </div>
+  </div>
+  <div class="wallet-cluster">
+    <div class="pill"><span class="dot" id="networkDot"></span><span id="networkLabel">未连接网络</span></div>
+    <div class="pill" id="accountPill">未连接钱包</div>
+    <button class="btn btn-primary" id="connectButton">连接钱包</button>
+  </div>
+</header>
+
+<!-- TITLE SECTION -->
+<section class="hero">
+  <div class="eyebrow">主网币 / ERC20 批量转账</div>
+  <h1>骡子批量转账</h1>
+  <p>选择主网币 BNB 或 ERC20 代币，填写收款列表，每行一笔：地址,数量。</p>
+</section>
+
+<!-- MAIN APP -->
+<section class="app-section">
+  <div class="panel">
+    <div class="panel-head"><h2>批量转账</h2></div>
+    <div class="panel-body">
+      <!-- MODE SWITCH -->
+      <div class="field">
+        <div class="field-top">
+          <label>转账类型</label>
+          <span id="assetKindText">BSC 主网币</span>
+        </div>
+        <div class="mode-switch">
+          <button class="mode-option active" id="modeNativeBtn" type="button">主网币 BNB</button>
+          <button class="mode-option" id="modeTokenBtn" type="button">ERC20 代币</button>
+        </div>
+        <div class="mode-hint" id="tokenHint" style="display:none">输入 ERC20 代币合约地址后读取余额和授权。</div>
+      </div>
+
+      <!-- TOKEN ADDRESS -->
+      <div class="field" id="tokenAddressField" style="display:none">
+        <div class="field-top">
+          <label for="tokenAddressInput">代币合约地址</label>
+          <span>BSC ERC20</span>
+        </div>
+        <div class="token-row">
+          <input id="tokenAddressInput" autocomplete="off" spellcheck="false" placeholder="0x...">
+          <button class="btn btn-secondary" id="refreshTokenBtn" type="button">读取代币</button>
+        </div>
+      </div>
+
+      <!-- TOKEN INFO -->
+      <div class="inline-info" id="tokenInfoBlock" style="display:none">
+        <div class="info-box"><span>资产符号</span><strong id="tokenSymbol">--</strong></div>
+        <div class="info-box"><span>小数位</span><strong id="tokenDecimals">--</strong></div>
+        <div class="info-box"><span>钱包余额</span><strong id="tokenBalance">--</strong></div>
+      </div>
+
+      <!-- TRANSFER LIST -->
+      <div class="field">
+        <div class="field-top">
+          <label for="transferList">收款列表</label>
+          <span>每行：地址,数量；最多 200 行</span>
+        </div>
+        <textarea id="transferList" spellcheck="false" placeholder="0x1111111111111111111111111111111111111111,10&#10;0x2222222222222222222222222222222222222222,25.5"></textarea>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="summary">
+        <div class="summary-card"><span>有效笔数</span><strong id="summaryCount">0</strong></div>
+        <div class="summary-card"><span>总数量</span><strong id="summaryTotal">0</strong></div>
+        <div class="summary-card"><span>授权状态</span><strong id="summaryAllowance">--</strong></div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="actions">
+        <button class="btn btn-primary" id="approveBtn" type="button" disabled>一次性授权</button>
+        <button class="btn btn-primary" id="transferBtn" type="button" disabled>开始批量转账</button>
+        <button class="btn btn-secondary" id="clearBtn" type="button">清空</button>
+      </div>
+
+      <!-- STATUS -->
+      <div class="status-box" id="statusBox">请先连接钱包。</div>
+
+      <!-- TX LOG -->
+      <div class="log" id="txLog">
+        <div class="log-empty">暂无交易记录。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>骡子批量转账 &copy; 2025 &middot; BSC Mainnet &middot; 合约已开源验证</p>
+</footer>
+
+<script>
+const CONTRACT = "0xDe90281c116efC624C464A78511817C0B9192d2e";
+const BSC_CHAIN_ID = "0x38";
+const BSC_CHAIN_ID_DEC = 56;
+const BSC_RPC = "https://bsc-dataseed1.binance.org";
+
+const ERC20_ABI = [
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address,address) view returns (uint256)",
+  "function approve(address,uint256) returns (bool)"
+];
+
+const BATCH_ABI = [
+  "function batchTransferNative(address[] recipients, uint256[] amounts) payable",
+  "function batchTransfer(address tokenAddress, address[] recipients, uint256[] amounts) payable"
+];
+
+let provider = null;
+let signer = null;
+let account = null;
+let mode = "native";
+let tokenContract = null;
+let batchContract = null;
+let tokenAddress = null;
+let tokenDecimals = 18;
+let tokenSymbolText = "BNB";
+
+const $ = id => document.getElementById(id);
+
+function setStatus(msg, type) {
+  const box = $("statusBox");
+  box.textContent = msg;
+  box.className = "status-box" + (type ? " " + type : "");
+}
+
+function addLog(type, hash) {
+  const log = $("txLog");
+  const empty = log.querySelector(".log-empty");
+  if (empty) empty.remove();
+  const row = document.createElement("div");
+  row.className = "log-row";
+  const now = new Date().toLocaleTimeString("zh-CN");
+  const shortHash = hash.slice(0, 10) + "..." + hash.slice(-6);
+  row.innerHTML = `<span class="log-type">${type}</span><a class="log-hash" href="https://bscscan.com/tx/${hash}" target="_blank">${shortHash}</a><span class="log-time">${now}</span>`;
+  log.prepend(row);
+}
+
+function parseList() {
+  const raw = $("transferList").value.trim();
+  if (!raw) return { recipients: [], amounts: [], totalRaw: "0" };
+  const lines = raw.split("\n").filter(l => l.trim());
+  const recipients = [];
+  const amounts = [];
+  let total = 0n;
+  for (const line of lines) {
+    const parts = line.split(",").map(s => s.trim());
+    if (parts.length < 2) continue;
+    const addr = parts[0];
+    const amt = parts[1];
+    if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) continue;
+    if (!amt || isNaN(amt) || parseFloat(amt) <= 0) continue;
+    recipients.push(addr);
+    amounts.push(amt);
+    try {
+      const parsed = ethers.parseUnits(amt, tokenDecimals);
+      total += parsed;
+    } catch {
+      return { recipients: [], amounts: [], totalRaw: "0", error: true };
+    }
+  }
+  return { recipients, amounts, totalRaw: ethers.formatUnits(total, tokenDecimals), count: recipients.length };
+}
+
+function updateSummary() {
+  const data = parseList();
+  $("summaryCount").textContent = data.count || 0;
+  $("summaryTotal").textContent = data.totalRaw || "0";
+  $("transferBtn").disabled = !account || data.count === 0;
+  if (data.error) {
+    setStatus("收款列表中存在无效金额，请检查格式。", "error");
+  }
+  return data;
+}
+
+async function checkAllowance() {
+  if (mode !== "token" || !tokenContract || !account) {
+    $("summaryAllowance").textContent = "--";
+    $("approveBtn").disabled = true;
+    return;
+  }
+  try {
+    const data = parseList();
+    if (data.count === 0) {
+      $("summaryAllowance").textContent = "--";
+      $("approveBtn").disabled = true;
+      return;
+    }
+    const totalWei = ethers.parseUnits(data.totalRaw, tokenDecimals);
+    const allowance = await tokenContract.allowance(account, CONTRACT);
+    const formatted = ethers.formatUnits(allowance, tokenDecimals);
+    $("summaryAllowance").textContent = parseFloat(formatted).toLocaleString();
+    $("approveBtn").disabled = allowance >= totalWei;
+    $("transferBtn").disabled = allowance < totalWei;
+  } catch (e) {
+    $("summaryAllowance").textContent = "查询失败";
+  }
+}
+
+async function connectWallet() {
+  if (!window.ethereum) {
+    setStatus("未检测到 MetaMask，请安装钱包插件。", "error");
+    return;
+  }
+  try {
+    provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner();
+    account = accounts[0];
+
+    const chainId = await provider.send("eth_chainId", []);
+    if (chainId !== BSC_CHAIN_ID) {
+      setStatus("请切换到 BSC 主网 (Chain ID: 56)。", "error");
+      try {
+        await provider.send("wallet_switchEthereumChain", [{ chainId: BSC_CHAIN_ID }]);
+      } catch {
+        await provider.send("wallet_addEthereumChain", [{
+          chainId: BSC_CHAIN_ID,
+          chainName: "BSC Mainnet",
+          nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+          rpcUrls: [BSC_RPC],
+          blockExplorerUrls: ["https://bscscan.com"]
+        }]);
+      }
+    }
+
+    batchContract = new ethers.Contract(CONTRACT, BATCH_ABI, signer);
+
+    $("accountPill").textContent = account.slice(0, 6) + "..." + account.slice(-4);
+    $("networkDot").classList.add("connected");
+    $("networkLabel").textContent = "BSC 主网";
+    $("connectButton").textContent = "已连接";
+    $("connectButton").disabled = true;
+    $("transferBtn").disabled = true;
+    setStatus("钱包已连接，可以开始转账。", "success");
+
+    if (mode === "native") {
+      const bal = await provider.getBalance(account);
+      $("tokenBalance").textContent = parseFloat(ethers.formatEther(bal)).toFixed(4) + " BNB";
+    }
+
+    window.ethereum.on("accountsChanged", () => location.reload());
+    window.ethereum.on("chainChanged", () => location.reload());
+  } catch (e) {
+    setStatus("连接失败：" + (e.message || e), "error");
+  }
+}
+
+async function readToken() {
+  const addr = $("tokenAddressInput").value.trim();
+  if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) {
+    setStatus("请输入有效的代币合约地址。", "error");
+    return;
+  }
+  if (!provider) {
+    setStatus("请先连接钱包。", "error");
+    return;
+  }
+  try {
+    setStatus("正在读取代币信息...", "loading");
+    tokenContract = new ethers.Contract(addr, ERC20_ABI, provider);
+    const [sym, dec, bal] = await Promise.all([
+      tokenContract.symbol(),
+      tokenContract.decimals(),
+      tokenContract.balanceOf(account)
+    ]);
+    tokenDecimals = Number(dec);
+    tokenSymbolText = sym;
+    tokenAddress = addr;
+
+    $("tokenSymbol").textContent = sym;
+    $("tokenDecimals").textContent = dec.toString();
+    $("tokenBalance").textContent = parseFloat(ethers.formatUnits(bal, dec)).toLocaleString();
+
+    const tokenForSigner = new ethers.Contract(addr, ERC20_ABI, signer);
+    tokenContract = tokenForSigner;
+
+    $("tokenInfoBlock").style.display = "";
+    setStatus("代币读取成功：" + sym, "success");
+    updateSummary();
+    checkAllowance();
+  } catch (e) {
+    setStatus("读取代币失败：" + (e.message || e), "error");
+  }
+}
+
+async function doApprove() {
+  if (!tokenContract || !account) return;
+  try {
+    setStatus("正在授权...", "loading");
+    const data = parseList();
+    const totalWei = ethers.parseUnits(data.totalRaw, tokenDecimals);
+    const tx = await tokenContract.approve(CONTRACT, totalWei);
+    setStatus("授权交易已提交，等待确认...", "loading");
+    addLog("授权", tx.hash);
+    await tx.wait();
+    setStatus("授权成功！", "success");
+    checkAllowance();
+  } catch (e) {
+    setStatus("授权失败：" + (e.reason || e.message || e), "error");
+  }
+}
+
+async function doTransfer() {
+  if (!account) return;
+  const data = updateSummary();
+  if (data.count === 0) {
+    setStatus("收款列表为空或格式有误。", "error");
+    return;
+  }
+  try {
+    if (mode === "native") {
+      const totalWei = ethers.parseUnits(data.totalRaw, 18);
+      const bal = await provider.getBalance(account);
+      if (bal < totalWei) {
+        setStatus("BNB 余额不足。", "error");
+        return;
+      }
+      setStatus("正在提交主网币批量转账...", "loading");
+      const tx = await batchContract.batchTransferNative(data.recipients, data.amounts.map(a => ethers.parseUnits(a, 18)), { value: totalWei });
+      addLog("主网币转账", tx.hash);
+      setStatus("交易已提交，等待确认...", "loading");
+      await tx.wait();
+      setStatus("主网币批量转账成功！共 " + data.count + " 笔。", "success");
+    } else {
+      const totalWei = ethers.parseUnits(data.totalRaw, tokenDecimals);
+      const allowance = await tokenContract.allowance(account, CONTRACT);
+      if (allowance < totalWei) {
+        setStatus("授权额度不足，请先授权。", "error");
+        return;
+      }
+      setStatus("正在提交代币批量转账...", "loading");
+      const amountsWei = data.amounts.map(a => ethers.parseUnits(a, tokenDecimals));
+      const tx = await batchContract.batchTransfer(tokenAddress, data.recipients, amountsWei);
+      addLog("代币转账", tx.hash);
+      setStatus("交易已提交，等待确认...", "loading");
+      await tx.wait();
+      setStatus(tokenSymbolText + " 批量转账成功！共 " + data.count + " 笔。", "success");
+      checkAllowance();
+    }
+  } catch (e) {
+    setStatus("转账失败：" + (e.reason || e.message || e), "error");
+  }
+}
+
+function switchMode(m) {
+  mode = m;
+  const isNative = m === "native";
+  $("modeNativeBtn").classList.toggle("active", isNative);
+  $("modeTokenBtn").classList.toggle("active", !isNative);
+  $("tokenAddressField").style.display = isNative ? "none" : "";
+  $("tokenHint").style.display = isNative ? "none" : "";
+  $("tokenInfoBlock").style.display = isNative ? "none" : "";
+  $("assetKindText").textContent = isNative ? "BSC 主网币" : "BSC ERC20";
+  $("approveBtn").style.display = isNative ? "none" : "";
+  $("summaryAllowance").textContent = isNative ? "--" : "--";
+
+  if (isNative && account && provider) {
+    provider.getBalance(account).then(bal => {
+      $("tokenBalance").textContent = parseFloat(ethers.formatEther(bal)).toFixed(4) + " BNB";
+    });
+    $("tokenSymbol").textContent = "BNB";
+    $("tokenDecimals").textContent = "18";
+    $("tokenInfoBlock").style.display = "";
+  }
+  updateSummary();
+  if (!isNative && tokenContract) checkAllowance();
+  else $("approveBtn").disabled = true;
+}
+
+$("connectButton").addEventListener("click", connectWallet);
+$("modeNativeBtn").addEventListener("click", () => switchMode("native"));
+$("modeTokenBtn").addEventListener("click", () => switchMode("token"));
+$("refreshTokenBtn").addEventListener("click", readToken);
+$("approveBtn").addEventListener("click", doApprove);
+$("transferBtn").addEventListener("click", doTransfer);
+$("clearBtn").addEventListener("click", () => {
+  $("transferList").value = "";
+  updateSummary();
+  if (mode === "token" && tokenContract) checkAllowance();
+});
+$("transferList").addEventListener("input", () => {
+  updateSummary();
+  if (mode === "token" && tokenContract) checkAllowance();
+});
+</script>
+</body>
+</html>
