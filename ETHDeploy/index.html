@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ETH 合约部署工具</title>
+<title>WOOF 代币部署工具</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -15,8 +15,6 @@
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
 .app{display:grid;grid-template-rows:56px 1fr;height:100vh}
-
-/* Header */
 .header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:var(--panel)}
 .logo{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.5px}
 .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber)}
@@ -25,11 +23,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .conn-btn{font-family:var(--mono);font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid var(--amber-dim);background:transparent;color:var(--amber);cursor:pointer;transition:all .2s}
 .conn-btn:hover{background:rgba(232,168,73,.1)}
 .conn-btn.connected{border-color:var(--green);color:var(--green)}
-
-/* Main layout */
 .main{display:grid;grid-template-columns:1fr 380px;overflow:hidden}
-
-/* Editor panel */
 .editor-panel{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
 .editor-tabs{display:flex;align-items:center;padding:0 16px;height:40px;background:var(--panel);border-bottom:1px solid var(--border);gap:8px}
 .editor-tab{font-family:var(--mono);font-size:12px;color:var(--text2);padding:4px 12px;border-radius:4px;background:var(--panel2);border:1px solid var(--border)}
@@ -38,33 +32,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 #code{width:100%;height:100%;background:var(--bg);color:#c9d1d9;border:none;outline:none;resize:none;padding:16px 20px;font-family:var(--mono);font-size:13px;line-height:1.7;tab-size:4;white-space:pre;overflow:auto}
 #code::placeholder{color:var(--text3)}
 .editor-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--panel);border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text3)}
-
-/* Right panel */
 .right-panel{display:flex;flex-direction:column;overflow-y:auto;background:var(--panel)}
 .section{padding:20px;border-bottom:1px solid var(--border)}
 .section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);margin-bottom:14px}
-
-/* Form elements */
-label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500}
-select,input[type=text],input[type=number]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
-select:focus,input:focus{border-color:var(--amber-dim)}
-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2371717a'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
-.row{display:flex;gap:10px;margin-bottom:12px}
-.row>*{flex:1}
-.check-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.check-row input{width:auto;accent-color:var(--amber)}
-.check-row label{margin:0;font-size:12px;color:var(--text2);cursor:pointer}
-
-/* Buttons */
+.info-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px}
+.info-label{color:var(--text2)}
+.info-value{font-family:var(--mono);color:var(--text);font-weight:500}
 .btn{width:100%;padding:10px;border:none;border-radius:6px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-primary{background:var(--amber);color:#08080c}
 .btn-primary:hover{background:#f0b85a;transform:translateY(-1px);box-shadow:0 4px 16px rgba(232,168,73,.25)}
 .btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
-.btn-secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border);margin-top:8px}
-.btn-secondary:hover{border-color:var(--text2)}
-.btn-secondary:disabled{opacity:.4;cursor:not-allowed}
-
-/* Status / Log */
 .log{font-family:var(--mono);font-size:11px;line-height:1.8;max-height:260px;overflow-y:auto;padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)}
 .log-line{display:flex;gap:8px}
 .log-time{color:var(--text3);flex-shrink:0}
@@ -72,26 +50,18 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 .log-msg.success{color:var(--green)}
 .log-msg.error{color:var(--red)}
 .log-msg.info{color:var(--amber)}
-
-/* Deploy result */
 .result-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px}
 .result-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px}
 .result-label{color:var(--text2)}
 .result-value{font-family:var(--mono);color:var(--text);word-break:break-all;text-align:right;max-width:200px}
 .result-value a{color:var(--amber);text-decoration:none}
 .result-value a:hover{text-decoration:underline}
-
-/* Spinner */
 .spinner{width:14px;height:14px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* Scrollbar */
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--text2)}
-
-/* Responsive */
 @media(max-width:900px){
   .main{grid-template-columns:1fr;grid-template-rows:1fr auto}
   .right-panel{max-height:50vh}
@@ -101,7 +71,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 <body>
 <div class="app">
   <div class="header">
-    <div class="logo"><span class="logo-dot"></span>ETH Deploy</div>
+    <div class="logo"><span class="logo-dot"></span>WOOF Deploy</div>
     <div class="header-right">
       <span class="net-badge" id="netName">未连接</span>
       <button class="conn-btn" id="connBtn" onclick="connectWallet()">连接 MetaMask</button>
@@ -113,13 +83,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
         <span class="editor-tab active">Token.sol</span>
       </div>
       <div class="editor-wrap">
-        <textarea id="code" spellcheck="false" placeholder="// 在此粘贴 Solidity 合约代码...
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
-
-contract MyToken {
-    // ...
-}"></textarea>
+        <textarea id="code" spellcheck="false" readonly placeholder="// 合约源代码（只读）"></textarea>
       </div>
       <div class="editor-footer">
         <span id="charCount">0 字符</span>
@@ -128,57 +92,17 @@ contract MyToken {
     </div>
     <div class="right-panel">
       <div class="section">
-        <div class="section-title">编译器设置</div>
-        <div class="row">
-          <div>
-            <label>编译器版本</label>
-            <select id="solcVersion">
-              <option value="0.8.28">v0.8.28</option>
-              <option value="0.8.27">v0.8.27</option>
-              <option value="0.8.26">v0.8.26</option>
-              <option value="0.8.25">v0.8.25</option>
-              <option value="0.8.24">v0.8.24</option>
-              <option value="0.8.23">v0.8.23</option>
-              <option value="0.8.22">v0.8.22</option>
-              <option value="0.8.21">v0.8.21</option>
-              <option value="0.8.20">v0.8.20</option>
-              <option value="0.8.19" selected>v0.8.19</option>
-              <option value="0.8.18">v0.8.18</option>
-              <option value="0.8.17">v0.8.17</option>
-              <option value="0.8.16">v0.8.16</option>
-              <option value="0.8.15">v0.8.15</option>
-              <option value="0.8.7">v0.8.7</option>
-              <option value="0.8.0">v0.8.0</option>
-              <option value="0.7.6">v0.7.6</option>
-              <option value="0.7.0">v0.7.0</option>
-              <option value="0.6.12">v0.6.12</option>
-              <option value="0.5.17">v0.5.17</option>
-            </select>
-          </div>
+        <div class="section-title">合约信息</div>
+        <div class="info-card">
+          <div class="info-row"><span class="info-label">代币名称</span><span class="info-value">Woof</span></div>
+          <div class="info-row"><span class="info-label">代币符号</span><span class="info-value">WOOF</span></div>
+          <div class="info-row"><span class="info-label">精度</span><span class="info-value">18</span></div>
+          <div class="info-row"><span class="info-label">总供应量</span><span class="info-value">1,000,000,000</span></div>
+          <div class="info-row"><span class="info-label">编译器</span><span class="info-value">v0.8.19</span></div>
+          <div class="info-row"><span class="info-label">优化</span><span class="info-value">200 runs</span></div>
         </div>
-        <div class="check-row">
-          <input type="checkbox" id="optCheck" checked>
-          <label for="optCheck">启用优化</label>
-          <input type="number" id="optRuns" value="200" style="width:70px;margin-left:auto" min="1">
-        </div>
-        <label>EVM 版本</label>
-        <select id="evmVersion" style="margin-bottom:14px">
-          <option value="default">default</option>
-          <option value="london" selected>london</option>
-          <option value="paris">paris</option>
-          <option value="shanghai">shanghai</option>
-          <option value="cancun">cancun</option>
-        </select>
-        <button class="btn btn-primary" id="compileBtn" onclick="compileCode()">
-          编译合约
-        </button>
       </div>
-      <div class="section" id="deploySection" style="display:none">
-        <div class="section-title">部署设置</div>
-        <label>选择合约</label>
-        <select id="contractSelect" style="margin-bottom:12px"></select>
-        <label>构造函数参数（ABI 编码，可选）</label>
-        <input type="text" id="ctorArgs" placeholder="例: 000000000000000000000000..." style="margin-bottom:14px">
+      <div class="section">
         <button class="btn btn-primary" id="deployBtn" onclick="deployContract()">
           部署合约
         </button>
@@ -195,24 +119,48 @@ contract MyToken {
   </div>
 </div>
 <script>
-let solcModule = null;
-let loadedVersion = null;
-let solcBuilds = null;
-let compiledContracts = {};
+const BYTECODE = '608060405234801561001057600080fd5b50600180546001600160a01b031916339081179091556b033b2e3c9fd0803ce80000006000818155828152600260205260408082208390555190917fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9161007991815260200190565b60405180910390a3610c20806100906000396000f3fe608060405234801561001057600080fd5b50600436106100ea5760003560e01c8063715018a61161008c578063a457c2d711610066578063a457c2d714610223578063a9059cbb14610236578063dd62ed3e14610249578063f2fde38b1461028257600080fd5b8063715018a6146101cb5780638da5cb5b146101d557806395d89b411461020057600080fd5b806323b872dd116100c857806323b872dd14610162578063313ce56714610175578063395093511461018f57806370a08231146101a257600080fd5b806306fdde03146100ef578063095ea7b31461012857806318160ddd1461014b575b600080fd5b610112604051806040016040528060048152602001632bb7b7b360e11b81525081565b60405161011f91906109be565b60405180910390f35b61013b610136366004610a28565b610295565b604051901515815260200161011f565b61015460005481565b60405190815260200161011f565b61013b610170366004610a52565b61032c565b61017d601281565b60405160ff909116815260200161011f565b61013b61019d366004610a28565b61054e565b6101546101b0366004610a8e565b6001600160a01b031660009081526002602052604090205490565b6101d3610605565b005b6001546101e8906001600160a01b031681565b6040516001600160a01b03909116815260200161011f565b610112604051806040016040528060048152602001632ba7a7a360e11b81525081565b61013b610231366004610a28565b6106a9565b61013b610244366004610a28565b6107c1565b610154610257366004610ab0565b6001600160a01b03918216600090815260036020908152604080832093909416825291909152205490565b6101d3610290366004610a8e565b6108a6565b60006001600160a01b0383166102c65760405162461bcd60e51b81526004016102bd90610ae3565b60405180910390fd5b3360008181526003602090815260408083206001600160a01b03881680855290835292819020869055518581529192917f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b92591015b60405180910390a35060015b92915050565b60006001600160a01b0384166103925760405162461bcd60e51b815260206004820152602560248201527f546f6b656e3a207472616e736665722066726f6d20746865207a65726f206164604482015264647265737360d81b60648201526084016102bd565b6001600160a01b0383166103b85760405162461bcd60e51b81526004016102bd90610b25565b6001600160a01b0384166000908152600260205260409020548211156103f05760405162461bcd60e51b81526004016102bd90610b68565b6001600160a01b03841660009081526003602090815260408083203384529091529020548211156104635760405162461bcd60e51b815260206004820152601960248201527f546f6b656e3a20616c6c6f77616e63652065786365656465640000000000000060448201526064016102bd565b6001600160a01b0384166000908152600260205260408120805484929061048b908490610bc4565b90915550506001600160a01b038316600090815260026020526040812080548492906104b8908490610bd7565b90915550506001600160a01b0384166000908152600360209081526040808320338452909152812080548492906104f0908490610bc4565b92505081905550826001600160a01b0316846001600160a01b03167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef8460405161053c91815260200190565b60405180910390a35060019392505050565b60006001600160a01b0383166105765760405162461bcd60e51b81526004016102bd90610ae3565b3360009081526003602090815260408083206001600160a01b0387168452909152812080548492906105a9908490610bd7565b90915550503360008181526003602090815260408083206001600160a01b038816808552908352928190205490519081529192917f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925910161031a565b6001546001600160a01b0316331461065f5760405162461bcd60e51b815260206004820152601e60248201527f546f6b656e3a2063616c6c6572206973206e6f7420746865206f776e6572000060448201526064016102bd565b6001546040516000916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600180546001600160a01b0319169055565b60006001600160a01b0383166106d15760405162461bcd60e51b81526004016102bd90610ae3565b3360009081526003602090815260408083206001600160a01b0387168452909152902054828110156107535760405162461bcd60e51b815260206004820152602560248201527f546f6b656e3a2064656372656173656420616c6c6f77616e63652062656c6f77604482015264207a65726f60d81b60648201526084016102bd565b61075d8382610bc4565b3360008181526003602090815260408083206001600160a01b038a16808552908352928190208590555193845290927f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925910160405180910390a35060019392505050565b60006001600160a01b0383166107e95760405162461bcd60e51b81526004016102bd90610b25565b336000908152600260205260409020548211156108185760405162461bcd60e51b81526004016102bd90610b68565b3360009081526002602052604081208054849290610837908490610bc4565b90915550506001600160a01b03831660009081526002602052604081208054849290610864908490610bd7565b90915550506040518281526001600160a01b0384169033907fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9060200161031a565b6001546001600160a01b031633146109005760405162461bcd60e51b815260206004820152601e60248201527f546f6b656e3a2063616c6c6572206973206e6f7420746865206f776e6572000060448201526064016102bd565b6001600160a01b0381166109625760405162461bcd60e51b8152602060048201526024808201527f546f6b656e3a206e6577206f776e657220697320746865207a65726f206164646044820152637265737360e01b60648201526084016102bd565b6001546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3600180546001600160a01b0319166001600160a01b0392909216919091179055565b600060208083528351808285015260005b818110156109eb578581018301518582016040015282016109cf565b506000604082860101526040601f19601f8301168501019250505092915050565b80356001600160a01b0381168114610a2357600080fd5b919050565b60008060408385031215610a3b57600080fd5b610a4483610a0c565b946020939093013593505050565b600080600060608486031215610a6757600080fd5b610a7084610a0c565b9250610a7e60208501610a0c565b9150604084013590509250925092565b600060208284031215610aa057600080fd5b610aa982610a0c565b9392505050565b60008060408385031215610ac357600080fd5b610acc83610a0c565b9150610ada60208401610a0c565b90509250929050565b60208082526022908201527f546f6b656e3a20617070726f766520746f20746865207a65726f206164647265604082015261737360f01b606082015260800190565b60208082526023908201527f546f6b656e3a207472616e7366657220746f20746865207a65726f206164647260408201526265737360e81b606082015260800190565b60208082526026908201527f546f6b656e3a207472616e7366657220616d6f756e7420657863656564732062604082015265616c616e636560d01b606082015260800190565b634e487b7160e01b600052601160045260246000fd5b8181038181111561032657610326610bae565b8082018082111561032657610326610bae565bfea2646970667358221220c422e2a9c528df235d4f21659dbda7ee7ba23337f2d702e2b53f310ebb2e6ceb64736f6c63430008130033';
+
 let currentAccount = null;
 let currentChainId = null;
 
 const codeEl = document.getElementById('code');
 const logBox = document.getElementById('logBox');
-const compileBtn = document.getElementById('compileBtn');
 const deployBtn = document.getElementById('deployBtn');
-const deploySection = document.getElementById('deploySection');
 const resultSection = document.getElementById('resultSection');
-const contractSelect = document.getElementById('contractSelect');
 
-codeEl.addEventListener('input', () => {
-  document.getElementById('charCount').textContent = codeEl.value.length + ' 字符';
-});
+codeEl.value = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract Token {
+    string public constant name = "Woof";
+    string public constant symbol = "WOOF";
+    uint8 public constant decimals = 18;
+    uint256 public totalSupply;
+    address public owner;
+
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Token: caller is not the owner");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+        totalSupply = 1_000_000_000 * 10 ** 18;
+        _balances[msg.sender] = totalSupply;
+        emit Transfer(address(0), msg.sender, totalSupply);
+    }
+
+    // ... 完整代码已省略
+}`;
+document.getElementById('charCount').textContent = codeEl.value.length + ' 字符';
 
 function log(msg, type = '') {
   const now = new Date();
@@ -222,132 +170,6 @@ function log(msg, type = '') {
   line.innerHTML = `<span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span>`;
   logBox.appendChild(line);
   logBox.scrollTop = logBox.scrollHeight;
-}
-
-async function fetchSolcBuilds() {
-  if (solcBuilds) return solcBuilds;
-  const res = await fetch('https://binaries.soliditylang.org/wasm/list.json');
-  solcBuilds = await res.json();
-  return solcBuilds;
-}
-
-async function loadSolc(version) {
-  if (solcModule && loadedVersion === version) return solcModule;
-  if (loadedVersion !== version) {
-    solcModule = null;
-    loadedVersion = null;
-    if (typeof Module !== 'undefined') {
-      try { delete window.Module; } catch(e) { window.Module = undefined; }
-    }
-  }
-  log(`正在加载编译器 v${version}...`, 'info');
-  const builds = await fetchSolcBuilds();
-  const entry = builds.releases[version];
-  if (!entry) throw new Error(`未找到编译器版本 v${version}`);
-  const url = 'https://binaries.soliditylang.org/wasm/' + entry;
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = url;
-    script.onload = () => {
-      const check = setInterval(() => {
-        if (typeof Module !== 'undefined' && Module.cwrap) {
-          clearInterval(check);
-          solcModule = Module;
-          loadedVersion = version;
-          log('编译器加载完成', 'success');
-          resolve(Module);
-        }
-      }, 100);
-      setTimeout(() => {
-        clearInterval(check);
-        if (!solcModule) reject(new Error('编译器加载超时'));
-      }, 30000);
-    };
-    script.onerror = () => reject(new Error('编译器加载失败，请检查网络'));
-    document.head.appendChild(script);
-  });
-}
-
-function runCompile(source, version) {
-  const compile = solcModule.cwrap('compile', 'string', ['string', 'number']);
-  const input = JSON.stringify({
-    language: 'Solidity',
-    sources: { 'contract.sol': { content: source } },
-    settings: {
-      optimizer: {
-        enabled: document.getElementById('optCheck').checked,
-        runs: parseInt(document.getElementById('optRuns').value) || 200
-      },
-      evmVersion: document.getElementById('evmVersion').value,
-      outputSelection: { '*': { '*': ['abi', 'evm.bytecode.object'] } }
-    }
-  });
-  const output = JSON.parse(compile(input, 0));
-  return output;
-}
-
-async function compileCode() {
-  const source = codeEl.value.trim();
-  if (!source) { log('请先输入合约代码', 'error'); return; }
-
-  compileBtn.disabled = true;
-  compileBtn.innerHTML = '<span class="spinner"></span>编译中...';
-
-  try {
-    const version = document.getElementById('solcVersion').value;
-    await loadSolc(version);
-
-    const output = runCompile(source, version);
-
-    if (output.errors) {
-      const errors = output.errors.filter(e => e.severity === 'error');
-      const warnings = output.errors.filter(e => e.severity === 'warning');
-      warnings.forEach(w => log('警告: ' + w.formattedMessage.split('\n')[0], ''));
-      if (errors.length > 0) {
-        errors.forEach(e => log('错误: ' + e.formattedMessage.split('\n')[0], 'error'));
-        throw new Error('编译失败');
-      }
-    }
-
-    compiledContracts = {};
-    const contracts = output.contracts || {};
-    for (const file in contracts) {
-      for (const name in contracts[file]) {
-        const c = contracts[file][name];
-        if (c.evm && c.evm.bytecode && c.evm.bytecode.object) {
-          const key = file + ':' + name;
-          compiledContracts[key] = {
-            name,
-            file,
-            abi: c.abi,
-            bytecode: c.evm.bytecode.object
-          };
-        }
-      }
-    }
-
-    const names = Object.keys(compiledContracts);
-    if (names.length === 0) {
-      log('未找到可部署的合约', 'error');
-      return;
-    }
-
-    contractSelect.innerHTML = '';
-    names.forEach(key => {
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = compiledContracts[key].name;
-      contractSelect.appendChild(opt);
-    });
-
-    deploySection.style.display = 'block';
-    log(`编译成功，找到 ${names.length} 个合约`, 'success');
-  } catch (e) {
-    log(e.message || '编译失败', 'error');
-  } finally {
-    compileBtn.disabled = false;
-    compileBtn.innerHTML = '编译合约';
-  }
 }
 
 async function connectWallet() {
@@ -385,20 +207,12 @@ async function connectWallet() {
 
 async function deployContract() {
   if (!currentAccount) { log('请先连接钱包', 'error'); return; }
-  const key = contractSelect.value;
-  if (!key || !compiledContracts[key]) { log('请先编译合约', 'error'); return; }
 
-  const contract = compiledContracts[key];
-  const ctorArgs = document.getElementById('ctorArgs').value.trim();
-  let deployData = '0x' + contract.bytecode;
-  if (ctorArgs) {
-    const args = ctorArgs.startsWith('0x') ? ctorArgs.slice(2) : ctorArgs;
-    deployData += args;
-  }
+  const deployData = '0x' + BYTECODE;
 
   deployBtn.disabled = true;
   deployBtn.innerHTML = '<span class="spinner"></span>部署中...';
-  log(`正在部署 ${contract.name}...`, 'info');
+  log('正在部署 Token (WOOF)...', 'info');
 
   try {
     const balance = await window.ethereum.request({
@@ -428,10 +242,16 @@ async function deployContract() {
     log('等待区块确认...', '');
 
     const receipt = await waitForReceipt(txHash);
-    const contractAddr = receipt.contractAddress;
     const gasUsed = Number(BigInt(receipt.gasUsed));
     const blockNum = Number(BigInt(receipt.blockNumber));
 
+    if (receipt.status === '0x0' || receipt.contractAddress === null) {
+      log('交易已上链但执行失败', 'error');
+      log(`区块高度: ${blockNum}，消耗 Gas: ${gasUsed}`, '');
+      throw new Error('部署失败，交易已回滚');
+    }
+
+    const contractAddr = receipt.contractAddress;
     log(`部署成功!`, 'success');
     log(`合约地址: ${contractAddr}`, 'success');
     log(`消耗 Gas: ${gasUsed}`, '');
@@ -455,7 +275,7 @@ async function deployContract() {
 
     resultSection.style.display = 'block';
     document.getElementById('resultCard').innerHTML = `
-      <div class="result-row"><span class="result-label">合约名称</span><span class="result-value">${contract.name}</span></div>
+      <div class="result-row"><span class="result-label">合约名称</span><span class="result-value">Token</span></div>
       <div class="result-row"><span class="result-label">合约地址</span><span class="result-value"><a href="${explorerBase}/address/${contractAddr}" target="_blank">${contractAddr}</a></span></div>
       <div class="result-row"><span class="result-label">交易哈希</span><span class="result-value"><a href="${explorerBase}/tx/${txHash}" target="_blank">${txHash}</a></span></div>
       <div class="result-row"><span class="result-label">区块高度</span><span class="result-value">${blockNum}</span></div>
@@ -487,8 +307,8 @@ function waitForReceipt(txHash) {
   });
 }
 
-log('ETH Deploy 工具已就绪', 'info');
-log('请粘贴 Solidity 代码，选择编译器版本，点击编译', '');
+log('WOOF 部署工具已就绪', 'info');
+log('连接 MetaMask 后点击部署按钮即可', '');
 </script>
 </body>
 </html>
