@@ -130,11 +130,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       创作者中心
     </button>
-    <button class="tab-btn" data-tab="overview">
+    <button class="tab-btn" data-tab="overview" id="overviewTab" style="display:none">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       合约概览
     </button>
-    <button class="tab-btn" data-tab="query">
+    <button class="tab-btn" data-tab="query" id="queryTab" style="display:none">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       数据查询
     </button>
@@ -171,8 +171,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <div id="creatorHasBuyMule" style="display:none">
             <div class="result-box" style="margin-top:12px">
               <div class="result-row"><span>BuyMule 地址</span><span class="mono" id="creatorBmAddr">--</span></div>
-              <div class="result-row"><span>BNB 余额</span><span id="creatorBmBNB">--</span></div>
-              <div class="result-row"><span>代币余额</span><span id="creatorBmToken">--</span></div>
             </div>
             <button class="btn-secondary" id="copyBmAddrBtn" style="margin-top:12px;width:100%">复制 BuyMule 地址</button>
           </div>
@@ -550,19 +548,16 @@ async function connectWallet() {
     factoryContract = getReadContract();
     factorySigned = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
 
-    const ownerAddr = await factoryContract.owner();
-    const pendingAddr = await factoryContract.pendingOwner();
-    isOwner = (ownerAddr.toLowerCase() === userAddress.toLowerCase());
-    isPendingOwner = (pendingAddr.toLowerCase() === userAddress.toLowerCase());
-    document.getElementById('ownerTab').style.display = isOwner ? '' : 'none';
-
+    // 立即更新 UI，不阻塞
     const btn = document.getElementById('connectBtn');
     btn.innerHTML = '<span class="btn-dot"></span>' + shortAddr(userAddress);
     btn.classList.add('connected');
-    showToast('钱包已连接' + (isOwner ? ' (Owner)' : ''));
+    showToast('钱包已连接: ' + shortAddr(userAddress));
+
+    // 后台异步加载数据（不 await）
     loadOverview();
     loadCreatorData();
-    if (isOwner) loadOwnerData();
+    checkOwnerRole();
 
     // 监听账户变化
     window.ethereum.on('accountsChanged', function(accounts) {
@@ -570,6 +565,8 @@ async function connectWallet() {
         userAddress = null; signer = null; provider = null; factorySigned = null;
         isOwner = false; isPendingOwner = false;
         document.getElementById('ownerTab').style.display = 'none';
+        document.getElementById('overviewTab').style.display = 'none';
+        document.getElementById('queryTab').style.display = 'none';
         document.getElementById('connectBtn').innerHTML = '<span class="btn-dot"></span>连接钱包';
         document.getElementById('connectBtn').classList.remove('connected');
         document.getElementById('creatorNotConnected').style.display = '';
@@ -588,6 +585,19 @@ async function connectWallet() {
     console.error(err);
     showToast('连接失败: ' + handleTxError(err), 'error');
   }
+}
+
+async function checkOwnerRole() {
+  try {
+    const fc = factoryContract || getReadContract();
+    const [ownerAddr, pendingAddr] = await Promise.all([fc.owner(), fc.pendingOwner()]);
+    isOwner = (ownerAddr.toLowerCase() === userAddress.toLowerCase());
+    isPendingOwner = (pendingAddr.toLowerCase() === userAddress.toLowerCase());
+    document.getElementById('ownerTab').style.display = isOwner ? '' : 'none';
+    document.getElementById('overviewTab').style.display = isOwner ? '' : 'none';
+    document.getElementById('queryTab').style.display = isOwner ? '' : 'none';
+    if (isOwner) loadOwnerData();
+  } catch (err) { console.error(err); }
 }
 
 // ========== Tab 切换 ==========
@@ -633,11 +643,8 @@ async function loadCreatorData() {
 
   const fc = factoryContract || getReadContract();
   try {
-    const [bmAddr, stats] = await Promise.all([
-      fc.getBuyMuleByCreator(userAddress),
-      fc.getCreatorStats(userAddress)
-    ]);
-    const hasBm = bmAddr !== ethers.constants.AddressZero;
+    const stats = await fc.getCreatorStats(userAddress);
+    const hasBm = stats._buyMule !== ethers.constants.AddressZero;
 
     // 统计卡片
     const statsHtml = `
@@ -654,13 +661,7 @@ async function loadCreatorData() {
     if (hasBm) {
       document.getElementById('creatorNoBuyMule').style.display = 'none';
       document.getElementById('creatorHasBuyMule').style.display = '';
-      document.getElementById('creatorBmAddr').textContent = bmAddr;
-      const [bnb, tok] = await Promise.all([
-        fc.getBuyMuleBNBBalance(bmAddr),
-        fc.getBuyMuleTokenBalance(bmAddr, await fc.token())
-      ]);
-      document.getElementById('creatorBmBNB').textContent = formatBNB(bnb);
-      document.getElementById('creatorBmToken').textContent = formatToken(tok);
+      document.getElementById('creatorBmAddr').textContent = stats._buyMule;
     } else {
       document.getElementById('creatorNoBuyMule').style.display = '';
       document.getElementById('creatorHasBuyMule').style.display = 'none';
