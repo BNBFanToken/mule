@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETH 合约部署工具</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080c;--panel:#101018;--panel2:#16161f;--border:#1e1e2e;
+  --amber:#e8a849;--amber-dim:#b8842e;--green:#3ecf8e;--red:#ef4444;
+  --text:#d4d4d8;--text2:#71717a;--text3:#3f3f46;
+  --mono:'JetBrains Mono',monospace;--sans:'Noto Sans SC',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
+.app{display:grid;grid-template-rows:56px 1fr;height:100vh}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:var(--panel)}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.5px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber)}
+.header-right{display:flex;align-items:center;gap:16px}
+.net-badge{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:4px;background:#1a1a2e;border:1px solid var(--border);color:var(--text2)}
+.conn-btn{font-family:var(--mono);font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid var(--amber-dim);background:transparent;color:var(--amber);cursor:pointer;transition:all .2s}
+.conn-btn:hover{background:rgba(232,168,73,.1)}
+.conn-btn.connected{border-color:var(--green);color:var(--green)}
+
+/* Main layout */
+.main{display:grid;grid-template-columns:1fr 380px;overflow:hidden}
+
+/* Editor panel */
+.editor-panel{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+.editor-tabs{display:flex;align-items:center;padding:0 16px;height:40px;background:var(--panel);border-bottom:1px solid var(--border);gap:8px}
+.editor-tab{font-family:var(--mono);font-size:12px;color:var(--text2);padding:4px 12px;border-radius:4px;background:var(--panel2);border:1px solid var(--border)}
+.editor-tab.active{color:var(--amber);border-color:var(--amber-dim)}
+.editor-wrap{flex:1;position:relative;overflow:hidden}
+#code{width:100%;height:100%;background:var(--bg);color:#c9d1d9;border:none;outline:none;resize:none;padding:16px 20px;font-family:var(--mono);font-size:13px;line-height:1.7;tab-size:4;white-space:pre;overflow:auto}
+#code::placeholder{color:var(--text3)}
+.editor-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--panel);border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text3)}
+
+/* Right panel */
+.right-panel{display:flex;flex-direction:column;overflow-y:auto;background:var(--panel)}
+.section{padding:20px;border-bottom:1px solid var(--border)}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);margin-bottom:14px}
+
+/* Form elements */
+label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500}
+select,input[type=text],input[type=number]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+select:focus,input:focus{border-color:var(--amber-dim)}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2371717a'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.row{display:flex;gap:10px;margin-bottom:12px}
+.row>*{flex:1}
+.check-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.check-row input{width:auto;accent-color:var(--amber)}
+.check-row label{margin:0;font-size:12px;color:var(--text2);cursor:pointer}
+
+/* Buttons */
+.btn{width:100%;padding:10px;border:none;border-radius:6px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--amber);color:#08080c}
+.btn-primary:hover{background:#f0b85a;transform:translateY(-1px);box-shadow:0 4px 16px rgba(232,168,73,.25)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border);margin-top:8px}
+.btn-secondary:hover{border-color:var(--text2)}
+.btn-secondary:disabled{opacity:.4;cursor:not-allowed}
+
+/* Status / Log */
+.log{font-family:var(--mono);font-size:11px;line-height:1.8;max-height:260px;overflow-y:auto;padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)}
+.log-line{display:flex;gap:8px}
+.log-time{color:var(--text3);flex-shrink:0}
+.log-msg{color:var(--text2);word-break:break-all}
+.log-msg.success{color:var(--green)}
+.log-msg.error{color:var(--red)}
+.log-msg.info{color:var(--amber)}
+
+/* Deploy result */
+.result-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px}
+.result-label{color:var(--text2)}
+.result-value{font-family:var(--mono);color:var(--text);word-break:break-all;text-align:right;max-width:200px}
+.result-value a{color:var(--amber);text-decoration:none}
+.result-value a:hover{text-decoration:underline}
+
+/* Spinner */
+.spinner{width:14px;height:14px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text2)}
+
+/* Responsive */
+@media(max-width:900px){
+  .main{grid-template-columns:1fr;grid-template-rows:1fr auto}
+  .right-panel{max-height:50vh}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo"><span class="logo-dot"></span>ETH Deploy</div>
+    <div class="header-right">
+      <span class="net-badge" id="netName">未连接</span>
+      <button class="conn-btn" id="connBtn" onclick="connectWallet()">连接 MetaMask</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="editor-panel">
+      <div class="editor-tabs">
+        <span class="editor-tab active">Token.sol</span>
+      </div>
+      <div class="editor-wrap">
+        <textarea id="code" spellcheck="false" placeholder="// 在此粘贴 Solidity 合约代码...
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract MyToken {
+    // ...
+}"></textarea>
+      </div>
+      <div class="editor-footer">
+        <span id="charCount">0 字符</span>
+        <span>Solidity</span>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="section">
+        <div class="section-title">编译器设置</div>
+        <div class="row">
+          <div>
+            <label>编译器版本</label>
+            <select id="solcVersion">
+              <option value="0.8.28">v0.8.28</option>
+              <option value="0.8.27">v0.8.27</option>
+              <option value="0.8.26">v0.8.26</option>
+              <option value="0.8.25">v0.8.25</option>
+              <option value="0.8.24">v0.8.24</option>
+              <option value="0.8.23">v0.8.23</option>
+              <option value="0.8.22">v0.8.22</option>
+              <option value="0.8.21">v0.8.21</option>
+              <option value="0.8.20">v0.8.20</option>
+              <option value="0.8.19" selected>v0.8.19</option>
+              <option value="0.8.18">v0.8.18</option>
+              <option value="0.8.17">v0.8.17</option>
+              <option value="0.8.16">v0.8.16</option>
+              <option value="0.8.15">v0.8.15</option>
+              <option value="0.8.7">v0.8.7</option>
+              <option value="0.8.0">v0.8.0</option>
+              <option value="0.7.6">v0.7.6</option>
+              <option value="0.7.0">v0.7.0</option>
+              <option value="0.6.12">v0.6.12</option>
+              <option value="0.5.17">v0.5.17</option>
+            </select>
+          </div>
+        </div>
+        <div class="check-row">
+          <input type="checkbox" id="optCheck" checked>
+          <label for="optCheck">启用优化</label>
+          <input type="number" id="optRuns" value="200" style="width:70px;margin-left:auto" min="1">
+        </div>
+        <label>EVM 版本</label>
+        <select id="evmVersion" style="margin-bottom:14px">
+          <option value="default">default</option>
+          <option value="london" selected>london</option>
+          <option value="paris">paris</option>
+          <option value="shanghai">shanghai</option>
+          <option value="cancun">cancun</option>
+        </select>
+        <button class="btn btn-primary" id="compileBtn" onclick="compileCode()">
+          编译合约
+        </button>
+      </div>
+      <div class="section" id="deploySection" style="display:none">
+        <div class="section-title">部署设置</div>
+        <label>选择合约</label>
+        <select id="contractSelect" style="margin-bottom:12px"></select>
+        <label>构造函数参数（ABI 编码，可选）</label>
+        <input type="text" id="ctorArgs" placeholder="例: 000000000000000000000000..." style="margin-bottom:14px">
+        <button class="btn btn-primary" id="deployBtn" onclick="deployContract()">
+          部署合约
+        </button>
+      </div>
+      <div class="section" id="resultSection" style="display:none">
+        <div class="section-title">部署结果</div>
+        <div class="result-card" id="resultCard"></div>
+      </div>
+      <div class="section" style="flex:1">
+        <div class="section-title">日志</div>
+        <div class="log" id="logBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let solcModule = null;
+let loadedVersion = null;
+let solcBuilds = null;
+let compiledContracts = {};
+let currentAccount = null;
+let currentChainId = null;
+
+const codeEl = document.getElementById('code');
+const logBox = document.getElementById('logBox');
+const compileBtn = document.getElementById('compileBtn');
+const deployBtn = document.getElementById('deployBtn');
+const deploySection = document.getElementById('deploySection');
+const resultSection = document.getElementById('resultSection');
+const contractSelect = document.getElementById('contractSelect');
+
+codeEl.addEventListener('input', () => {
+  document.getElementById('charCount').textContent = codeEl.value.length + ' 字符';
+});
+
+function log(msg, type = '') {
+  const now = new Date();
+  const time = now.toTimeString().slice(0, 8);
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span>`;
+  logBox.appendChild(line);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+async function fetchSolcBuilds() {
+  if (solcBuilds) return solcBuilds;
+  const res = await fetch('https://binaries.soliditylang.org/wasm/list.json');
+  solcBuilds = await res.json();
+  return solcBuilds;
+}
+
+async function loadSolc(version) {
+  if (solcModule && loadedVersion === version) return solcModule;
+  if (loadedVersion !== version) {
+    solcModule = null;
+    loadedVersion = null;
+    if (typeof Module !== 'undefined') {
+      try { delete window.Module; } catch(e) { window.Module = undefined; }
+    }
+  }
+  log(`正在加载编译器 v${version}...`, 'info');
+  const builds = await fetchSolcBuilds();
+  const entry = builds.releases[version];
+  if (!entry) throw new Error(`未找到编译器版本 v${version}`);
+  const url = 'https://binaries.soliditylang.org/wasm/' + entry;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = () => {
+      const check = setInterval(() => {
+        if (typeof Module !== 'undefined' && Module.cwrap) {
+          clearInterval(check);
+          solcModule = Module;
+          loadedVersion = version;
+          log('编译器加载完成', 'success');
+          resolve(Module);
+        }
+      }, 100);
+      setTimeout(() => {
+        clearInterval(check);
+        if (!solcModule) reject(new Error('编译器加载超时'));
+      }, 30000);
+    };
+    script.onerror = () => reject(new Error('编译器加载失败，请检查网络'));
+    document.head.appendChild(script);
+  });
+}
+
+function runCompile(source, version) {
+  const compile = solcModule.cwrap('compile', 'string', ['string', 'number']);
+  const input = JSON.stringify({
+    language: 'Solidity',
+    sources: { 'contract.sol': { content: source } },
+    settings: {
+      optimizer: {
+        enabled: document.getElementById('optCheck').checked,
+        runs: parseInt(document.getElementById('optRuns').value) || 200
+      },
+      evmVersion: document.getElementById('evmVersion').value,
+      outputSelection: { '*': { '*': ['abi', 'evm.bytecode.object'] } }
+    }
+  });
+  const output = JSON.parse(compile(input, 0));
+  return output;
+}
+
+async function compileCode() {
+  const source = codeEl.value.trim();
+  if (!source) { log('请先输入合约代码', 'error'); return; }
+
+  compileBtn.disabled = true;
+  compileBtn.innerHTML = '<span class="spinner"></span>编译中...';
+
+  try {
+    const version = document.getElementById('solcVersion').value;
+    await loadSolc(version);
+
+    const output = runCompile(source, version);
+
+    if (output.errors) {
+      const errors = output.errors.filter(e => e.severity === 'error');
+      const warnings = output.errors.filter(e => e.severity === 'warning');
+      warnings.forEach(w => log('警告: ' + w.formattedMessage.split('\n')[0], ''));
+      if (errors.length > 0) {
+        errors.forEach(e => log('错误: ' + e.formattedMessage.split('\n')[0], 'error'));
+        throw new Error('编译失败');
+      }
+    }
+
+    compiledContracts = {};
+    const contracts = output.contracts || {};
+    for (const file in contracts) {
+      for (const name in contracts[file]) {
+        const c = contracts[file][name];
+        if (c.evm && c.evm.bytecode && c.evm.bytecode.object) {
+          const key = file + ':' + name;
+          compiledContracts[key] = {
+            name,
+            file,
+            abi: c.abi,
+            bytecode: c.evm.bytecode.object
+          };
+        }
+      }
+    }
+
+    const names = Object.keys(compiledContracts);
+    if (names.length === 0) {
+      log('未找到可部署的合约', 'error');
+      return;
+    }
+
+    contractSelect.innerHTML = '';
+    names.forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = compiledContracts[key].name;
+      contractSelect.appendChild(opt);
+    });
+
+    deploySection.style.display = 'block';
+    log(`编译成功，找到 ${names.length} 个合约`, 'success');
+  } catch (e) {
+    log(e.message || '编译失败', 'error');
+  } finally {
+    compileBtn.disabled = false;
+    compileBtn.innerHTML = '编译合约';
+  }
+}
+
+async function connectWallet() {
+  if (typeof window.ethereum === 'undefined') {
+    log('未检测到 MetaMask，请先安装', 'error');
+    return;
+  }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    currentAccount = accounts[0];
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    currentChainId = parseInt(chainId, 16);
+
+    const btn = document.getElementById('connBtn');
+    btn.classList.add('connected');
+    btn.textContent = currentAccount.slice(0, 6) + '...' + currentAccount.slice(-4);
+
+    const netNames = {1:'以太坊主网',11155111:'Sepolia 测试网',5:'Goerli 测试网',17000:'Holesky 测试网',56:'BSC 主网',137:'Polygon 主网',42161:'Arbitrum One',10:'Optimism',8453:'Base',43114:'Avalanche C-Chain',250:'Fantom',324:'zkSync Era'};
+    document.getElementById('netName').textContent = netNames[currentChainId] || `Chain ${currentChainId}`;
+
+    log(`已连接: ${currentAccount}`, 'success');
+
+    window.ethereum.on('accountsChanged', (accs) => {
+      if (accs.length > 0) {
+        currentAccount = accs[0];
+        btn.textContent = currentAccount.slice(0, 6) + '...' + currentAccount.slice(-4);
+        log('账户已切换: ' + currentAccount, 'info');
+      }
+    });
+    window.ethereum.on('chainChanged', () => window.location.reload());
+  } catch (e) {
+    log('连接失败: ' + e.message, 'error');
+  }
+}
+
+async function deployContract() {
+  if (!currentAccount) { log('请先连接钱包', 'error'); return; }
+  const key = contractSelect.value;
+  if (!key || !compiledContracts[key]) { log('请先编译合约', 'error'); return; }
+
+  const contract = compiledContracts[key];
+  const ctorArgs = document.getElementById('ctorArgs').value.trim();
+  let deployData = '0x' + contract.bytecode;
+  if (ctorArgs) {
+    const args = ctorArgs.startsWith('0x') ? ctorArgs.slice(2) : ctorArgs;
+    deployData += args;
+  }
+
+  deployBtn.disabled = true;
+  deployBtn.innerHTML = '<span class="spinner"></span>部署中...';
+  log(`正在部署 ${contract.name}...`, 'info');
+
+  try {
+    const balance = await window.ethereum.request({
+      method: 'eth_getBalance',
+      params: [currentAccount, 'latest']
+    });
+    const ethBalance = Number(BigInt(balance)) / 1e18;
+    log(`当前余额: ${ethBalance.toFixed(6)} ETH`, '');
+
+    const gasEstimate = await window.ethereum.request({
+      method: 'eth_estimateGas',
+      params: [{ from: currentAccount, data: deployData }]
+    });
+    const gasBigInt = BigInt(gasEstimate);
+    const gasLimit = Number(gasBigInt * 120n / 100n);
+    log(`预估 Gas: ${gasBigInt}`, '');
+
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: currentAccount,
+        data: deployData,
+        gas: '0x' + BigInt(gasLimit).toString(16)
+      }]
+    });
+    log(`交易已发送: ${txHash}`, 'info');
+    log('等待区块确认...', '');
+
+    const receipt = await waitForReceipt(txHash);
+    const contractAddr = receipt.contractAddress;
+    const gasUsed = Number(BigInt(receipt.gasUsed));
+    const blockNum = Number(BigInt(receipt.blockNumber));
+
+    log(`部署成功!`, 'success');
+    log(`合约地址: ${contractAddr}`, 'success');
+    log(`消耗 Gas: ${gasUsed}`, '');
+    log(`区块高度: ${blockNum}`, '');
+
+    const explorers = {
+      1: 'https://etherscan.io',
+      11155111: 'https://sepolia.etherscan.io',
+      17000: 'https://holesky.etherscan.io',
+      56: 'https://bscscan.com',
+      137: 'https://polygonscan.com',
+      42161: 'https://arbiscan.io',
+      10: 'https://optimistic.etherscan.io',
+      8453: 'https://basescan.org',
+      43114: 'https://snowtrace.io',
+      250: 'https://ftmscan.com',
+      8217: 'https://scope.klaytn.com',
+      324: 'https://explorer.zksync.io'
+    };
+    const explorerBase = explorers[currentChainId] || 'https://etherscan.io';
+
+    resultSection.style.display = 'block';
+    document.getElementById('resultCard').innerHTML = `
+      <div class="result-row"><span class="result-label">合约名称</span><span class="result-value">${contract.name}</span></div>
+      <div class="result-row"><span class="result-label">合约地址</span><span class="result-value"><a href="${explorerBase}/address/${contractAddr}" target="_blank">${contractAddr}</a></span></div>
+      <div class="result-row"><span class="result-label">交易哈希</span><span class="result-value"><a href="${explorerBase}/tx/${txHash}" target="_blank">${txHash}</a></span></div>
+      <div class="result-row"><span class="result-label">区块高度</span><span class="result-value">${blockNum}</span></div>
+      <div class="result-row"><span class="result-label">Gas 消耗</span><span class="result-value">${gasUsed}</span></div>
+      <div class="result-row"><span class="result-label">部署者</span><span class="result-value"><a href="${explorerBase}/address/${currentAccount}" target="_blank">${currentAccount}</a></span></div>
+    `;
+  } catch (e) {
+    log('部署失败: ' + (e.message || e), 'error');
+  } finally {
+    deployBtn.disabled = false;
+    deployBtn.innerHTML = '部署合约';
+  }
+}
+
+function waitForReceipt(txHash) {
+  return new Promise((resolve, reject) => {
+    const check = async () => {
+      try {
+        const receipt = await window.ethereum.request({
+          method: 'eth_getTransactionReceipt',
+          params: [txHash]
+        });
+        if (receipt) { resolve(receipt); return; }
+      } catch (e) {}
+      setTimeout(check, 3000);
+    };
+    check();
+    setTimeout(() => reject(new Error('等待超时')), 300000);
+  });
+}
+
+log('ETH Deploy 工具已就绪', 'info');
+log('请粘贴 Solidity 代码，选择编译器版本，点击编译', '');
+</script>
+</body>
+</html>
