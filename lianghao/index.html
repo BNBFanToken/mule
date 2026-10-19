@@ -1,657 +1,1066 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style rel="stylesheet" type="text/css">@charset "utf-8";
-
-*, ::before, ::after { margin: 0px; padding: 0px; box-sizing: border-box; }
-
-:root { --gold-50: #FFFBEB; --gold-100: #FEF3C7; --gold-200: #FDE68A; --gold-300: #FCD34D; --gold-400: #FBBF24; --gold-500: #F59E0B; --gold-600: #D97706; --gold-700: #B45309; --amber-glow: rgba(251, 191, 36, 0.15); --bg: #FFFEF9; --bg-card: #FFFFFF; --text-primary: #1C1917; --text-secondary: #57534E; --text-muted: #A8A29E; --border: #E7E5E4; --border-gold: rgba(251, 191, 36, 0.3); --success: #059669; --success-bg: #ECFDF5; --error: #DC2626; --error-bg: #FEF2F2; --radius: 16px; --radius-sm: 10px; --radius-xs: 6px; --shadow-sm: 0 1px 3px rgba(28,25,23,0.04), 0 1px 2px rgba(28,25,23,0.03); --shadow-md: 0 4px 16px rgba(28,25,23,0.06), 0 2px 4px rgba(28,25,23,0.03); --shadow-lg: 0 12px 40px rgba(28,25,23,0.08), 0 4px 12px rgba(28,25,23,0.04); --shadow-gold: 0 8px 32px rgba(251,191,36,0.15), 0 2px 8px rgba(251,191,36,0.1); }
-
-body { font-family: "Noto Sans SC", -apple-system, sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; position: relative; }
-
-body::before { content: ""; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(at 20% 20%, rgba(251, 191, 36, 0.08) 0%, transparent 50%), radial-gradient(at 80% 80%, rgba(253, 224, 71, 0.06) 0%, transparent 50%), radial-gradient(rgba(245, 158, 11, 0.03) 0%, transparent 70%); animation: 20s ease-in-out 0s infinite alternate none running bgShift; z-index: 0; pointer-events: none; }
-
-@keyframes bgShift { 
-  0% { transform: translate(0px, 0px) rotate(0deg); }
-  100% { transform: translate(-2%, -2%) rotate(3deg); }
-}
-
-.noise-overlay { position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1; }
-
-.container { max-width: 680px; margin: 0px auto; padding: 40px 20px 60px; position: relative; z-index: 2; }
-
-.header { text-align: center; margin-bottom: 48px; animation: 0.8s ease-out 0s 1 normal none running fadeUp; }
-
-.header-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--gold-50), var(--gold-100)); border: 1px solid var(--border-gold); border-radius: 100px; padding: 6px 16px; font-size: 12px; font-weight: 500; color: var(--gold-700); margin-bottom: 20px; letter-spacing: 0.5px; }
-
-.header-badge svg { width: 14px; height: 14px; }
-
-.header h1 { font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 12px; background-image: ; background-position-x: ; background-position-y: ; background-size: ; background-repeat: ; background-attachment: ; background-origin: ; background-color: ; -webkit-text-fill-color: transparent; background-clip: text; }
-
-.header p { font-size: 15px; color: var(--text-secondary); line-height: 1.6; max-width: 480px; margin: 0px auto; }
-
-.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; box-shadow: var(--shadow-sm); transition: 0.3s; animation: 0.8s ease-out 0s 1 normal both running fadeUp; }
-
-.card:nth-child(2) { animation-delay: 0.1s; }
-
-.card:nth-child(3) { animation-delay: 0.2s; }
-
-.card:nth-child(4) { animation-delay: 0.3s; }
-
-.card:hover { box-shadow: var(--shadow-md); border-color: var(--border-gold); }
-
-.card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-
-.card-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-
-.card-icon.gold { background: linear-gradient(135deg, var(--gold-100), var(--gold-200)); color: var(--gold-700); }
-
-.card-icon.green { background: linear-gradient(135deg, rgb(236, 253, 245), rgb(209, 250, 229)); color: var(--success); }
-
-.card-icon.blue { background: linear-gradient(135deg, rgb(239, 246, 255), rgb(219, 234, 254)); color: rgb(37, 99, 235); }
-
-.card-icon svg { width: 20px; height: 20px; }
-
-.card-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
-
-.card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-
-.btn-connect { width: 100%; padding: 14px 24px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; border-radius: var(--radius-sm); font-family: "Noto Sans SC", sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(135deg, var(--gold-400), var(--gold-500)); color: rgb(255, 255, 255); box-shadow: var(--shadow-gold); position: relative; overflow: hidden; }
-
-.btn-connect::before { content: ""; position: absolute; top: 0px; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent); transition: left 0.5s; }
-
-.btn-connect:hover::before { left: 100%; }
-
-.btn-connect:hover { transform: translateY(-1px); box-shadow: rgba(251, 191, 36, 0.25) 0px 12px 40px; }
-
-.btn-connect:active { transform: translateY(0px); }
-
-.btn-connect:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-
-.btn-connect svg { width: 20px; height: 20px; }
-
-.wallet-info { display: none; animation: 0.4s ease-out 0s 1 normal none running fadeIn; }
-
-.wallet-info.show { display: block; }
-
-.info-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0px; border-bottom: 1px solid var(--border); }
-
-.info-row:last-child { border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; }
-
-.info-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
-
-.info-value { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
-
-.info-value .addr { color: var(--gold-700); background: var(--gold-50); padding: 2px 8px; border-radius: var(--radius-xs); font-size: 12px; }
-
-.nonce-section { display: none; }
-
-.nonce-section.show { display: block; }
-
-.input-group { display: flex; gap: 10px; margin-bottom: 16px; }
-
-.input-wrapper { flex: 1 1 0%; position: relative; }
-
-.input-wrapper input { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--text-primary); background: var(--bg); transition: 0.2s; outline: none; }
-
-.input-wrapper input:focus { border-color: var(--gold-400); box-shadow: 0 0 0 3px var(--amber-glow); }
-
-.input-wrapper input::placeholder { color: var(--text-muted); font-family: "Noto Sans SC", sans-serif; font-size: 13px; }
-
-.btn { padding: 12px 20px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; border-radius: var(--radius-sm); font-family: "Noto Sans SC", sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
-
-.btn-primary { background: linear-gradient(135deg, var(--gold-400), var(--gold-500)); color: rgb(255, 255, 255); box-shadow: var(--shadow-gold); }
-
-.btn-primary:hover { transform: translateY(-1px); }
-
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-
-.btn-secondary { background: var(--bg); color: var(--text-primary); border: 1.5px solid var(--border); }
-
-.btn-secondary:hover { border-color: var(--gold-400); background: var(--gold-50); }
-
-.target-section { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 14px 16px; background: linear-gradient(135deg, var(--gold-50), #FFF); border: 1px solid var(--border-gold); border-radius: var(--radius-sm); }
-
-.target-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
-
-.target-input { flex: 1 1 0%; padding: 8px 12px; border: 1.5px solid var(--border-gold); border-radius: var(--radius-xs); font-family: "JetBrains Mono", monospace; font-size: 14px; font-weight: 600; color: var(--gold-700); background: rgb(255, 255, 255); text-align: center; outline: none; letter-spacing: 2px; transition: 0.2s; }
-
-.target-input:focus { border-color: var(--gold-400); box-shadow: 0 0 0 3px var(--amber-glow); }
-
-.progress-section { display: none; }
-
-.progress-section.show { display: block; }
-
-.progress-bar-wrap { width: 100%; height: 6px; background: var(--gold-100); border-radius: 100px; overflow: hidden; margin-bottom: 12px; }
-
-.progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold-400), var(--gold-500)); border-radius: 100px; width: 0%; transition: width 0.15s; }
-
-.progress-stats { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-family: "JetBrains Mono", monospace; }
-
-.result-section { display: none; }
-
-.result-section.show { display: block; animation: 0.5s ease-out 0s 1 normal none running fadeIn; }
-
-.result-box { background: linear-gradient(135deg, var(--gold-50), #FFF); border: 2px solid var(--gold-300); border-radius: var(--radius); padding: 24px; text-align: center; position: relative; overflow: hidden; }
-
-.result-box::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(251, 191, 36, 0.06) 0%, transparent 70%); animation: 3s ease-in-out 0s infinite normal none running pulse; }
-
-@keyframes pulse { 
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.1); opacity: 1; }
-}
-
-.result-label { font-size: 12px; font-weight: 600; color: var(--gold-600); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; position: relative; }
-
-.result-address { font-family: "JetBrains Mono", monospace; font-size: 15px; font-weight: 600; color: var(--text-primary); word-break: break-all; line-height: 1.6; position: relative; cursor: pointer; padding: 12px; border-radius: var(--radius-xs); transition: background 0.2s; }
-
-.result-address:hover { background: rgba(251, 191, 36, 0.08); }
-
-.result-address .highlight { color: var(--gold-600); font-weight: 700; text-shadow: rgba(251, 191, 36, 0.3) 0px 0px 8px; }
-
-.result-meta { display: flex; justify-content: center; gap: 24px; margin-top: 16px; position: relative; }
-
-.result-meta-item { font-size: 12px; color: var(--text-secondary); }
-
-.result-meta-item span { font-family: "JetBrains Mono", monospace; font-weight: 600; color: var(--gold-700); }
-
-.btn-copy { margin-top: 16px; padding: 10px 24px; background: rgb(255, 255, 255); border: 1.5px solid var(--gold-300); border-radius: var(--radius-sm); font-family: "Noto Sans SC", sans-serif; font-size: 13px; font-weight: 600; color: var(--gold-700); cursor: pointer; transition: 0.2s; position: relative; }
-
-.btn-copy:hover { background: var(--gold-50); border-color: var(--gold-400); }
-
-.status-msg { display: none; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; margin-top: 12px; animation: 0.3s ease-out 0s 1 normal none running fadeIn; }
-
-.status-msg.show { display: flex; align-items: center; gap: 8px; }
-
-.status-msg.success { background: var(--success-bg); color: var(--success); }
-
-.status-msg.error { background: var(--error-bg); color: var(--error); }
-
-.spinner { width: 16px; height: 16px; border-top-style: ; border-top-width: ; border-right-color: ; border-right-style: ; border-right-width: ; border-bottom-color: ; border-bottom-style: ; border-bottom-width: ; border-left-color: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; border-top-color: var(--gold-500); border-radius: 50%; animation: 0.6s linear 0s infinite normal none running spin; display: inline-block; }
-
-@keyframes spin { 
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes fadeUp { 
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0px); }
-}
-
-@keyframes fadeIn { 
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-primary); color: rgb(255, 255, 255); padding: 12px 24px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; z-index: 999; transition: transform 0.3s; box-shadow: var(--shadow-lg); }
-
-.toast.show { transform: translateX(-50%) translateY(0px); }
-
-@media (max-width: 640px) {
-  .container { padding: 24px 16px 40px; }
-  .header h1 { font-size: 28px; }
-  .card { padding: 20px; }
-  .input-group { flex-direction: column; }
-  .result-address { font-size: 13px; }
-}</style>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CREATE2 靓号搜索 · 代币部署工具</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com/">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREATE2 靓号搜索 · 代币部署工具</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* === 重置和变量 === */
+    *, ::before, ::after { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --gold-50: #FFFBEB; --gold-100: #FEF3C7; --gold-200: #FDE68A; --gold-300: #FCD34D;
+      --gold-400: #FBBF24; --gold-500: #F59E0B; --gold-600: #D97706; --gold-700: #B45309;
+      --amber-glow: rgba(251, 191, 36, 0.15);
+      --bg: #FFFEF9; --bg-card: #FFFFFF;
+      --text-primary: #1C1917; --text-secondary: #57534E; --text-muted: #A8A29E;
+      --border: #E7E5E4; --border-gold: rgba(251, 191, 36, 0.3);
+      --success: #059669; --success-bg: #ECFDF5;
+      --error: #DC2626; --error-bg: #FEF2F2;
+      --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
+      --shadow-sm: 0 1px 3px rgba(28,25,23,0.04), 0 1px 2px rgba(28,25,23,0.03);
+      --shadow-md: 0 4px 16px rgba(28,25,23,0.06), 0 2px 4px rgba(28,25,23,0.03);
+      --shadow-lg: 0 12px 40px rgba(28,25,23,0.08), 0 4px 12px rgba(28,25,23,0.04);
+      --shadow-gold: 0 8px 32px rgba(251,191,36,0.15), 0 2px 8px rgba(251,191,36,0.1);
+    }
+    
+    /* === 基础样式 === */
+    body {
+      font-family: "Noto Sans SC", -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: fixed;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: 
+        radial-gradient(at 20% 20%, rgba(251, 191, 36, 0.08) 0%, transparent 50%),
+        radial-gradient(at 80% 80%, rgba(253, 224, 71, 0.06) 0%, transparent 50%),
+        radial-gradient(rgba(245, 158, 11, 0.03) 0%, transparent 70%);
+      animation: 20s ease-in-out infinite alternate bgShift;
+      z-index: 0;
+      pointer-events: none;
+    }
+    
+    @keyframes bgShift {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(-2%, -2%) rotate(3deg); }
+    }
+    
+    .noise-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    /* === 布局 === */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    /* === 头部 === */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: 0.8s ease-out fadeUp;
+    }
+    
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, var(--gold-50), var(--gold-100));
+      border: 1px solid var(--border-gold);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gold-700);
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    
+    .header-badge svg { width: 14px; height: 14px; }
+    
+    .header h1 {
+      font-size: 36px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--gold-500), var(--gold-700));
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .header p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    
+    /* === 卡片 === */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: 0.3s;
+      animation: 0.8s ease-out fadeUp both;
+    }
+    
+    .card:nth-child(2) { animation-delay: 0.1s; }
+    .card:nth-child(3) { animation-delay: 0.2s; }
+    .card:nth-child(4) { animation-delay: 0.3s; }
+    
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-gold);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .card-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .card-icon.gold { background: linear-gradient(135deg, var(--gold-100), var(--gold-200)); color: var(--gold-700); }
+    .card-icon.green { background: linear-gradient(135deg, rgb(236, 253, 245), rgb(209, 250, 229)); color: var(--success); }
+    .card-icon.blue { background: linear-gradient(135deg, rgb(239, 246, 255), rgb(219, 234, 254)); color: rgb(37, 99, 235); }
+    .card-icon svg { width: 20px; height: 20px; }
+    
+    .card-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    
+    /* === 按钮 === */
+    .btn-connect {
+      width: 100%;
+      padding: 14px 24px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--gold-400), var(--gold-500));
+      color: white;
+      box-shadow: var(--shadow-gold);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-connect::before {
+      content: "";
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .btn-connect:hover::before { left: 100%; }
+    .btn-connect:hover { transform: translateY(-1px); box-shadow: 0 12px 40px rgba(251, 191, 36, 0.25); }
+    .btn-connect:active { transform: translateY(0); }
+    .btn-connect:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    .btn-connect svg { width: 20px; height: 20px; }
+    
+    /* === 钱包信息 === */
+    .wallet-info { display: none; animation: 0.4s ease-out fadeIn; }
+    .wallet-info.show { display: block; }
+    
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    
+    .info-value {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .info-value .addr {
+      color: var(--gold-700);
+      background: var(--gold-50);
+      padding: 2px 8px;
+      border-radius: var(--radius-xs);
+      font-size: 12px;
+    }
+    
+    /* === 搜索配置 === */
+    .search-section { display: none; }
+    .search-section.show { display: block; }
+    
+    .input-group { display: flex; gap: 10px; margin-bottom: 16px; }
+    .input-wrapper { flex: 1; position: relative; }
+    
+    .input-wrapper input,
+    .input-wrapper textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg);
+      transition: 0.2s;
+      outline: none;
+    }
+    
+    .input-wrapper textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-size: 11px;
+    }
+    
+    .input-wrapper input:focus,
+    .input-wrapper textarea:focus {
+      border-color: var(--gold-400);
+      box-shadow: 0 0 0 3px var(--amber-glow);
+    }
+    
+    .input-wrapper input::placeholder,
+    .input-wrapper textarea::placeholder {
+      color: var(--text-muted);
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 13px;
+    }
+    
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold-400), var(--gold-500));
+      color: white;
+      box-shadow: var(--shadow-gold);
+    }
+    
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text-primary);
+      border: 1.5px solid var(--border);
+    }
+    
+    .btn-secondary:hover { border-color: var(--gold-400); background: var(--gold-50); }
+    
+    .target-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--gold-50), white);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-sm);
+    }
+    
+    .target-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+    
+    .target-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1.5px solid var(--border-gold);
+      border-radius: var(--radius-xs);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gold-700);
+      background: white;
+      text-align: center;
+      outline: none;
+      letter-spacing: 2px;
+      transition: 0.2s;
+    }
+    
+    .target-input:focus { border-color: var(--gold-400); box-shadow: 0 0 0 3px var(--amber-glow); }
+    
+    /* === 进度条 === */
+    .progress-section { display: none; }
+    .progress-section.show { display: block; }
+    
+    .progress-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: var(--gold-100);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-400), var(--gold-500));
+      border-radius: 100px;
+      width: 0%;
+      transition: width 0.15s;
+    }
+    
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: "JetBrains Mono", monospace;
+    }
+    
+    /* === 结果展示 === */
+    .result-section { display: none; }
+    .result-section.show { display: block; animation: 0.5s ease-out fadeIn; }
+    
+    .result-box {
+      background: linear-gradient(135deg, var(--gold-50), white);
+      border: 2px solid var(--gold-300);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .result-box::before {
+      content: "";
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.06) 0%, transparent 70%);
+      animation: 3s ease-in-out infinite pulse;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+    
+    .result-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold-600);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    
+    .result-address {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      word-break: break-all;
+      line-height: 1.6;
+      position: relative;
+      cursor: pointer;
+      padding: 12px;
+      border-radius: var(--radius-xs);
+      transition: background 0.2s;
+    }
+    
+    .result-address:hover { background: rgba(251, 191, 36, 0.08); }
+    
+    .result-address .highlight {
+      color: var(--gold-600);
+      font-weight: 700;
+      text-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
+    }
+    
+    .result-meta {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+      position: relative;
+    }
+    
+    .result-meta-item { font-size: 12px; color: var(--text-secondary); }
+    .result-meta-item span { font-family: "JetBrains Mono", monospace; font-weight: 600; color: var(--gold-700); }
+    
+    .btn-copy {
+      margin-top: 16px;
+      padding: 10px 24px;
+      background: white;
+      border: 1.5px solid var(--gold-300);
+      border-radius: var(--radius-sm);
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold-700);
+      cursor: pointer;
+      transition: 0.2s;
+      position: relative;
+    }
+    
+    .btn-copy:hover { background: var(--gold-50); border-color: var(--gold-400); }
+    
+    /* === 状态消息 === */
+    .status-msg {
+      display: none;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 12px;
+      animation: 0.3s ease-out fadeIn;
+    }
+    
+    .status-msg.show { display: flex; align-items: center; gap: 8px; }
+    .status-msg.success { background: var(--success-bg); color: var(--success); }
+    .status-msg.error { background: var(--error-bg); color: var(--error); }
+    
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--gold-500);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: 0.6s linear infinite spin;
+      display: inline-block;
+    }
+    
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    @keyframes fadeUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+    
+    /* === 提示框 === */
+    .toast {
+      position: fixed;
+      bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--text-primary);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 999;
+      transition: transform 0.3s;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    
+    /* === 响应式 === */
+    @media (max-width: 640px) {
+      .container { padding: 24px 16px 40px; }
+      .header h1 { font-size: 28px; }
+      .card { padding: 20px; }
+      .input-group { flex-direction: column; }
+      .result-address { font-size: 13px; }
+    }
+  </style>
 </head>
+
 <body>
-<div class="noise-overlay"></div>
-<div class="container">
-  <!-- Header -->
-  <div class="header">
-    <div class="header-badge">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
-      CREATE2 靓号搜索工具
+  <div class="noise-overlay"></div>
+  
+  <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <div class="header-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+        </svg>
+        CREATE2 靓号搜索工具
+      </div>
+      <h1>靓号合约地址生成器</h1>
+      <p>基于 CREATE2 搜索 Salt，找到目标后缀的合约地址，一键部署代币</p>
     </div>
-    <h1>靓号合约地址生成器</h1>
-    <p>基于 CREATE2 搜索 Salt，找到目标后缀的合约地址，一键部署代币</p>
-  </div>
-
-  <!-- Card 1: Connect Wallet -->
-  <div class="card" id="card-connect">
-    <div class="card-header">
-      <div class="card-icon gold">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M2 10h20"></path><circle cx="16" cy="14" r="2"></circle></svg>
+    
+    <!-- 卡片1：连接钱包 -->
+    <div class="card" id="card-connect">
+      <div class="card-header">
+        <div class="card-icon gold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+            <path d="M2 10h20"></path>
+            <circle cx="16" cy="14" r="2"></circle>
+          </svg>
+        </div>
+        <div>
+          <div class="card-title">连接钱包</div>
+          <div class="card-subtitle">支持 MetaMask 及所有 WalletConnect 钱包</div>
+        </div>
       </div>
-      <div>
-        <div class="card-title">连接钱包</div>
-        <div class="card-subtitle">支持 MetaMask 及所有 WalletConnect 钱包</div>
-      </div>
-    </div>
-
-    <button class="btn-connect" id="btn-connect">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"></path></svg>
-      连接钱包
-    </button>
-
-    <div class="wallet-info" id="wallet-info">
-      <div class="info-row">
-        <span class="info-label">钱包地址</span>
-        <span class="info-value"><span class="addr" id="wallet-address">-</span></span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">工厂合约</span>
-        <span class="info-value"><span class="addr" id="wallet-factory">-</span></span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">所在网络</span>
-        <span class="info-value" id="wallet-network">-</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">ETH 余额</span>
-        <span class="info-value" id="wallet-balance">-</span>
-      </div>
-    </div>
-
-    <div class="status-msg" id="connect-status"></div>
-  </div>
-
-  <!-- Card 2: Token Config + Search -->
-  <div class="card nonce-section" id="card-search">
-    <div class="card-header">
-      <div class="card-icon blue">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-      </div>
-      <div>
-        <div class="card-title">代币配置 & 地址搜索</div>
-        <div class="card-subtitle">配置代币信息和工厂合约，搜索匹配的 Salt</div>
-      </div>
-    </div>
-
-    <div class="input-group">
-      <div class="input-wrapper">
-        <input type="text" id="token-name" placeholder="代币全称，如 Woof" value="Woof">
-      </div>
-      <div class="input-wrapper">
-        <input type="text" id="token-symbol" placeholder="代币符号，如 WOOF" value="WOOF">
-      </div>
-    </div>
-
-    <div class="input-wrapper" style="margin-bottom:16px;">
-      <input type="text" id="factory-address" placeholder="工厂合约地址" value="0xe4c01128B7d9D9A38890E1EFfedc8b32E19238F3" style="font-size:12px;">
-    </div>
-
-    <div class="input-wrapper" style="margin-bottom:8px;">
-      <textarea id="token-bytecode" placeholder="粘贴 Token 合约的 Creation Code（从 Remix 编译结果中复制 Bytecode object）" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-primary);background:var(--bg);resize:vertical;min-height:60px;outline:none;transition:0.2s;"></textarea>
-    </div>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
-      <strong>获取 Creation Code：</strong>在 Remix 中编译 TokenFactory.sol → 展开 Compilation Details → 找到 Token 合约 → 复制 Bytecode 的 object 字段（不带 0x 前缀也行）
-    </div>
-
-    <div class="target-section">
-      <span class="target-label">目标后缀</span>
-      <input class="target-input" id="target-suffix" value="8888" maxlength="40" placeholder="8888">
-    </div>
-
-    <div class="input-group">
-      <div class="input-wrapper">
-        <input type="text" id="salt-start" placeholder="起始 Salt（默认 0）" pattern="[0-9]*" inputmode="numeric" value="0">
-      </div>
-      <div class="input-wrapper">
-        <input type="text" id="salt-range" placeholder="搜索范围（默认100万）" pattern="[0-9]*" inputmode="numeric" value="1000000">
-      </div>
-    </div>
-
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">
-      <strong>提示：</strong>CREATE2 搜索不需要消耗 Gas！每多一位后缀，搜索难度增加 16 倍。4 位后缀约需 ~6.5 万次，8 位后缀约需 ~43 亿次。建议先用短后缀测试。
-    </div>
-
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-primary" id="btn-search" style="flex:1;min-width:140px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-        单线程搜索
+      
+      <button class="btn-connect" id="btn-connect">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path>
+          <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
+          <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"></path>
+        </svg>
+        连接钱包
       </button>
-      <button class="btn btn-primary" id="btn-search-parallel" style="flex:1;min-width:140px;background:linear-gradient(135deg,#7C3AED,#A855F7);">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4M14 12h4"></path></svg>
-        多线程搜索
-      </button>
-      <button class="btn btn-secondary" id="btn-stop" disabled="">
-        停止
-      </button>
-    </div>
-
-    <div id="parallel-status" style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;"></div>
-
-    <!-- Progress -->
-    <div class="progress-section" id="progress-section">
-      <div style="height:12px;"></div>
-      <div class="progress-bar-wrap">
-        <div class="progress-bar" id="progress-bar"></div>
+      
+      <div class="wallet-info" id="wallet-info">
+        <div class="info-row">
+          <span class="info-label">钱包地址</span>
+          <span class="info-value"><span class="addr" id="wallet-address">-</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">工厂合约</span>
+          <span class="info-value"><span class="addr" id="wallet-factory">-</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">所在网络</span>
+          <span class="info-value" id="wallet-network">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">ETH 余额</span>
+          <span class="info-value" id="wallet-balance">-</span>
+        </div>
       </div>
-      <div class="progress-stats">
-        <span id="progress-current">已搜索: 0</span>
-        <span id="progress-speed">速度: 0/s</span>
-        <span id="progress-percent">0%</span>
+      
+      <div class="status-msg" id="connect-status"></div>
+    </div>
+    
+    <!-- 卡片2：搜索配置 -->
+    <div class="card search-section" id="card-search">
+      <div class="card-header">
+        <div class="card-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="card-title">地址搜索</div>
+          <div class="card-subtitle">配置工厂合约和字节码，搜索匹配的 Salt</div>
+        </div>
+      </div>
+      
+      <div class="input-wrapper" style="margin-bottom:16px;">
+        <input type="text" id="factory-address" placeholder="工厂合约地址" value="0xe4c01128B7d9D9A38890E1EFfedc8b32E19238F3" style="font-size:12px;">
+      </div>
+      
+      <div class="input-wrapper" style="margin-bottom:8px;">
+        <textarea id="token-bytecode" placeholder="粘贴完整的 Creation Code（从 Remix 编译结果中复制 Bytecode object，包含构造函数参数）"></textarea>
+      </div>
+      
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
+        <strong>获取方法：</strong>在 Remix 中编译 TokenFactory.sol → 展开 Compilation Details → 找到 Token 合约 → 复制 Bytecode 的 object 字段
+      </div>
+      
+      <div class="target-section">
+        <span class="target-label">目标后缀</span>
+        <input class="target-input" id="target-suffix" value="8888" maxlength="40" placeholder="8888">
+      </div>
+      
+      <div class="input-group">
+        <div class="input-wrapper">
+          <input type="text" id="salt-start" placeholder="起始 Salt（默认 0）" pattern="[0-9]*" inputmode="numeric" value="0">
+        </div>
+        <div class="input-wrapper">
+          <input type="text" id="salt-range" placeholder="搜索范围（默认100万）" pattern="[0-9]*" inputmode="numeric" value="1000000">
+        </div>
+      </div>
+      
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">
+        <strong>提示：</strong>CREATE2 搜索不需要消耗 Gas！每多一位后缀，搜索难度增加 16 倍。4 位后缀约需 ~6.5 万次，8 位后缀约需 ~43 亿次。建议先用短后缀测试。
+      </div>
+      
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btn-search" style="flex:1;min-width:140px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          单线程搜索
+        </button>
+        <button class="btn btn-primary" id="btn-search-parallel" style="flex:1;min-width:140px;background:linear-gradient(135deg,#7C3AED,#A855F7);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+            <path d="M6 12h4M14 12h4"></path>
+          </svg>
+          多线程搜索
+        </button>
+        <button class="btn btn-secondary" id="btn-stop" disabled>停止</button>
+      </div>
+      
+      <div id="parallel-status" style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;"></div>
+      
+      <div class="progress-section" id="progress-section">
+        <div style="height:12px;"></div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-stats">
+          <span id="progress-current">已搜索: 0</span>
+          <span id="progress-speed">速度: 0/s</span>
+          <span id="progress-percent">0%</span>
+        </div>
+      </div>
+      
+      <div class="status-msg" id="search-status"></div>
+    </div>
+    
+    <!-- 卡片3：搜索结果 -->
+    <div class="card result-section" id="card-result">
+      <div class="card-header">
+        <div class="card-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div>
+          <div class="card-title">找到靓号地址</div>
+          <div class="card-subtitle">恭喜！发现匹配的合约地址</div>
+        </div>
+      </div>
+      
+      <div class="result-box">
+        <div class="result-label">合约部署地址</div>
+        <div class="result-address" id="result-address" title="点击复制">-</div>
+        <div class="result-meta">
+          <div class="result-meta-item">Salt: <span id="result-salt">-</span></div>
+          <div class="result-meta-item">匹配后缀: <span id="result-suffix">-</span></div>
+        </div>
+        <button class="btn-copy">复制地址</button>
       </div>
     </div>
-
-    <div class="status-msg" id="search-status"></div>
   </div>
-
-  <!-- Card 3: Result -->
-  <div class="card result-section" id="card-result">
-    <div class="card-header">
-      <div class="card-icon green">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      </div>
-      <div>
-        <div class="card-title">找到靓号地址</div>
-        <div class="card-subtitle">恭喜！发现匹配的合约地址</div>
-      </div>
-    </div>
-
-    <div class="result-box">
-      <div class="result-label">合约部署地址</div>
-      <div class="result-address" id="result-address" title="点击复制">-</div>
-      <div class="result-meta">
-        <div class="result-meta-item">Salt: <span id="result-salt">-</span></div>
-        <div class="result-meta-item">匹配后缀: <span id="result-suffix">-</span></div>
-      </div>
-      <button class="btn-copy">复制地址</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-<script>
-let userAddress = null;
-let searching = false;
-let workers = [];
-const FACTORY_ADDRESS_DEFAULT = '0xe4c01128B7d9D9A38890E1EFfedc8b32E19238F3';
-
-// === Wallet Connection ===
-async function connectWallet() {
-  const btn = document.getElementById('btn-connect');
-  if (!window.ethereum) {
-    showStatus('connect-status', 'error', '未检测到钱包插件，请先安装 MetaMask');
-    return;
-  }
-  try {
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> 连接中...';
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send('eth_requestAccounts', []);
-    userAddress = await provider.getSigner().getAddress();
-    const network = await provider.getNetwork();
-    const balance = await provider.getBalance(userAddress);
-    const factoryAddr = document.getElementById('factory-address').value.trim() || FACTORY_ADDRESS_DEFAULT;
-    document.getElementById('wallet-address').textContent = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
-    document.getElementById('wallet-factory').textContent = factoryAddr.slice(0, 8) + '...' + factoryAddr.slice(-4);
-    document.getElementById('wallet-network').textContent = network.name + ' (Chain ' + network.chainId + ')';
-    document.getElementById('wallet-balance').textContent = parseFloat(ethers.utils.formatEther(balance)).toFixed(4) + ' ETH';
-    document.getElementById('wallet-info').classList.add('show');
-    document.getElementById('card-search').classList.add('show');
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 已连接';
-    btn.style.background = 'linear-gradient(135deg, #059669, #10B981)';
-    showStatus('connect-status', 'success', '钱包连接成功');
-    if (window.ethereum.on) {
-      window.ethereum.on('accountsChanged', () => location.reload());
-      window.ethereum.on('chainChanged', () => location.reload());
+  
+  <div class="toast" id="toast"></div>
+  
+  <script>
+    // === 全局变量 ===
+    let userAddress = null;
+    let searching = false;
+    let workers = [];
+    const FACTORY_ADDRESS_DEFAULT = '0xe4c01128B7d9D9A38890E1EFfedc8b32E19238F3';
+    
+    // === CREATE2 地址计算 ===
+    function getCreate2Address(factoryAddr, saltInt, bytecodeHash) {
+      const saltHex = '0x' + saltInt.toString(16).padStart(64, '0');
+      const packed = ethers.utils.concat([
+        new Uint8Array([0xff]),
+        ethers.utils.arrayify(factoryAddr),
+        ethers.utils.arrayify(saltHex),
+        ethers.utils.arrayify(bytecodeHash)
+      ]);
+      const hash = ethers.utils.keccak256(packed);
+      return ethers.utils.getAddress('0x' + hash.slice(-40));
     }
-  } catch (err) {
-    console.error(err);
-    showStatus('connect-status', 'error', '连接失败: ' + (err.message || '用户拒绝连接'));
-    btn.disabled = false;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg> 连接钱包';
-  }
-}
-
-// === CREATE2 Address Computation ===
-function getCreate2Address(factoryAddr, saltInt, bytecodeHash) {
-  const saltHex = '0x' + saltInt.toString(16).padStart(64, '0');
-  const packed = ethers.utils.concat([
-    new Uint8Array([0xff]),
-    ethers.utils.arrayify(factoryAddr),
-    ethers.utils.arrayify(saltHex),
-    ethers.utils.arrayify(bytecodeHash)
-  ]);
-  const hash = ethers.utils.keccak256(packed);
-  return ethers.utils.getAddress('0x' + hash.slice(-40));
-}
-
-function getFullBytecode() {
-  const name = document.getElementById('token-name').value.trim();
-  const symbol = document.getElementById('token-symbol').value.trim();
-  let creationCode = document.getElementById('token-bytecode').value.trim();
-  if (!name || !symbol) return null;
-  if (!creationCode) return null;
-  if (!creationCode.startsWith('0x')) creationCode = '0x' + creationCode;
-  const encodedParams = ethers.utils.defaultAbiCoder.encode(['string', 'string'], [name, symbol]).slice(2);
-  return creationCode + encodedParams;
-}
-
-// === Single-thread Search ===
-async function startSearch() {
-  if (!userAddress) { showStatus('search-status', 'error', '请先连接钱包'); return; }
-  const suffix = document.getElementById('target-suffix').value.trim().toLowerCase();
-  if (!suffix || !/^[0-9a-f]+$/.test(suffix)) {
-    showStatus('search-status', 'error', '请输入有效的十六进制后缀（仅支持 0-9, a-f）'); return;
-  }
-  const factoryAddr = document.getElementById('factory-address').value.trim();
-  if (!factoryAddr || !ethers.utils.isAddress(factoryAddr)) {
-    showStatus('search-status', 'error', '请输入有效的工厂合约地址'); return;
-  }
-  const fullBytecode = getFullBytecode();
-  if (!fullBytecode) {
-    showStatus('search-status', 'error', '请填写代币名称、符号和 Creation Code'); return;
-  }
-  const bytecodeHash = ethers.utils.keccak256(ethers.utils.arrayify(fullBytecode));
-  const startSalt = parseInt(document.getElementById('salt-start').value.trim() || '0', 10);
-  const range = parseInt(document.getElementById('salt-range').value.trim() || '1000000', 10);
-  if (isNaN(startSalt) || startSalt < 0 || isNaN(range) || range <= 0) {
-    showStatus('search-status', 'error', '参数格式不正确'); return;
-  }
-  searching = true;
-  document.getElementById('btn-search').disabled = true;
-  document.getElementById('btn-search-parallel').disabled = true;
-  document.getElementById('btn-stop').disabled = false;
-  document.getElementById('progress-section').classList.add('show');
-  document.getElementById('card-result').classList.remove('show');
-  showStatus('search-status', 'success', '正在搜索...');
-  const startTime = performance.now();
-  let found = false;
-  let searched = 0;
-  const batchSize = 500;
-  for (let i = startSalt; i < startSalt + range && searching; i += batchSize) {
-    const end = Math.min(i + batchSize, startSalt + range);
-    for (let n = i; n < end; n++) {
-      const addr = getCreate2Address(factoryAddr, n, bytecodeHash);
-      if (addr.toLowerCase().endsWith(suffix)) {
-        found = true; searched = n - startSalt + 1;
-        displayResult(addr, n, suffix); break;
+    
+    // === 获取字节码 ===
+    function getBytecode() {
+      let bytecode = document.getElementById('token-bytecode').value.trim();
+      if (!bytecode) return null;
+      if (!bytecode.startsWith('0x')) bytecode = '0x' + bytecode;
+      return bytecode;
+    }
+    
+    // === 连接钱包 ===
+    async function connectWallet() {
+      const btn = document.getElementById('btn-connect');
+      
+      if (!window.ethereum) {
+        showStatus('connect-status', 'error', '未检测到钱包插件，请先安装 MetaMask');
+        return;
+      }
+      
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> 连接中...';
+        
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+        userAddress = await provider.getSigner().getAddress();
+        
+        const network = await provider.getNetwork();
+        const balance = await provider.getBalance(userAddress);
+        const factoryAddr = document.getElementById('factory-address').value.trim() || FACTORY_ADDRESS_DEFAULT;
+        
+        document.getElementById('wallet-address').textContent = 
+          userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+        document.getElementById('wallet-factory').textContent = 
+          factoryAddr.slice(0, 8) + '...' + factoryAddr.slice(-4);
+        document.getElementById('wallet-network').textContent = 
+          network.name + ' (Chain ' + network.chainId + ')';
+        document.getElementById('wallet-balance').textContent = 
+          parseFloat(ethers.utils.formatEther(balance)).toFixed(4) + ' ETH';
+        
+        document.getElementById('wallet-info').classList.add('show');
+        document.getElementById('card-search').classList.add('show');
+        
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 已连接';
+        btn.style.background = 'linear-gradient(135deg, #059669, #10B981)';
+        
+        showStatus('connect-status', 'success', '钱包连接成功');
+        
+        if (window.ethereum.on) {
+          window.ethereum.on('accountsChanged', () => location.reload());
+          window.ethereum.on('chainChanged', () => location.reload());
+        }
+      } catch (err) {
+        console.error(err);
+        showStatus('connect-status', 'error', '连接失败: ' + (err.message || '用户拒绝连接'));
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg> 连接钱包';
       }
     }
-    if (found) break;
-    searched = end - startSalt;
-    const elapsed = (performance.now() - startTime) / 1000;
-    const speed = Math.round(searched / elapsed);
-    const percent = ((searched / range) * 100).toFixed(1);
-    document.getElementById('progress-bar').style.width = percent + '%';
-    document.getElementById('progress-current').textContent = '已搜索: ' + searched.toLocaleString();
-    document.getElementById('progress-speed').textContent = '速度: ' + speed.toLocaleString() + '/s';
-    document.getElementById('progress-percent').textContent = percent + '%';
-    await new Promise(r => setTimeout(r, 0));
-  }
-  searching = false;
-  document.getElementById('btn-search').disabled = false;
-  document.getElementById('btn-search-parallel').disabled = false;
-  document.getElementById('btn-stop').disabled = true;
-  if (!found) showStatus('search-status', 'error', '搜索完毕，未找到匹配地址。请增大搜索范围。');
-  else showStatus('search-status', 'success', '搜索成功！');
-}
-
-function displayResult(address, salt, suffix) {
-  const addrEl = document.getElementById('result-address');
-  const suffixLen = suffix.length;
-  const prefix = address.slice(0, -suffixLen);
-  const matched = address.slice(-suffixLen).toLowerCase();
-  addrEl.innerHTML = prefix + '<span class="highlight">' + matched + '</span>';
-  addrEl.dataset.address = address;
-  document.getElementById('result-salt').textContent = salt + ' (0x' + salt.toString(16).padStart(64, '0') + ')';
-  document.getElementById('result-suffix').textContent = suffix;
-  document.getElementById('card-result').classList.add('show');
-  document.getElementById('card-result').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-// === Utilities ===
-function copyAddress() {
-  const addr = document.getElementById('result-address').dataset.address;
-  if (!addr) return;
-  navigator.clipboard.writeText(addr)
-    .then(() => showToast('地址已复制到剪贴板'))
-    .catch(() => showToast('复制失败，请手动复制'));
-}
-
-function showStatus(id, type, msg) {
-  const el = document.getElementById(id);
-  el.className = 'status-msg show ' + type;
-  el.innerHTML = (type === 'success'
-    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
-    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
-  ) + msg;
-}
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
-}
-
-// === Web Worker Parallel Search ===
-const workerScript = `
-importScripts('https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js');
-
-function getCreate2Address(factoryAddr, saltInt, bytecodeHash) {
-  const saltHex = '0x' + saltInt.toString(16).padStart(64, '0');
-  const packed = ethers.utils.concat([
-    new Uint8Array([0xff]),
-    ethers.utils.arrayify(factoryAddr),
-    ethers.utils.arrayify(saltHex),
-    ethers.utils.arrayify(bytecodeHash)
-  ]);
-  const hash = ethers.utils.keccak256(packed);
-  return ethers.utils.getAddress('0x' + hash.slice(-40));
-}
-
-self.onmessage = function(e) {
-  const { factoryAddr, startSalt, count, suffix, bytecodeHash } = e.data;
-  for (let i = 0; i < count; i++) {
-    const salt = startSalt + i;
-    const addr = getCreate2Address(factoryAddr, salt, bytecodeHash);
-    if (addr.toLowerCase().endsWith(suffix)) {
-      self.postMessage({ found: true, salt: salt, address: addr });
-      return;
-    }
-  }
-  self.postMessage({ found: false, searched: count });
-};
-`;
-
-const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
-const workerUrl = URL.createObjectURL(workerBlob);
-
-async function startSearchParallel() {
-  if (!userAddress) { showStatus('search-status', 'error', '请先连接钱包'); return; }
-  const suffix = document.getElementById('target-suffix').value.trim().toLowerCase();
-  if (!suffix || !/^[0-9a-f]+$/.test(suffix)) {
-    showStatus('search-status', 'error', '请输入有效的十六进制后缀（仅支持 0-9, a-f）'); return;
-  }
-  const factoryAddr = document.getElementById('factory-address').value.trim();
-  if (!factoryAddr || !ethers.utils.isAddress(factoryAddr)) {
-    showStatus('search-status', 'error', '请输入有效的工厂合约地址'); return;
-  }
-  const fullBytecode = getFullBytecode();
-  if (!fullBytecode) {
-    showStatus('search-status', 'error', '请填写代币名称、符号和 Creation Code'); return;
-  }
-  const bytecodeHash = ethers.utils.keccak256(ethers.utils.arrayify(fullBytecode));
-  const startSalt = parseInt(document.getElementById('salt-start').value.trim() || '0', 10);
-  const range = parseInt(document.getElementById('salt-range').value.trim() || '1000000', 10);
-  if (isNaN(startSalt) || startSalt < 0 || isNaN(range) || range <= 0) {
-    showStatus('search-status', 'error', '参数格式不正确'); return;
-  }
-  const numWorkers = Math.min(navigator.hardwareConcurrency || 4, 8);
-  document.getElementById('parallel-status').textContent = '使用 ' + numWorkers + ' 个线程并行搜索';
-  searching = true;
-  document.getElementById('btn-search').disabled = true;
-  document.getElementById('btn-search-parallel').disabled = true;
-  document.getElementById('btn-stop').disabled = false;
-  document.getElementById('progress-section').classList.add('show');
-  document.getElementById('card-result').classList.remove('show');
-  showStatus('search-status', 'success', '多线程搜索中...');
-  const startTime = performance.now();
-  let found = false;
-  let totalSearched = 0;
-  const batchSize = 10000;
-  workers = [];
-  for (let i = 0; i < numWorkers; i++) workers.push(new Worker(workerUrl));
-  let currentSalt = startSalt;
-  const endSalt = startSalt + range;
-  while (currentSalt < endSalt && searching) {
-    const promises = [];
-    for (let w = 0; w < workers.length && currentSalt < endSalt; w++) {
-      const wStart = currentSalt;
-      const wCount = Math.min(batchSize, endSalt - currentSalt);
-      currentSalt += wCount;
-      promises.push(new Promise((resolve) => {
-        workers[w].onmessage = (e) => resolve(e.data);
-        workers[w].postMessage({ factoryAddr, startSalt: wStart, count: wCount, suffix, bytecodeHash });
-      }));
-    }
-    const results = await Promise.all(promises);
-    for (const result of results) {
-      if (result.found) {
-        found = true;
-        displayResult(result.address, result.salt, suffix);
-        searching = false; break;
+    
+    // === 单线程搜索 ===
+    async function startSearch() {
+      if (!userAddress) {
+        showStatus('search-status', 'error', '请先连接钱包');
+        return;
       }
-      totalSearched += result.searched;
+      
+      const suffix = document.getElementById('target-suffix').value.trim().toLowerCase();
+      if (!suffix || !/^[0-9a-f]+$/.test(suffix)) {
+        showStatus('search-status', 'error', '请输入有效的十六进制后缀（仅支持 0-9, a-f）');
+        return;
+      }
+      
+      const factoryAddr = document.getElementById('factory-address').value.trim();
+      if (!factoryAddr || !ethers.utils.isAddress(factoryAddr)) {
+        showStatus('search-status', 'error', '请输入有效的工厂合约地址');
+        return;
+      }
+      
+      const bytecode = getBytecode();
+      if (!bytecode) {
+        showStatus('search-status', 'error', '请粘贴完整的 Creation Code');
+        return;
+      }
+      
+      const bytecodeHash = ethers.utils.keccak256(ethers.utils.arrayify(bytecode));
+      const startSalt = parseInt(document.getElementById('salt-start').value.trim() || '0', 10);
+      const range = parseInt(document.getElementById('salt-range').value.trim() || '1000000', 10);
+      
+      if (isNaN(startSalt) || startSalt < 0 || isNaN(range) || range <= 0) {
+        showStatus('search-status', 'error', '参数格式不正确');
+        return;
+      }
+      
+      searching = true;
+      document.getElementById('btn-search').disabled = true;
+      document.getElementById('btn-search-parallel').disabled = true;
+      document.getElementById('btn-stop').disabled = false;
+      document.getElementById('progress-section').classList.add('show');
+      document.getElementById('card-result').classList.remove('show');
+      showStatus('search-status', 'success', '正在搜索...');
+      
+      const startTime = performance.now();
+      let found = false;
+      let searched = 0;
+      const batchSize = 500;
+      
+      for (let i = startSalt; i < startSalt + range && searching; i += batchSize) {
+        const end = Math.min(i + batchSize, startSalt + range);
+        
+        for (let n = i; n < end; n++) {
+          const addr = getCreate2Address(factoryAddr, n, bytecodeHash);
+          if (addr.toLowerCase().endsWith(suffix)) {
+            found = true;
+            searched = n - startSalt + 1;
+            displayResult(addr, n, suffix);
+            break;
+          }
+        }
+        
+        if (found) break;
+        
+        searched = end - startSalt;
+        const elapsed = (performance.now() - startTime) / 1000;
+        const speed = Math.round(searched / elapsed);
+        const percent = ((searched / range) * 100).toFixed(1);
+        
+        document.getElementById('progress-bar').style.width = percent + '%';
+        document.getElementById('progress-current').textContent = '已搜索: ' + searched.toLocaleString();
+        document.getElementById('progress-speed').textContent = '速度: ' + speed.toLocaleString() + '/s';
+        document.getElementById('progress-percent').textContent = percent + '%';
+        
+        await new Promise(r => setTimeout(r, 0));
+      }
+      
+      searching = false;
+      document.getElementById('btn-search').disabled = false;
+      document.getElementById('btn-search-parallel').disabled = false;
+      document.getElementById('btn-stop').disabled = true;
+      
+      if (!found) {
+        showStatus('search-status', 'error', '搜索完毕，未找到匹配地址。请增大搜索范围。');
+      } else {
+        showStatus('search-status', 'success', '搜索成功！');
+      }
     }
-    if (found) break;
-    const elapsed = (performance.now() - startTime) / 1000;
-    const speed = Math.round(totalSearched / elapsed);
-    const percent = ((totalSearched / range) * 100).toFixed(1);
-    document.getElementById('progress-bar').style.width = percent + '%';
-    document.getElementById('progress-current').textContent = '已搜索: ' + totalSearched.toLocaleString();
-    document.getElementById('progress-speed').textContent = '速度: ' + speed.toLocaleString() + '/s';
-    document.getElementById('progress-percent').textContent = percent + '%';
-    await new Promise(r => setTimeout(r, 0));
-  }
-  workers.forEach(w => w.terminate());
-  workers = [];
-  searching = false;
-  document.getElementById('btn-search').disabled = false;
-  document.getElementById('btn-search-parallel').disabled = false;
-  document.getElementById('btn-stop').disabled = true;
-  if (!found) showStatus('search-status', 'error', '搜索完毕，未找到匹配地址。');
-  else showStatus('search-status', 'success', '多线程搜索成功！');
-}
-
-function stopSearch() {
-  searching = false;
-  workers.forEach(w => w.terminate());
-  workers = [];
-  document.getElementById('btn-stop').disabled = true;
-  document.getElementById('btn-search').disabled = false;
-  document.getElementById('btn-search-parallel').disabled = false;
-  document.getElementById('progress-section').classList.remove('show');
-  showStatus('search-status', 'error', '搜索已停止');
-}
-
-// === Event Listeners ===
-document.getElementById('btn-connect').addEventListener('click', connectWallet);
-document.getElementById('btn-search').addEventListener('click', startSearch);
-document.getElementById('btn-search-parallel').addEventListener('click', startSearchParallel);
-document.getElementById('btn-stop').addEventListener('click', stopSearch);
-document.querySelector('.btn-copy').addEventListener('click', copyAddress);
-document.getElementById('result-address').addEventListener('click', copyAddress);
-</script>
-
-
-</body></html>
+    
+    // === 显示结果 ===
+    function displayResult(address, salt, suffix) {
+      const addrEl = document.getElementById('result-address');
+      const suffixLen = suffix.length;
+      const prefix = address.slice(0, -suffixLen);
+      const matched = address.slice(-suffixLen).toLowerCase();
+      
+      addrEl.innerHTML = prefix + '<span class="highlight">' + matched + '</span>';
+      addrEl.dataset.address = address;
+      
+      document.getElementById('result-salt').textContent = 
+        salt + ' (0x' + salt.toString(16).padStart(64, '0') + ')';
+      document.getElementById('result-suffix').textContent = suffix;
+      document.getElementById('card-result').classList.add('show');
+      
+      document.getElementById('card-result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // === 工具函数 ===
+    function copyAddress() {
+      const addr = document.getElementById('result-address').dataset.address;
+      if (!addr) return;
+      navigator.clipboard.writeText(addr)
+        .then(() => showToast('地址已复制到剪贴板'))
+        .catch(() => showToast('复制失败，请手动复制'));
+    }
+    
+    function showStatus(id, type, msg) {
+      const el = document.getElementById(id);
+      el.className = 'status-msg show ' + type;
+      el.innerHTML = (type === 'success'
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+      ) + msg;
+    }
+    
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+    
+    // === Web Worker 多线程搜索 ===
+    const workerScript = `
+      importScripts('https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js');
+      
+      function getCreate2Address(factoryAddr, saltInt, bytecodeHash) {
+        const saltHex = '0x' + saltInt.toString(16).padStart(64, '0');
+        const packed = ethers.utils.concat([
+          new Uint8Array([0xff]),
+          ethers.utils.arrayify(factoryAddr),
+          ethers.utils.arrayify(saltHex),
+          ethers.utils.arrayify(bytecodeHash)
+        ]);
+        const hash = ethers.utils.keccak256(packed);
+        return ethers.utils.getAddress('0x' + hash.slice(-40));
+      }
+      
+      self.onmessage = function(e) {
+        const { factoryAddr, startSalt, count, suffix, bytecodeHash } = e.data;
+        
+        for (let i = 0; i < count; i++) {
+          const salt = startSalt + i;
+          const addr = getCreate2Address(factoryAddr, salt, bytecodeHash);
+          if (addr.toLowerCase().endsWith(suffix)) {
+            self.postMessage({ found: true, salt: salt, address: addr });
+            return;
+          }
+        }
+        
+        self.postMessage({ found: false, searched: count });
+      };
+    `;
+    
+    const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
+    const workerUrl = URL.createObjectURL(workerBlob);
+    
+    async function startSearchParallel() {
+      if (!userAddress) {
+        showStatus('search-status', 'error', '请先连接钱包');
+        return;
+      }
+      
+      const suffix = document.getElementById('target-suffix').value.trim().toLowerCase();
+      if (!suffix || !/^[0-9a-f]+$/.test(suffix)) {
+        showStatus('search-status', 'error', '请输入有效的十六进制后缀（仅支持 0-9, a-f）');
+        return;
+      }
+      
+      const factoryAddr = document.getElementById('factory-address').value.trim();
+      if (!factoryAddr || !ethers.utils.isAddress(factoryAddr)) {
+        showStatus('search-status', 'error', '请输入有效的工厂合约地址');
+        return;
+      }
+      
+      const bytecode = getBytecode();
+      if (!bytecode) {
+        showStatus('search-status', 'error', '请粘贴完整的 Creation Code');
+        return;
+      }
+      
+      const bytecodeHash = ethers.utils.keccak256(ethers.utils.arrayify(bytecode));
+      const startSalt = parseInt(document.getElementById('salt-start').value.trim() || '0', 10);
+      const range = parseInt(document.getElementById('salt-range').value.trim() || '1000000', 10);
+      
+      if (isNaN(startSalt) || startSalt < 0 || isNaN(range) || range <= 0) {
+        showStatus('search-status', 'error', '参数格式不正确');
+        return;
+      }
+      
+      const numWorkers = Math.min(navigator.hardwareConcurrency || 4, 8);
+      document.getElementById('parallel-status').textContent = '使用 ' + numWorkers + ' 个线程并行搜索';
+      
+      searching = true;
+      document.getElementById('btn-search').disabled = true;
+      document.getElementById('btn-search-parallel').disabled = true;
+      document.getElementById('btn-stop').disabled = false;
+      document.getElementById('progress-section').classList.add('show');
+      document.getElementById('card-result').classList.remove('show');
+      showStatus('search-status', 'success', '多线程搜索中...');
+      
+      const startTime = performance.now();
+      let found = false;
+      let totalSearched = 0;
+      const batchSize = 10000;
+      
+      workers = [];
+      for (let i = 0; i < numWorkers; i++) {
+        workers.push(new Worker(workerUrl));
+      }
+      
+      let currentSalt = startSalt;
+      const endSalt = startSalt + range;
+      
+      while (currentSalt < endSalt && searching) {
+        const promises = [];
+        
+        for (let w = 0; w < workers.length && currentSalt < endSalt; w++) {
+          const wStart = currentSalt;
+          const wCount = Math.min(batchSize, endSalt - currentSalt);
+          currentSalt += wCount;
+          
+          promises.push(new Promise((resolve) => {
+            workers[w].onmessage = (e) => resolve(e.data);
+            workers[w].postMessage({ 
+              factoryAddr, 
+              startSalt: wStart, 
+              count: wCount, 
+              suffix, 
+              bytecodeHash 
+            });
+          }));
+        }
+        
+        const results = await Promise.all(promises);
+        
+        for (const result of results) {
+          if (result.found) {
+            found = true;
+            displayResult(result.address, result.salt, suffix);
+            searching = false;
+            break;
+          }
+          totalSearched += result.searched;
+        }
+        
+        if (found) break;
+        
+        const elapsed = (performance.now() - startTime) / 1000;
+        const speed = Math.round(totalSearched / elapsed);
+        const percent = ((totalSearched / range) * 100).toFixed(1);
+        
+        document.getElementById('progress-bar').style.width = percent + '%';
+        document.getElementById('progress-current').textContent = '已搜索: ' + totalSearched.toLocaleString();
+        document.getElementById('progress-speed').textContent = '速度: ' + speed.toLocaleString() + '/s';
+        document.getElementById('progress-percent').textContent = percent + '%';
+        
+        await new Promise(r => setTimeout(r, 0));
+      }
+      
+      workers.forEach(w => w.terminate());
+      workers = [];
+      
+      searching = false;
+      document.getElementById('btn-search').disabled = false;
+      document.getElementById('btn-search-parallel').disabled = false;
+      document.getElementById('btn-stop').disabled = true;
+      
+      if (!found) {
+        showStatus('search-status', 'error', '搜索完毕，未找到匹配地址。');
+      } else {
+        showStatus('search-status', 'success', '多线程搜索成功！');
+      }
+    }
+    
+    function stopSearch() {
+      searching = false;
+      workers.forEach(w => w.terminate());
+      workers = [];
+      document.getElementById('btn-stop').disabled = true;
+      document.getElementById('btn-search').disabled = false;
+      document.getElementById('btn-search-parallel').disabled = false;
+      document.getElementById('progress-section').classList.remove('show');
+      showStatus('search-status', 'error', '搜索已停止');
+    }
+    
+    // === 事件绑定 ===
+    document.getElementById('btn-connect').addEventListener('click', connectWallet);
+    document.getElementById('btn-search').addEventListener('click', startSearch);
+    document.getElementById('btn-search-parallel').addEventListener('click', startSearchParallel);
+    document.getElementById('btn-stop').addEventListener('click', stopSearch);
+    document.querySelector('.btn-copy').addEventListener('click', copyAddress);
+    document.getElementById('result-address').addEventListener('click', copyAddress);
+  </script>
+</body>
+</html>
