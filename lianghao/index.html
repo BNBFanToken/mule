@@ -667,15 +667,21 @@ body::before {
       <strong>提示：</strong>每多一位后缀，搜索难度增加 16 倍。4 位后缀约需 ~6.5 万次，8 位后缀约需 ~43 亿次。建议先用短后缀测试。
     </div>
 
-    <div style="display:flex;gap:10px;">
-      <button class="btn btn-primary" id="btn-search" onclick="startSearch()" style="flex:1;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="btn-search" onclick="startSearch()" style="flex:1;min-width:140px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        开始搜索
+        单线程搜索
+      </button>
+      <button class="btn btn-primary" id="btn-search-parallel" onclick="startSearchParallel()" style="flex:1;min-width:140px;background:linear-gradient(135deg,#7C3AED,#A855F7);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M14 12h4"/></svg>
+        多线程搜索
       </button>
       <button class="btn btn-secondary" id="btn-stop" onclick="stopSearch()" disabled>
         停止
       </button>
     </div>
+
+    <div id="parallel-status" style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;"></div>
 
     <!-- Progress -->
     <div class="progress-section" id="progress-section">
@@ -722,6 +728,7 @@ body::before {
 let userAddress = null;
 let currentNonce = null;
 let searching = false;
+let workers = [];
 
 // === Wallet Connection ===
 async function connectWallet() {
@@ -852,6 +859,7 @@ async function startSearch() {
 
   searching = true;
   document.getElementById('btn-search').disabled = true;
+  document.getElementById('btn-search-parallel').disabled = true;
   document.getElementById('btn-stop').disabled = false;
   document.getElementById('progress-section').classList.add('show');
   document.getElementById('card-result').classList.remove('show');
@@ -895,6 +903,7 @@ async function startSearch() {
 
   searching = false;
   document.getElementById('btn-search').disabled = false;
+  document.getElementById('btn-search-parallel').disabled = false;
   document.getElementById('btn-stop').disabled = true;
 
   if (!found) {
@@ -902,14 +911,6 @@ async function startSearch() {
   } else {
     showStatus('search-status', 'success', '搜索成功！');
   }
-}
-
-function stopSearch() {
-  searching = false;
-  document.getElementById('btn-stop').disabled = true;
-  document.getElementById('btn-search').disabled = false;
-  document.getElementById('progress-section').classList.remove('show');
-  showStatus('search-status', 'error', '搜索已停止');
 }
 
 function displayResult(address, nonce, suffix) {
@@ -952,6 +953,191 @@ function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// === Web Worker Parallel Search ===
+const workerScript = `
+importScripts('https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js');
+
+function getContractAddressFast(deployerBytes, nonce) {
+  let nonceRlp;
+  if (nonce === 0) {
+    nonceRlp = [0x80];
+  } else if (nonce <= 0x7f) {
+    nonceRlp = [nonce];
+  } else {
+    const hex = nonce.toString(16);
+    const paddedHex = hex.length % 2 === 0 ? hex : '0' + hex;
+    const bytes = [];
+    for (let i = 0; i < paddedHex.length; i += 2) {
+      bytes.push(parseInt(paddedHex.substring(i, i + 2), 16));
+    }
+    nonceRlp = [0x80 + bytes.length - 1, ...bytes];
+  }
+
+  const payloadLength = 1 + 20 + nonceRlp.length;
+  let rlpData;
+  if (payloadLength < 56) {
+    rlpData = [0xc0 + payloadLength, 0x94, ...deployerBytes, ...nonceRlp];
+  } else {
+    const lenHex = payloadLength.toString(16);
+    const paddedLenHex = lenHex.length % 2 === 0 ? lenHex : '0' + lenHex;
+    const lenBytes = [];
+    for (let i = 0; i < paddedLenHex.length; i += 2) {
+      lenBytes.push(parseInt(paddedLenHex.substring(i, i + 2), 16));
+    }
+    rlpData = [0xf7 + lenBytes.length, ...lenBytes, 0x94, ...deployerBytes, ...nonceRlp];
+  }
+
+  const hash = ethers.utils.keccak256(new Uint8Array(rlpData));
+  return ethers.utils.getAddress('0x' + hash.slice(-40));
+}
+
+self.onmessage = function(e) {
+  const { deployerBytes, startNonce, count, suffix } = e.data;
+  
+  for (let i = 0; i < count; i++) {
+    const nonce = startNonce + i;
+    const addr = getContractAddressFast(deployerBytes, nonce);
+    if (addr.toLowerCase().endsWith(suffix)) {
+      self.postMessage({ found: true, nonce: nonce, address: addr });
+      return;
+    }
+  }
+  
+  self.postMessage({ found: false, searched: count });
+};
+`;
+
+const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
+const workerUrl = URL.createObjectURL(workerBlob);
+
+async function startSearchParallel() {
+  if (!userAddress) {
+    showStatus('search-status', 'error', '请先连接钱包');
+    return;
+  }
+
+  const suffixRaw = document.getElementById('target-suffix').value.trim();
+  const suffix = suffixRaw.toLowerCase();
+  if (!suffix || !/^[0-9a-f]+$/.test(suffix)) {
+    showStatus('search-status', 'error', '请输入有效的十六进制后缀（仅支持 0-9, a-f）');
+    return;
+  }
+
+  const startNonceStr = document.getElementById('nonce-start').value.trim();
+  const startNonce = startNonceStr ? parseInt(startNonceStr, 10) : currentNonce;
+  const rangeStr = document.getElementById('nonce-range').value.trim();
+  const range = rangeStr ? parseInt(rangeStr, 10) : 100000;
+
+  if (isNaN(startNonce) || startNonce < 0 || isNaN(range) || range <= 0) {
+    showStatus('search-status', 'error', '参数格式不正确');
+    return;
+  }
+
+  const numWorkers = Math.min(navigator.hardwareConcurrency || 4, 8);
+  document.getElementById('parallel-status').textContent = '使用 ' + numWorkers + ' 个线程并行搜索';
+
+  searching = true;
+  document.getElementById('btn-search').disabled = true;
+  document.getElementById('btn-search-parallel').disabled = true;
+  document.getElementById('btn-stop').disabled = false;
+  document.getElementById('progress-section').classList.add('show');
+  document.getElementById('card-result').classList.remove('show');
+  showStatus('search-status', 'success', '多线程搜索中...');
+
+  const deployerBytes = Array.from(ethers.utils.arrayify(userAddress));
+  const startTime = performance.now();
+  let found = false;
+  let totalSearched = 0;
+  const batchSize = 10000;
+
+  // Create workers
+  workers = [];
+  for (let i = 0; i < numWorkers; i++) {
+    const worker = new Worker(workerUrl);
+    workers.push(worker);
+  }
+
+  let currentNonce = startNonce;
+  const endNonce = startNonce + range;
+
+  while (currentNonce < endNonce && searching) {
+    const promises = [];
+    
+    // Distribute work to all workers
+    for (let w = 0; w < workers.length && currentNonce < endNonce; w++) {
+      const workerStart = currentNonce;
+      const workerCount = Math.min(batchSize, endNonce - currentNonce);
+      currentNonce += workerCount;
+
+      promises.push(new Promise((resolve) => {
+        workers[w].onmessage = (e) => {
+          resolve(e.data);
+        };
+        workers[w].postMessage({
+          deployerBytes: deployerBytes,
+          startNonce: workerStart,
+          count: workerCount,
+          suffix: suffix
+        });
+      }));
+    }
+
+    // Wait for all workers to finish this batch
+    const results = await Promise.all(promises);
+    
+    // Check results
+    for (const result of results) {
+      if (result.found) {
+        found = true;
+        displayResult(result.address, result.nonce, suffix);
+        searching = false;
+        break;
+      }
+      totalSearched += result.searched;
+    }
+
+    if (found) break;
+
+    // Update progress
+    const elapsed = (performance.now() - startTime) / 1000;
+    const speed = Math.round(totalSearched / elapsed);
+    const percent = ((totalSearched / range) * 100).toFixed(1);
+
+    document.getElementById('progress-bar').style.width = percent + '%';
+    document.getElementById('progress-current').textContent = '已搜索: ' + totalSearched.toLocaleString();
+    document.getElementById('progress-speed').textContent = '速度: ' + speed.toLocaleString() + '/s';
+    document.getElementById('progress-percent').textContent = percent + '%';
+
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  // Clean up workers
+  workers.forEach(w => w.terminate());
+  workers = [];
+
+  searching = false;
+  document.getElementById('btn-search').disabled = false;
+  document.getElementById('btn-search-parallel').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+
+  if (!found) {
+    showStatus('search-status', 'error', '搜索完毕，未找到匹配地址。');
+  } else {
+    showStatus('search-status', 'success', '多线程搜索成功！');
+  }
+}
+
+function stopSearch() {
+  searching = false;
+  workers.forEach(w => w.terminate());
+  workers = [];
+  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('btn-search').disabled = false;
+  document.getElementById('btn-search-parallel').disabled = false;
+  document.getElementById('progress-section').classList.remove('show');
+  showStatus('search-status', 'error', '搜索已停止');
 }
 </script>
 </body>
