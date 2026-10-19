@@ -499,11 +499,171 @@
     
     .toast.show { transform: translateX(-50%) translateY(0); }
     
+    /* === Tab 切换 === */
+    .tab-nav {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--gold-50);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+    }
+    
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: var(--radius-xs);
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    
+    .tab-btn:hover {
+      background: rgba(251, 191, 36, 0.1);
+      color: var(--gold-700);
+    }
+    
+    .tab-btn.active {
+      background: white;
+      color: var(--gold-700);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+      animation: 0.3s ease-out fadeIn;
+    }
+    
+    /* === 使用说明样式 === */
+    .guide-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .guide-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--gold-300);
+    }
+    
+    .guide-section h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gold-700);
+      margin: 20px 0 12px 0;
+    }
+    
+    .guide-section p {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    
+    .guide-section ul, .guide-section ol {
+      margin: 12px 0;
+      padding-left: 24px;
+    }
+    
+    .guide-section li {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .guide-section code {
+      background: var(--gold-50);
+      border: 1px solid var(--border-gold);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--gold-700);
+    }
+    
+    .guide-section pre {
+      background: #1e1e1e;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    
+    .guide-section pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: #d4d4d4;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    
+    .guide-box {
+      background: linear-gradient(135deg, var(--gold-50), white);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin: 16px 0;
+    }
+    
+    .guide-box strong {
+      color: var(--gold-700);
+      display: block;
+      margin-bottom: 8px;
+    }
+    
+    .guide-warning {
+      background: var(--error-bg);
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin: 16px 0;
+    }
+    
+    .guide-warning strong {
+      color: var(--error);
+      display: block;
+      margin-bottom: 8px;
+    }
+    
+    .guide-success {
+      background: var(--success-bg);
+      border: 1px solid #a7f3d0;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin: 16px 0;
+    }
+    
+    .guide-success strong {
+      color: var(--success);
+      display: block;
+      margin-bottom: 8px;
+    }
+    
     /* === 响应式 === */
     @media (max-width: 640px) {
       .container { padding: 24px 16px 40px; }
       .header h1 { font-size: 28px; }
       .card { padding: 20px; }
+      .guide-section { padding: 20px; }
       .input-group { flex-direction: column; }
       .result-address { font-size: 13px; }
     }
@@ -526,7 +686,14 @@
       <p>基于 CREATE2 搜索 Salt，找到目标后缀的合约地址，一键部署代币</p>
     </div>
     
-    <!-- 卡片1：连接钱包 -->
+    <!-- Tab 导航 -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="tool">搜索工具</button>
+      <button class="tab-btn" data-tab="guide">使用说明</button>
+    </div>
+    
+    <!-- Tab 1: 搜索工具 -->
+    <div class="tab-content active" id="tab-tool">
     <div class="card" id="card-connect">
       <div class="card-header">
         <div class="card-icon gold">
@@ -593,12 +760,27 @@
       </div>
       
       <div class="input-wrapper" style="margin-bottom:8px;">
-        <textarea id="token-bytecode" placeholder="粘贴完整的 Creation Code（从 Remix 编译结果中复制 Bytecode object，包含构造函数参数）"></textarea>
+        <textarea id="token-bytecode" placeholder="粘贴纯 Bytecode（从 Remix 编译结果中复制 Bytecode object，不带构造函数参数）"></textarea>
       </div>
       
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
-        <strong>获取方法：</strong>在 Remix 中编译 TokenFactory.sol → 展开 Compilation Details → 找到 Token 合约 → 复制 Bytecode 的 object 字段
+      <div class="input-group">
+        <div class="input-wrapper">
+          <input type="text" id="token-name" placeholder="代币名称，如 Woof" value="Woof">
+        </div>
+        <div class="input-wrapper">
+          <input type="text" id="token-symbol" placeholder="代币符号，如 WOOF" value="WOOF">
+        </div>
       </div>
+      
+      <button class="btn btn-secondary" id="btn-encode" style="width:100%;margin-bottom:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        生成完整 Creation Code（Bytecode + 参数编码）
+      </button>
+      
+      <div id="encode-status" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;"></div>
       
       <div class="target-section">
         <span class="target-label">目标后缀</span>
@@ -678,6 +860,211 @@
         <button class="btn-copy">复制地址</button>
       </div>
     </div>
+    </div>
+    
+    <!-- Tab 2: 使用说明 -->
+    <div class="tab-content" id="tab-guide">
+      <div class="guide-section">
+        <h2>什么是 CREATE2 靓号搜索</h2>
+        <p>CREATE2 是以太坊的一个特殊操作码，它可以根据 <strong>工厂合约地址</strong>、<strong>Salt（盐值）</strong>和<strong>合约字节码</strong> 来预测合约部署后的地址。</p>
+        <p>通过遍历不同的 Salt 值，我们可以找到一个让合约地址以特定后缀结尾的 Salt，这就是"靓号地址"。</p>
+        
+        <div class="guide-box">
+          <strong>核心优势</strong>
+          <ul style="margin:0;">
+            <li>搜索过程完全在链下进行，<strong>不消耗任何 Gas</strong></li>
+            <li>只需要 1 笔部署交易，成本极低</li>
+            <li>可以精确控制合约地址的后缀</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="guide-section">
+        <h2>前置准备</h2>
+        
+        <h3>1. 部署工厂合约</h3>
+        <p>你需要先部署一个 TokenFactory 合约。这个合约包含了两个功能：</p>
+        <ul>
+          <li><code>deployToken()</code> - 使用 CREATE2 部署代币合约</li>
+          <li><code>predictTokenAddress()</code> - 预测部署后的地址（用于验证）</li>
+        </ul>
+        <p>部署后，记下工厂合约的地址，填入本工具的"工厂合约地址"输入框。</p>
+        
+        <h3>2. 获取完整 Creation Code</h3>
+        <p>完整 Creation Code = 纯 Bytecode + 构造函数参数编码。获取方法：</p>
+        
+        <p><strong>第一步：复制纯 Bytecode</strong></p>
+        <ol>
+          <li>在 Remix 中打开 TokenFactory.sol 并编译</li>
+          <li>点击左侧的 "Solidity Compiler" 标签</li>
+          <li>点击 "Compilation Details" 按钮</li>
+          <li>在弹出的详情中，找到 <strong>Token</strong> 合约（不是 TokenFactory）</li>
+          <li>展开 "BYTECODE" → 复制 "object" 字段的值</li>
+        </ol>
+        
+        <p><strong>第二步：拼接构造函数参数</strong></p>
+        <p>Token 合约的构造函数接受两个参数：<code>name</code>（string）和 <code>symbol</code>（string）。你需要将这两个参数 ABI 编码后拼接到 Bytecode 末尾。</p>
+        <p>最简单的方法：使用本工具下方的"参数拼接工具"，输入 name 和 symbol，自动生成完整的 Creation Code。</p>
+        
+        <div class="guide-warning">
+          <strong>为什么必须拼接参数？</strong>
+          <p style="margin:0;">工厂合约部署时用的是 <code>creationCode + abi.encode(name, symbol)</code>。如果搜索时用的字节码不含参数，算出的地址和实际部署的地址会不一样！</p>
+        </div>
+        
+        <h3>3. 准备 ETH</h3>
+        <p>部署代币合约需要支付 Gas 费，确保你的钱包有足够的 ETH（通常 0.01-0.05 ETH 足够）。</p>
+      </div>
+      
+      <div class="guide-section">
+        <h2>使用步骤</h2>
+        
+        <h3>步骤 1：连接钱包</h3>
+        <p>点击"连接钱包"按钮，授权 MetaMask 或其他钱包连接。</p>
+        
+        <h3>步骤 2：填写配置</h3>
+        <ul>
+          <li><strong>工厂合约地址</strong>：你部署的 TokenFactory 合约地址（已预填）</li>
+          <li><strong>Bytecode</strong>：粘贴从 Remix 复制的纯 Bytecode</li>
+          <li><strong>代币名称和符号</strong>：填入你要部署的代币信息</li>
+          <li><strong>生成完整 Creation Code</strong>：点击按钮，工具会自动拼接参数编码</li>
+          <li><strong>目标后缀</strong>：你想要的地址后缀，如 <code>8888</code>、<code>dead</code>、<code>0000</code></li>
+          <li><strong>起始 Salt</strong>：从哪个 Salt 值开始搜索（默认 0）</li>
+          <li><strong>搜索范围</strong>：最多搜索多少个 Salt（默认 100 万）</li>
+        </ul>
+        
+        <h3>步骤 3：开始搜索</h3>
+        <p>点击"单线程搜索"或"多线程搜索"按钮。多线程会更快，但会占用更多 CPU。</p>
+        <p>搜索过程中会显示进度、速度和已搜索数量。</p>
+        
+        <h3>步骤 4：记录结果</h3>
+        <p>找到匹配的地址后，工具会显示：</p>
+        <ul>
+          <li><strong>合约地址</strong>：部署后的代币合约地址（带高亮后缀）</li>
+          <li><strong>Salt 值</strong>：十进制和十六进制格式，部署时需要用</li>
+          <li><strong>匹配后缀</strong>：你设置的目标后缀</li>
+        </ul>
+        
+        <div class="guide-warning">
+          <strong>重要提示</strong>
+          <p style="margin:0;">请立即复制并保存 Salt 值！关闭页面后需要重新搜索。</p>
+        </div>
+      </div>
+      
+      <div class="guide-section">
+        <h2>部署代币合约</h2>
+        <p>找到 Salt 后，你需要调用工厂合约的 <code>deployToken</code> 函数来部署代币。</p>
+        
+        <h3>方法 1：在 Remix 中部署</h3>
+        <ol>
+          <li>在 Remix 中打开 "Deploy & Run Transactions" 标签</li>
+          <li>在 "At Address" 输入框填入工厂合约地址，点击 "At Address"</li>
+          <li>展开 TokenFactory 合约的函数列表</li>
+          <li>找到 <code>deployToken</code> 函数</li>
+          <li>填入参数：
+            <ul>
+              <li><code>tokenName</code>：代币名称，如 <code>Woof</code></li>
+              <li><code>tokenSymbol</code>：代币符号，如 <code>WOOF</code></li>
+              <li><code>salt</code>：搜索到的 Salt 值（十六进制，带 0x 前缀）</li>
+            </ul>
+          </li>
+          <li>点击 "transact" 并确认交易</li>
+        </ol>
+        
+        <h3>方法 2：使用脚本部署</h3>
+        <pre><code>const { ethers } = require("ethers");
+
+const provider = new ethers.JsonRpcProvider("YOUR_RPC_URL");
+const wallet = new ethers.Wallet("YOUR_PRIVATE_KEY", provider);
+
+const factoryAddress = "0xe4c01128B7d9D9A38890E1EFfedc8b32E19238F3";
+const factoryABI = [
+  "function deployToken(string tokenName, string tokenSymbol, bytes32 salt) external returns (address)"
+];
+
+const factory = new ethers.Contract(factoryAddress, factoryABI, wallet);
+
+const tokenName = "Woof";
+const tokenSymbol = "WOOF";
+const salt = "0x0000000000000000000000000000000000000000000000000000000000001234"; // 替换为你的 Salt
+
+const tx = await factory.deployToken(tokenName, tokenSymbol, salt);
+const receipt = await tx.wait();
+
+console.log("部署成功！交易哈希:", receipt.hash);</code></pre>
+        
+        <div class="guide-success">
+          <strong>部署完成后</strong>
+          <p style="margin:0;">代币合约会部署到搜索到的靓号地址。工厂合约会自动将 owner 权限和全部代币转给你。</p>
+        </div>
+      </div>
+      
+      <div class="guide-section">
+        <h2>常见问题</h2>
+        
+        <h3>Q: 搜索了很久没找到怎么办？</h3>
+        <p>每多一位后缀，搜索难度增加 16 倍。如果 4 位后缀（如 8888）搜索不到，可以：</p>
+        <ul>
+          <li>增大搜索范围（如改为 1000 万）</li>
+          <li>使用更短的后缀（如 888）</li>
+          <li>换一个后缀（如 dead、0000、beef）</li>
+        </ul>
+        
+        <h3>Q: 部署后地址和预测的不一样？</h3>
+        <p>这说明 Creation Code 不一致。可能的原因：</p>
+        <ul>
+          <li>编译器版本不同</li>
+          <li>优化设置不同（optimizer enabled/disabled, runs）</li>
+          <li>合约代码有改动</li>
+        </ul>
+        <p>解决方法：确保搜索时用的 Creation Code 和部署时完全一致。</p>
+        
+        <h3>Q: 可以修改代币名称和符号吗？</h3>
+        <p>可以，但要注意：修改 name 或 symbol 后，必须重新点击"生成完整 Creation Code"按钮，否则搜索时用的参数编码和实际部署时不一致，地址会不匹配。</p>
+        
+        <h3>Q: 工厂合约的 owner 可以转移吗？</h3>
+        <p>当前合约没有 owner 转移功能。如果需要，可以在 TokenFactory.sol 中添加 <code>transferOwnership</code> 函数。</p>
+        
+        <h3>Q: 搜索时浏览器很卡怎么办？</h3>
+        <p>使用单线程搜索，或者减小搜索范围。多线程搜索会占用更多 CPU 资源。</p>
+        
+        <h3>Q: 后缀长度和搜索难度</h3>
+        <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;">
+          <thead>
+            <tr style="background:var(--gold-50);">
+              <th style="padding:8px;border:1px solid var(--border);text-align:left;">后缀长度</th>
+              <th style="padding:8px;border:1px solid var(--border);text-align:left;">平均搜索次数</th>
+              <th style="padding:8px;border:1px solid var(--border);text-align:left;">预计时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:8px;border:1px solid var(--border);">1 位</td><td style="padding:8px;border:1px solid var(--border);">16 次</td><td style="padding:8px;border:1px solid var(--border);">&lt; 1 秒</td></tr>
+            <tr><td style="padding:8px;border:1px solid var(--border);">2 位</td><td style="padding:8px;border:1px solid var(--border);">256 次</td><td style="padding:8px;border:1px solid var(--border);">&lt; 1 秒</td></tr>
+            <tr><td style="padding:8px;border:1px solid var(--border);">3 位</td><td style="padding:8px;border:1px solid var(--border);">4,096 次</td><td style="padding:8px;border:1px solid var(--border);">&lt; 1 秒</td></tr>
+            <tr><td style="padding:8px;border:1px solid var(--border);">4 位</td><td style="padding:8px;border:1px solid var(--border);">65,536 次</td><td style="padding:8px;border:1px solid var(--border);">~1 秒</td></tr>
+            <tr><td style="padding:8px;border:1px solid var(--border);">5 位</td><td style="padding:8px;border:1px solid var(--border);">1,048,576 次</td><td style="padding:8px;border:1px solid var(--border);">~10 秒</td></tr>
+            <tr><td style="padding:8px;border:1px solid var(--border);">6 位</td><td style="padding:8px;border:1px solid var(--border);">16,777,216 次</td><td style="padding:8px;border:1px solid var(--border);">~2-3 分钟</td></tr>
+            <tr><td style="padding:8px;border:1px solid var(--border);">7 位</td><td style="padding:8px;border:1px solid var(--border);">268,435,456 次</td><td style="padding:8px;border:1px solid var(--border);">~30-40 分钟</td></tr>
+            <tr><td style="padding:8px;border:1px solid var(--border);">8 位</td><td style="padding:8px;border:1px solid var(--border);">4,294,967,296 次</td><td style="padding:8px;border:1px solid var(--border);">~8-10 小时</td></tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="guide-section">
+        <h2>安全提示</h2>
+        <div class="guide-warning">
+          <strong>私钥安全</strong>
+          <p style="margin:0;">永远不要在不可信的网站上输入私钥。本工具只在浏览器本地运行，不会上传任何数据。</p>
+        </div>
+        <div class="guide-warning">
+          <strong>测试网先行</strong>
+          <p style="margin:0;">建议先在 Sepolia 或 Goerli 测试网验证整个流程，确认无误后再上主网。</p>
+        </div>
+        <div class="guide-box">
+          <strong>字节码一致性</strong>
+          <p style="margin:0;">搜索时用的 Creation Code 必须和部署时完全一致，否则地址会不匹配。</p>
+        </div>
+      </div>
+    </div>
   </div>
   
   <div class="toast" id="toast"></div>
@@ -687,6 +1074,7 @@
     let userAddress = null;
     let searching = false;
     let workers = [];
+    let fullBytecode = null; // 完整的 Creation Code（含参数）
     const FACTORY_ADDRESS_DEFAULT = '0xe4c01128B7d9D9A38890E1EFfedc8b32E19238F3';
     
     // === CREATE2 地址计算 ===
@@ -704,10 +1092,48 @@
     
     // === 获取字节码 ===
     function getBytecode() {
+      // 如果已经生成了完整的 Creation Code，直接使用
+      if (fullBytecode) return fullBytecode;
+      
+      // 否则尝试从 textarea 读取（用户可能已经粘贴了完整的字节码）
       let bytecode = document.getElementById('token-bytecode').value.trim();
       if (!bytecode) return null;
       if (!bytecode.startsWith('0x')) bytecode = '0x' + bytecode;
       return bytecode;
+    }
+    
+    // === 生成完整 Creation Code ===
+    function encodeBytecode() {
+      const bytecodeInput = document.getElementById('token-bytecode').value.trim();
+      const name = document.getElementById('token-name').value.trim();
+      const symbol = document.getElementById('token-symbol').value.trim();
+      const statusEl = document.getElementById('encode-status');
+      
+      if (!bytecodeInput) {
+        statusEl.innerHTML = '<span style="color:var(--error);">请先粘贴 Bytecode</span>';
+        return;
+      }
+      
+      if (!name || !symbol) {
+        statusEl.innerHTML = '<span style="color:var(--error);">请填写代币名称和符号</span>';
+        return;
+      }
+      
+      try {
+        // 确保 bytecode 有 0x 前缀
+        let bytecode = bytecodeInput;
+        if (!bytecode.startsWith('0x')) bytecode = '0x' + bytecode;
+        
+        // ABI 编码构造函数参数
+        const encodedParams = ethers.utils.defaultAbiCoder.encode(['string', 'string'], [name, symbol]).slice(2);
+        
+        // 拼接完整的 Creation Code
+        fullBytecode = bytecode + encodedParams;
+        
+        statusEl.innerHTML = '<span style="color:var(--success);">✓ 已生成完整 Creation Code（' + (fullBytecode.length / 2 - 1).toLocaleString() + ' 字节）</span>';
+      } catch (err) {
+        statusEl.innerHTML = '<span style="color:var(--error);">编码失败: ' + err.message + '</span>';
+      }
     }
     
     // === 连接钱包 ===
@@ -1061,6 +1487,30 @@
     document.getElementById('btn-stop').addEventListener('click', stopSearch);
     document.querySelector('.btn-copy').addEventListener('click', copyAddress);
     document.getElementById('result-address').addEventListener('click', copyAddress);
+    document.getElementById('btn-encode').addEventListener('click', encodeBytecode);
+    
+    // 当 textarea 内容改变时，重置 fullBytecode
+    document.getElementById('token-bytecode').addEventListener('input', () => {
+      fullBytecode = null;
+      document.getElementById('encode-status').innerHTML = '';
+    });
+    
+    // === Tab 切换 ===
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.dataset.tab;
+        
+        // 切换按钮状态
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // 切换内容
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById('tab-' + tabName).classList.add('active');
+      });
+    });
   </script>
 </body>
 </html>
