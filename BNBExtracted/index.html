@@ -521,6 +521,17 @@ async function claimBNB() {
   btn.disabled = true;
 
   try {
+    // 先检查余额
+    addLog('正在检查合约余额...', 'info');
+    const rpcProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+    const balance = await rpcProvider.getBalance(CONTRACT_ADDRESS);
+    if (balance.isZero()) {
+      addLog('合约余额为 0，无可领取的 BNB', 'error');
+      showToast('合约余额为 0，暂无可领取的 BNB', 'error');
+      return;
+    }
+    addLog('合约余额: ' + ethers.utils.formatEther(balance) + ' BNB', 'info');
+
     addLog('正在发起交易...', 'info');
     const tx = await contract.extractBNB();
     addLog('交易已提交: ' + tx.hash, 'info');
@@ -560,7 +571,37 @@ async function claimToken() {
   btn.disabled = true;
 
   try {
-    addLog('正在提取代币...', 'info');
+    // 先检查代币余额
+    addLog('正在检查代币余额...', 'info');
+    const tokenContract = new ethers.Contract(tokenAddr, [
+      'function balanceOf(address) view returns (uint256)',
+      'function decimals() view returns (uint8)',
+      'function symbol() view returns (string)'
+    ], new ethers.providers.JsonRpcProvider(BSC_RPC));
+
+    let tokenBalance, tokenSymbol;
+    try {
+      [tokenBalance, tokenSymbol] = await Promise.all([
+        tokenContract.balanceOf(CONTRACT_ADDRESS),
+        tokenContract.symbol().catch(() => 'UNKNOWN')
+      ]);
+    } catch {
+      addLog('无法读取代币信息，请检查合约地址是否正确', 'error');
+      showToast('代币合约地址无效', 'error');
+      return;
+    }
+
+    if (tokenBalance.isZero()) {
+      addLog('合约中 ' + tokenSymbol + ' 余额为 0，无可提取的代币', 'error');
+      showToast('该代币余额为 0，暂无可提取', 'error');
+      return;
+    }
+
+    let decimals;
+    try { decimals = await tokenContract.decimals(); } catch { decimals = 18; }
+    addLog('合约 ' + tokenSymbol + ' 余额: ' + ethers.utils.formatUnits(tokenBalance, decimals), 'info');
+
+    addLog('正在发起交易...', 'info');
     const tx = await contract.extractToken(tokenAddr);
     addLog('交易已提交: ' + tx.hash, 'info');
     showToast('交易已提交，等待确认...', 'success');
