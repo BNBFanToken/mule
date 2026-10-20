@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合约钱包 - 领取</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<style>
+/* === RESET & BASE === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f0ff 100%);
+  min-height: 100vh;
+  color: #1a1a2e;
+  line-height: 1.6;
+}
+
+/* === LAYOUT === */
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* === HEADER === */
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+
+.header p {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* === CARD === */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title .icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+/* === CONNECT BUTTON === */
+.btn-connect {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-connect:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+}
+
+.btn-connect:active {
+  transform: translateY(0);
+}
+
+.btn-connect.connected {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* === WALLET INFO === */
+.wallet-info {
+  display: none;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #f9fafb;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.wallet-info.show { display: block; }
+
+.wallet-info .address {
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: #374151;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+/* === INFO ROW === */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.info-row:last-child { border-bottom: none; }
+
+.info-label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  font-family: "SF Mono", "Fira Code", monospace;
+  text-align: right;
+  max-width: 60%;
+  word-break: break-all;
+}
+
+.info-value.balance {
+  color: #6366f1;
+  font-size: 18px;
+}
+
+/* === CLAIM BUTTON === */
+.btn-claim {
+  width: 100%;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-claim:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(16,185,129,0.35);
+}
+
+.btn-claim:active { transform: translateY(0); }
+
+.btn-claim:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-claim .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: none;
+}
+
+.btn-claim.loading .spinner { display: inline-block; }
+.btn-claim.loading .btn-text { display: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* === TOKEN EXTRACT === */
+.token-input-group {
+  margin-top: 16px;
+}
+
+.token-input-group label {
+  display: block;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.token-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.token-input-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  outline: none;
+  transition: border-color 0.2s;
+  color: #374151;
+}
+
+.token-input-row input:focus {
+  border-color: #6366f1;
+}
+
+.token-input-row input::placeholder {
+  color: #d1d5db;
+}
+
+.btn-token {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #6366f1;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.btn-token:hover {
+  background: #4f46e5;
+}
+
+.btn-token:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* === LOG === */
+.log-area {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #6b7280;
+  max-height: 120px;
+  overflow-y: auto;
+  display: none;
+  font-family: "SF Mono", "Fira Code", monospace;
+  line-height: 1.8;
+}
+
+.log-area.show { display: block; }
+.log-area .success { color: #16a34a; }
+.log-area .error { color: #dc2626; }
+.log-area .info { color: #6366f1; }
+
+/* === FOOTER === */
+.footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.footer a {
+  color: #6366f1;
+  text-decoration: none;
+}
+
+.footer a:hover { text-decoration: underline; }
+
+/* === TOAST === */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 9999;
+  transition: transform 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.toast.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="header">
+    <h1>合约钱包领取</h1>
+    <p>连接钱包后，点击按钮将合约中的资产发送至白名单地址</p>
+  </div>
+
+  <!-- CONNECT CARD -->
+  <div class="card">
+    <div class="card-title">
+      <span class="icon" style="background:#eef2ff;color:#6366f1;">W</span>
+      钱包连接
+    </div>
+    <button class="btn-connect" id="btnConnect" onclick="connectWallet()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>
+      连接钱包
+    </button>
+    <div class="wallet-info" id="walletInfo">
+      <div>当前地址：<span class="address" id="userAddress">-</span></div>
+      <div style="margin-top:6px;">网络：BSC 主网 (56)</div>
+    </div>
+  </div>
+
+  <!-- CONTRACT INFO CARD -->
+  <div class="card">
+    <div class="card-title">
+      <span class="icon" style="background:#fef3c7;color:#d97706;">i</span>
+      合约信息
+    </div>
+    <div class="info-row">
+      <span class="info-label">合约地址</span>
+      <span class="info-value" id="contractAddr" style="font-size:12px;">-</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">白名单地址</span>
+      <span class="info-value" id="whitelistAddr" style="font-size:12px;">-</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">BNB 余额</span>
+      <span class="info-value balance" id="bnbBalance">-</span>
+    </div>
+  </div>
+
+  <!-- CLAIM CARD -->
+  <div class="card">
+    <div class="card-title">
+      <span class="icon" style="background:#ecfdf5;color:#059669;">$</span>
+      领取资产
+    </div>
+
+    <button class="btn-claim" id="btnClaimBNB" onclick="claimBNB()" disabled>
+      <span class="btn-text">领取 BNB</span>
+      <span class="spinner"></span>
+    </button>
+
+    <div class="token-input-group">
+      <label>提取代币（粘贴代币合约地址）</label>
+      <div class="token-input-row">
+        <input type="text" id="tokenAddress" placeholder="0x..." />
+        <button class="btn-token" id="btnClaimToken" onclick="claimToken()" disabled>提取</button>
+      </div>
+    </div>
+
+    <div class="log-area" id="logArea"></div>
+  </div>
+
+  <div class="footer">
+    合约：<a href="https://bscscan.com/address/0xA1B9543B5c7050F9cC3fe98142688FD6e96124a1" target="_blank">0xA1B9...124a1</a>
+    &nbsp;|&nbsp; BSC 主网
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// === CONFIG ===
+const CONTRACT_ADDRESS = '0xA1B9543B5c7050F9cC3fe98142688FD6e96124a1';
+const BSC_CHAIN_ID = '0x38'; // 56
+const BSC_CHAIN_ID_DECIMAL = 56;
+const BSC_RPC = 'https://bsc-dataseed.binance.org/';
+
+const ABI = [
+  'function whitelistAddress() view returns (address)',
+  'function extractBNB()',
+  'function extractToken(address token)',
+  'function owner() view returns (address)',
+  'event BNBExtracted(address indexed caller, address indexed to, uint256 amount)',
+  'event TokenExtracted(address indexed caller, address indexed token, address indexed to, uint256 amount)'
+];
+
+let provider = null;
+let signer = null;
+let contract = null;
+let readContract = null;
+
+// === INIT READ-ONLY ===
+async function initReadOnly() {
+  try {
+    const readOnlyProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+    readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, readOnlyProvider);
+    await refreshInfo();
+  } catch (e) {
+    console.error('init read-only failed:', e);
+  }
+}
+
+async function refreshInfo() {
+  if (!readContract) return;
+  try {
+    const rpcProvider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+    const [whitelist, bnbBal] = await Promise.all([
+      readContract.whitelistAddress(),
+      rpcProvider.getBalance(CONTRACT_ADDRESS)
+    ]);
+    document.getElementById('contractAddr').textContent = CONTRACT_ADDRESS;
+    document.getElementById('whitelistAddr').textContent = whitelist;
+    document.getElementById('bnbBalance').textContent = ethers.utils.formatEther(bnbBal) + ' BNB';
+  } catch (e) {
+    console.error('refresh info failed:', e);
+  }
+}
+
+// === CONNECT WALLET ===
+async function connectWallet() {
+  if (!window.ethereum) {
+    showToast('请先安装 MetaMask 钱包', 'error');
+    return;
+  }
+
+  try {
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+    // Check and switch network
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (chainId !== BSC_CHAIN_ID) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: BSC_CHAIN_ID }]
+        });
+      } catch (switchErr) {
+        if (switchErr.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: BSC_CHAIN_ID,
+              chainName: 'BNB Smart Chain',
+              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+              rpcUrls: ['https://bsc-dataseed.binance.org/'],
+              blockExplorerUrls: ['https://bscscan.com/']
+            }]
+          });
+        } else {
+          showToast('请切换到 BSC 网络', 'error');
+          return;
+        }
+      }
+    }
+
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    signer = provider.getSigner();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+    const address = await signer.getAddress();
+    document.getElementById('userAddress').textContent = address;
+    document.getElementById('walletInfo').classList.add('show');
+    document.getElementById('btnConnect').classList.add('connected');
+    document.getElementById('btnConnect').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> 已连接';
+    document.getElementById('btnClaimBNB').disabled = false;
+    document.getElementById('btnClaimToken').disabled = false;
+
+    addLog('钱包已连接: ' + address, 'info');
+    showToast('钱包连接成功', 'success');
+
+    // Listen for account/chain changes (only once)
+    if (!window._walletListenersRegistered) {
+      window._walletListenersRegistered = true;
+      window.ethereum.on('accountsChanged', () => window.location.reload());
+      window.ethereum.on('chainChanged', () => window.location.reload());
+    }
+
+  } catch (e) {
+    console.error(e);
+    showToast('连接失败: ' + e.message, 'error');
+  }
+}
+
+// === CLAIM BNB ===
+async function claimBNB() {
+  if (!contract) {
+    showToast('请先连接钱包', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnClaimBNB');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    addLog('正在发起交易...', 'info');
+    const tx = await contract.extractBNB();
+    addLog('交易已提交: ' + tx.hash, 'info');
+    showToast('交易已提交，等待确认...', 'success');
+
+    const receipt = await tx.wait();
+    const bnbEvent = receipt.events ? receipt.events.find(e => e.event === 'BNBExtracted') : null;
+    const amount = bnbEvent ? ethers.utils.formatEther(bnbEvent.args.amount) : '?';
+    addLog('交易成功！领取 ' + amount + ' BNB', 'success');
+    showToast('领取成功！', 'success');
+    await refreshInfo();
+  } catch (e) {
+    console.error(e);
+    const msg = e.reason || e.message || '未知错误';
+    addLog('交易失败: ' + msg, 'error');
+    showToast('交易失败', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// === CLAIM TOKEN ===
+async function claimToken() {
+  if (!contract) {
+    showToast('请先连接钱包', 'error');
+    return;
+  }
+
+  const tokenAddr = document.getElementById('tokenAddress').value.trim();
+  if (!tokenAddr || !ethers.utils.isAddress(tokenAddr)) {
+    showToast('请输入有效的代币合约地址', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnClaimToken');
+  btn.disabled = true;
+
+  try {
+    addLog('正在提取代币...', 'info');
+    const tx = await contract.extractToken(tokenAddr);
+    addLog('交易已提交: ' + tx.hash, 'info');
+    showToast('交易已提交，等待确认...', 'success');
+
+    const receipt = await tx.wait();
+    const tokenEvent = receipt.events ? receipt.events.find(e => e.event === 'TokenExtracted') : null;
+    const amount = tokenEvent ? ethers.utils.formatEther(tokenEvent.args.amount) : '?';
+    addLog('代币提取成功！数量: ' + amount, 'success');
+    showToast('代币提取成功！', 'success');
+  } catch (e) {
+    console.error(e);
+    const msg = e.reason || e.message || '未知错误';
+    addLog('交易失败: ' + msg, 'error');
+    showToast('交易失败', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// === HELPERS ===
+function addLog(msg, type) {
+  const logArea = document.getElementById('logArea');
+  logArea.classList.add('show');
+  const line = document.createElement('div');
+  line.className = type || '';
+  line.textContent = '> ' + msg;
+  logArea.appendChild(line);
+  logArea.scrollTop = logArea.scrollHeight;
+}
+
+function showToast(msg, type) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast ' + type + ' show';
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// === START ===
+initReadOnly();
+</script>
+</body>
+</html>
