@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f8f7f3" />
+  <meta name="description" content="WOOF Token Presale on BSC - WoofSwap Platform Token" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>WOOF Presale · BSC Network</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;800&display=swap");
+    :root {
+      font-family: "DM Sans", "Microsoft YaHei", sans-serif;
+      color: #292b27;
+      background: #f8f7f3;
+      font-synthesis: none;
+      font-weight: 400;
+      --yellow: #f1ce59;
+      --yellow-dark: #d4b44e;
+      --muted: #8b8d83;
+      --line: #e7e7df;
+      --green: #53765c;
+      --bsc-yellow: #f0b90b;
+      --red: #e74c3c;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 280px; min-height: 100vh; }
+    button, input { font: inherit; }
+    button, a, input { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; color: inherit; border: 0; background: none; }
+    button:disabled { cursor: not-allowed; opacity: 0.48; }
+    button, a { transition: background 0.18s, transform 0.18s, color 0.18s; }
+    a { color: inherit; text-decoration: none; }
+    a:hover { color: #a27819; }
+    button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #92721a; outline-offset: 4px; }
+    button:hover:not(:disabled) { filter: brightness(0.97); }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    input { min-width: 0; color: inherit; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
+    h1, h2, h3, p { margin: 0; }
+    svg { flex-shrink: 0; }
+
+    .app-container { max-width: 480px; margin: 0 auto; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; }
+
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 16px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .back-link { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+    .back-link:hover { color: #a27819; }
+    .connect-btn { background: var(--yellow); padding: 8px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; white-space: nowrap; transition: all 0.2s; }
+    .connect-btn:hover:not(:disabled) { filter: brightness(0.95); }
+    .connect-btn.connected { background: #e8e8e0; font-size: 12px; }
+    .connect-btn.wrong-network { background: var(--red); color: white; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+    .card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+
+    .presale-head { text-align: center; margin-bottom: 24px; }
+    .network-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--bsc-yellow); color: white; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; margin-bottom: 12px; text-transform: uppercase; }
+    .network-badge.wrong { background: var(--red); }
+    .presale-head h1 { font-family: "Manrope", sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .presale-head p { color: var(--muted); font-size: 13px; }
+
+    .network-warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 12px; margin-bottom: 16px; display: none; align-items: center; gap: 8px; font-size: 13px; color: #856404; }
+    .network-warning.show { display: flex; }
+    .network-warning svg { flex-shrink: 0; }
+
+    .balance-section { background: #f8f9fa; border-radius: 12px; padding: 14px; margin-bottom: 20px; }
+    .balance-title { font-size: 12px; color: var(--muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .balance-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+    .balance-row:not(:last-child) { border-bottom: 1px solid var(--line); }
+    .balance-token { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+    .balance-token img { width: 24px; height: 24px; border-radius: 50%; }
+    .balance-amount { font-family: "Manrope", sans-serif; font-weight: 700; font-size: 14px; }
+
+    .progress-section { margin-bottom: 24px; }
+    .progress-item { margin-bottom: 14px; }
+    .progress-item:last-child { margin-bottom: 0; }
+    .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .progress-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .progress-value { font-size: 12px; font-weight: 700; font-family: "Manrope", sans-serif; }
+    .progress-bar-bg { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); min-width: 0; }
+    .progress-bar-fill.bnb { background: linear-gradient(90deg, var(--bsc-yellow), #d4a20a); }
+    .progress-bar-fill.mule { background: linear-gradient(90deg, var(--green), #3d5a44); }
+
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
+    .stat-chip { background: #fafaf6; border: 1px solid var(--line); padding: 10px 12px; border-radius: 10px; }
+    .stat-chip-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .stat-chip-value { font-size: 14px; font-weight: 700; font-family: "Manrope", sans-serif; }
+
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #f4f4ef; padding: 3px; border-radius: 10px; }
+    .tab { flex: 1; padding: 10px 8px; border-radius: 8px; font-weight: 600; font-size: 13px; text-align: center; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .tab.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.06); color: #292b27; }
+    .tab:not(.active) { color: var(--muted); }
+    .tab img { width: 18px; height: 18px; border-radius: 50%; }
+
+    .input-area { background: #fafaf6; border: 1.5px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; transition: border-color 0.2s; }
+    .input-area:focus-within { border-color: var(--yellow-dark); }
+    .input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .input-row input { flex: 1; background: none; border: none; font-size: 22px; font-weight: 700; font-family: "Manrope", sans-serif; letter-spacing: -0.5px; }
+    .input-row input:focus { outline: none; }
+    .input-row input::placeholder { color: #c5c5ba; }
+    .token-badge { display: flex; align-items: center; gap: 6px; background: white; border: 1px solid var(--line); padding: 4px 10px 4px 4px; border-radius: 20px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+    .token-badge img { width: 24px; height: 24px; border-radius: 50%; }
+
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    .slider-track { flex: 1; position: relative; height: 28px; display: flex; align-items: center; }
+    .slider-track input[type="range"] { width: 100%; -webkit-appearance: none; appearance: none; height: 4px; background: var(--line); border-radius: 2px; outline: none; cursor: pointer; position: relative; z-index: 2; }
+    .slider-track input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--yellow); border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.15s; }
+    .slider-track input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    .slider-track input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.25); }
+    .slider-track input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--yellow); border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); cursor: pointer; }
+    .slider-track input[type="range"]::-moz-range-track { height: 4px; background: var(--line); border-radius: 2px; }
+    .slider-pct { font-size: 12px; font-weight: 700; color: var(--muted); min-width: 36px; text-align: right; font-family: "Manrope", sans-serif; }
+    .slider-marks { display: flex; justify-content: space-between; padding: 0 2px; margin-top: 2px; }
+    .slider-marks span { font-size: 10px; color: #b5b5ab; font-weight: 500; cursor: pointer; transition: color 0.15s; }
+    .slider-marks span:hover { color: var(--yellow-dark); }
+    .slider-marks span.active { color: var(--yellow-dark); font-weight: 700; }
+
+    .quick-btns { display: flex; gap: 6px; margin-bottom: 16px; }
+    .quick-btn { flex: 1; padding: 6px 0; border-radius: 8px; font-size: 12px; font-weight: 600; background: #f4f4ef; color: var(--muted); text-align: center; transition: all 0.15s; }
+    .quick-btn:hover { background: var(--yellow); color: #292b27; }
+    .quick-btn.active { background: var(--yellow); color: #292b27; }
+
+    .info-panel { background: #fafaf6; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 13px; }
+    .info-row:not(:last-child) { border-bottom: 1px solid #f0f0ea; }
+    .info-label { color: var(--muted); }
+    .info-value { font-weight: 600; font-family: "Manrope", sans-serif; font-size: 12px; }
+
+    .submit-btn { width: 100%; background: var(--yellow); padding: 14px; border-radius: 12px; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .submit-btn:hover:not(:disabled) { filter: brightness(0.95); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .contract-row { text-align: center; margin-top: 16px; }
+    .contract-link { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+    .contract-link:hover { color: #a27819; }
+    .contract-link svg { width: 12px; height: 12px; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 999; animation: toastIn 0.3s ease, toastOut 0.3s ease 4.7s forwards; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 90vw; text-align: center; }
+    .toast.success { background: #2d6a3e; color: white; }
+    .toast.error { background: #c33; color: white; }
+    .toast.info { background: #333; color: white; }
+    .toast.warning { background: #f39c12; color: white; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+    .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 480px) {
+      .app-container { padding: 10px; }
+      .card { padding: 18px; }
+      .presale-head h1 { font-size: 20px; }
+      .input-row input { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="header">
+      <div class="header-left">
+        <a href="/" class="back-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          WoofSwap
+        </a>
+      </div>
+      <button class="connect-btn" id="connectBtn">Connect Wallet</button>
+    </div>
+
+    <div class="card">
+      <div class="presale-head">
+        <div class="network-badge" id="networkBadge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+          <span id="networkBadgeText">BSC Mainnet</span>
+        </div>
+        <h1>$WOOF Presale</h1>
+        <p>WoofSwap Platform Token · Pay with BNB or MULE</p>
+      </div>
+
+      <div class="network-warning" id="networkWarning">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="warningText">Please switch to BSC Mainnet to participate</span>
+      </div>
+
+      <div class="balance-section" id="balanceSection" style="display: none;">
+        <div class="balance-title">Your Wallet Balance</div>
+        <div class="balance-row">
+          <div class="balance-token">
+            <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/binance/info/logo.png" alt="BNB" />
+            BNB
+          </div>
+          <div class="balance-amount" id="bnbBalance">0.000000</div>
+        </div>
+        <div class="balance-row">
+          <div class="balance-token">
+            <img src="https://mule.la/mule.png?1" alt="MULE" />
+            MULE
+          </div>
+          <div class="balance-amount" id="muleBalance">0.000000</div>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <div class="progress-item">
+          <div class="progress-header">
+            <span class="progress-label">BNB Raised</span>
+            <span class="progress-value" id="bnbProgress">0 / 200 BNB</span>
+          </div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill bnb" id="bnbBar" style="width:0%"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header">
+            <span class="progress-label">MULE Raised</span>
+            <span class="progress-value" id="muleProgress">0 / 10,000,000 MULE</span>
+          </div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill mule" id="muleBar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-chip">
+          <div class="stat-chip-label">Per Wallet BNB</div>
+          <div class="stat-chip-value">0.5 BNB</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-label">Per Wallet MULE</div>
+          <div class="stat-chip-value">10,000 MULE</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="bnb">
+          <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/binance/info/logo.png" alt="BNB" />
+          Pay with BNB
+        </div>
+        <div class="tab" data-tab="mule">
+          <img src="https://mule.la/mule.png?1" alt="MULE" />
+          Pay with MULE
+        </div>
+      </div>
+
+      <div id="bnbForm">
+        <div class="input-area">
+          <div class="input-row">
+            <input type="number" id="bnbAmount" placeholder="0.0" step="any" min="0" inputmode="decimal" />
+            <div class="token-badge">
+              <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/binance/info/logo.png" alt="BNB" />
+              BNB
+            </div>
+          </div>
+          <div class="slider-row">
+            <div class="slider-track">
+              <input type="range" id="bnbSlider" min="0" max="100" value="0" step="1" />
+            </div>
+            <span class="slider-pct" id="bnbPct">0%</span>
+          </div>
+          <div class="slider-marks">
+            <span data-pct="0">0</span>
+            <span data-pct="25">25%</span>
+            <span data-pct="50">50%</span>
+            <span data-pct="75">75%</span>
+            <span data-pct="100">Max</span>
+          </div>
+        </div>
+
+        <div class="quick-btns" id="bnbQuick">
+          <div class="quick-btn" data-pct="25">25%</div>
+          <div class="quick-btn" data-pct="50">50%</div>
+          <div class="quick-btn" data-pct="75">75%</div>
+          <div class="quick-btn" data-pct="100">Max</div>
+        </div>
+
+        <div class="info-panel">
+          <div class="info-row">
+            <span class="info-label">Your Contribution</span>
+            <span class="info-value" id="userBnbDeposited">0 BNB</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Remaining Quota</span>
+            <span class="info-value" id="bnbRemaining">0.5 BNB</span>
+          </div>
+        </div>
+
+        <button class="submit-btn" id="depositBnbBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+          Contribute BNB
+        </button>
+      </div>
+
+      <div id="muleForm" style="display:none;">
+        <div class="input-area">
+          <div class="input-row">
+            <input type="number" id="muleAmount" placeholder="0.0" step="any" min="0" inputmode="decimal" />
+            <div class="token-badge">
+              <img src="https://mule.la/mule.png?1" alt="MULE" />
+              MULE
+            </div>
+          </div>
+          <div class="slider-row">
+            <div class="slider-track">
+              <input type="range" id="muleSlider" min="0" max="100" value="0" step="1" />
+            </div>
+            <span class="slider-pct" id="mulePct">0%</span>
+          </div>
+          <div class="slider-marks">
+            <span data-pct="0">0</span>
+            <span data-pct="25">25%</span>
+            <span data-pct="50">50%</span>
+            <span data-pct="75">75%</span>
+            <span data-pct="100">Max</span>
+          </div>
+        </div>
+
+        <div class="quick-btns" id="muleQuick">
+          <div class="quick-btn" data-pct="25">25%</div>
+          <div class="quick-btn" data-pct="50">50%</div>
+          <div class="quick-btn" data-pct="75">75%</div>
+          <div class="quick-btn" data-pct="100">Max</div>
+        </div>
+
+        <div class="info-panel">
+          <div class="info-row">
+            <span class="info-label">Your Contribution</span>
+            <span class="info-value" id="userMuleDeposited">0 MULE</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Remaining Quota</span>
+            <span class="info-value" id="muleRemaining">10,000 MULE</span>
+          </div>
+        </div>
+
+        <button class="submit-btn" id="depositMuleBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+          Approve & Contribute MULE
+        </button>
+      </div>
+
+      <div class="contract-row">
+        <a class="contract-link" href="https://bscscan.com/address/0xFc0C329eB10939def9AB4Ad7A8A2f37C28B55daa" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View Contract on BSCScan
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastBox"></div>
+
+  <script type="module">
+    import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@6.15.0/+esm';
+
+    const BSC = { chainId: 56, hex: '0x38', name: 'BNB Smart Chain', rpc: 'https://bsc-dataseed.binance.org/', explorer: 'https://bscscan.com' };
+    const PRESALE = '0xFc0C329eB10939def9AB4Ad7A8A2f37C28B55daa';
+    const MULE_ADDR = '0x5cBE32F9a420A0fC006aDF99115d782e6b848888';
+    const BNB_CAP = ethers.parseEther('200');
+    const MULE_CAP = ethers.parseEther('10000000');
+
+    const PRESALE_ABI = [
+      'function depositBNB() external payable',
+      'function depositMULE(uint256 amount) external',
+      'function totalBNBDeposited() view returns (uint256)',
+      'function totalMULEDeposited() view returns (uint256)',
+      'function userBNBDeposited(address) view returns (uint256)',
+      'function userMULEDeposited(address) view returns (uint256)',
+      'function getUserRemainingBNBQuota(address) view returns (uint256)',
+      'function getUserRemainingMULEQuota(address) view returns (uint256)',
+      'function SINGLE_USER_BNB_LIMIT() view returns (uint256)',
+      'function SINGLE_USER_MULE_LIMIT() view returns (uint256)'
+    ];
+    const ERC20_ABI = [
+      'function allowance(address,address) view returns (uint256)',
+      'function approve(address,uint256) returns (bool)',
+      'function balanceOf(address) view returns (uint256)',
+      'function decimals() view returns (uint8)'
+    ];
+
+    let provider = null;
+    let signer = null;
+    let presaleC = null;
+    let muleC = null;
+    let userAddr = null;
+    let currentChainId = 0;
+    let isCorrectNetwork = false;
+    let bnbRemain = 0n, muleRemain = 0n;
+    let bnbBalance = 0n, muleBalance = 0n;
+    let bnbSliderCtrl, muleSliderCtrl;
+
+    const $ = id => document.getElementById(id);
+    const tabs = document.querySelectorAll('.tab');
+
+    function toast(msg, type = 'info') {
+      const box = $('toastBox');
+      const el = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => el.remove(), 5200);
+    }
+
+    function fmt6(v) {
+      const s = ethers.formatEther(v);
+      return parseFloat(s) === 0 ? '0' : parseFloat(s).toFixed(6).replace(/0+$/, '').replace(/\.$/, '') || '0';
+    }
+
+    function updateConnectionUI() {
+      const btn = $('connectBtn');
+      const badge = $('networkBadge');
+      const badgeText = $('networkBadgeText');
+      const warning = $('networkWarning');
+      const warningText = $('warningText');
+      const balanceSection = $('balanceSection');
+
+      if (!userAddr) {
+        btn.textContent = 'Connect Wallet';
+        btn.className = 'connect-btn';
+        badge.className = 'network-badge';
+        badgeText.textContent = 'BSC Mainnet';
+        warning.classList.remove('show');
+        balanceSection.style.display = 'none';
+        return;
+      }
+
+      btn.textContent = userAddr.slice(0, 6) + '...' + userAddr.slice(-4);
+      
+      if (isCorrectNetwork) {
+        btn.className = 'connect-btn connected';
+        badge.className = 'network-badge';
+        badgeText.textContent = 'BSC Mainnet';
+        warning.classList.remove('show');
+        balanceSection.style.display = 'block';
+      } else {
+        btn.className = 'connect-btn wrong-network';
+        badge.className = 'network-badge wrong';
+        badgeText.textContent = 'Wrong Network';
+        warning.classList.add('show');
+        warningText.textContent = 'Please switch to BSC Mainnet to participate';
+        balanceSection.style.display = 'none';
+      }
+    }
+
+    function setupSlider(sliderId, pctId, quickId, marksParent, getMax, onInput) {
+      const slider = $(sliderId);
+      const pctEl = $(pctId);
+      const quickBtns = $(quickId).querySelectorAll('.quick-btn');
+      const marks = marksParent.querySelectorAll('span[data-pct]');
+
+      function setPct(pct) {
+        pct = Math.max(0, Math.min(100, pct));
+        slider.value = pct;
+        pctEl.textContent = pct === 100 ? 'Max' : pct + '%';
+        updateSliderBg(slider);
+        marks.forEach(m => m.classList.toggle('active', parseInt(m.dataset.pct) === pct));
+        quickBtns.forEach(b => b.classList.toggle('active', parseInt(b.dataset.pct) === pct));
+        const max = getMax();
+        if (max <= 0n) { onInput('0'); return; }
+        const val = (max * BigInt(pct)) / 100n;
+        onInput(val > 0n ? fmt6(val) : '0');
+      }
+
+      function updateSliderBg(s) {
+        const v = s.value;
+        s.style.background = `linear-gradient(to right, var(--yellow) ${v}%, var(--line) ${v}%)`;
+      }
+
+      slider.addEventListener('input', () => setPct(parseInt(slider.value)));
+      quickBtns.forEach(b => b.addEventListener('click', () => setPct(parseInt(b.dataset.pct))));
+      marks.forEach(m => m.addEventListener('click', () => setPct(parseInt(m.dataset.pct))));
+      updateSliderBg(slider);
+      return { setPct, reset: () => setPct(0) };
+    }
+
+    async function connect() {
+      console.log('Connect clicked');
+      try {
+        if (!window.ethereum) {
+          console.error('No ethereum provider');
+          toast('Please install MetaMask or another Web3 wallet', 'error');
+          return;
+        }
+        
+        console.log('Requesting accounts...');
+        toast('Connecting...', 'info');
+        
+        provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send('eth_requestAccounts', []);
+        
+        console.log('Accounts:', accounts);
+        
+        if (!accounts || accounts.length === 0) {
+          toast('No accounts found', 'error');
+          return;
+        }
+        
+        const chainIdHex = await provider.send('eth_chainId', []);
+        currentChainId = parseInt(chainIdHex, 16);
+        isCorrectNetwork = currentChainId === BSC.chainId;
+        
+        console.log('Chain ID:', currentChainId, 'Correct:', isCorrectNetwork);
+        
+        userAddr = accounts[0];
+        
+        if (isCorrectNetwork) {
+          signer = await provider.getSigner();
+          presaleC = new ethers.Contract(PRESALE, PRESALE_ABI, signer);
+          muleC = new ethers.Contract(MULE_ADDR, ERC20_ABI, signer);
+          await loadUser();
+          await loadBalances();
+          toast('Wallet connected', 'success');
+        } else {
+          signer = null;
+          presaleC = null;
+          muleC = null;
+          toast('Please switch to BSC Mainnet', 'warning');
+        }
+        
+        updateConnectionUI();
+      } catch (e) {
+        console.error('Connect error:', e);
+        toast(e.message || 'Connection failed', 'error');
+      }
+    }
+
+    async function loadBalances() {
+      if (!userAddr || !isCorrectNetwork) return;
+      try {
+        const publicProvider = new ethers.JsonRpcProvider(BSC.rpc);
+        const bnbBal = await publicProvider.getBalance(userAddr);
+        bnbBalance = bnbBal;
+        $('bnbBalance').textContent = fmt6(bnbBal);
+        
+        const muleContract = new ethers.Contract(MULE_ADDR, ERC20_ABI, publicProvider);
+        const muleBal = await muleContract.balanceOf(userAddr);
+        muleBalance = muleBal;
+        $('muleBalance').textContent = fmt6(muleBal);
+      } catch (e) {
+        console.error('Load balances error:', e);
+      }
+    }
+
+    async function handleChainChange(chainIdHex) {
+      console.log('Chain changed to:', chainIdHex);
+      currentChainId = parseInt(chainIdHex, 16);
+      isCorrectNetwork = currentChainId === BSC.chainId;
+      
+      if (isCorrectNetwork && userAddr) {
+        try {
+          signer = await provider.getSigner();
+          presaleC = new ethers.Contract(PRESALE, PRESALE_ABI, signer);
+          muleC = new ethers.Contract(MULE_ADDR, ERC20_ABI, signer);
+          await loadUser();
+          await loadBalances();
+          toast('Switched to BSC Mainnet', 'success');
+        } catch (e) {
+          console.error(e);
+        }
+      } else if (!isCorrectNetwork) {
+        signer = null;
+        presaleC = null;
+        muleC = null;
+        toast('Wrong network. Please switch to BSC.', 'warning');
+      }
+      
+      updateConnectionUI();
+    }
+
+    async function handleAccountChange(accounts) {
+      console.log('Account changed:', accounts);
+      if (!accounts || accounts.length === 0) {
+        userAddr = null;
+        signer = null;
+        presaleC = null;
+        muleC = null;
+        bnbRemain = 0n;
+        muleRemain = 0n;
+        $('userBnbDeposited').textContent = '0 BNB';
+        $('userMuleDeposited').textContent = '0 MULE';
+        $('bnbRemaining').textContent = '0.5 BNB';
+        $('muleRemaining').textContent = '10,000 MULE';
+        $('bnbBalance').textContent = '0.000000';
+        $('muleBalance').textContent = '0.000000';
+        updateConnectionUI();
+        toast('Wallet disconnected', 'info');
+        return;
+      }
+      
+      userAddr = accounts[0];
+      
+      if (isCorrectNetwork) {
+        try {
+          signer = await provider.getSigner();
+          presaleC = new ethers.Contract(PRESALE, PRESALE_ABI, signer);
+          muleC = new ethers.Contract(MULE_ADDR, ERC20_ABI, signer);
+          await loadUser();
+          await loadBalances();
+          toast('Account changed', 'success');
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      
+      updateConnectionUI();
+    }
+
+    async function loadGlobal() {
+      try {
+        const pub = new ethers.Contract(PRESALE, PRESALE_ABI, new ethers.JsonRpcProvider(BSC.rpc));
+        const [tb, tm] = await Promise.all([pub.totalBNBDeposited(), pub.totalMULEDeposited()]);
+        const bp = Math.min(100, Number((tb * 10000n) / BNB_CAP) / 100);
+        const mp = Math.min(100, Number((tm * 10000n) / MULE_CAP) / 100);
+        $('bnbProgress').textContent = fmt6(tb) + ' / 200 BNB';
+        $('muleProgress').textContent = fmt6(tm) + ' / 10,000,000 MULE';
+        $('bnbBar').style.width = bp + '%';
+        $('muleBar').style.width = mp + '%';
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadUser() {
+      if (!userAddr || !presaleC || !isCorrectNetwork) return;
+      try {
+        const [ub, um, br, mr] = await Promise.all([
+          presaleC.userBNBDeposited(userAddr),
+          presaleC.userMULEDeposited(userAddr),
+          presaleC.getUserRemainingBNBQuota(userAddr),
+          presaleC.getUserRemainingMULEQuota(userAddr)
+        ]);
+        bnbRemain = br;
+        muleRemain = mr;
+        $('userBnbDeposited').textContent = fmt6(ub) + ' BNB';
+        $('userMuleDeposited').textContent = fmt6(um) + ' MULE';
+        $('bnbRemaining').textContent = fmt6(br) + ' BNB';
+        $('muleRemaining').textContent = fmt6(mr) + ' MULE';
+      } catch (e) { console.error('Load user error:', e); }
+    }
+
+    async function depositBnb() {
+      if (!signer || !isCorrectNetwork) { toast('Please connect wallet on BSC', 'error'); return; }
+      const val = $('bnbAmount').value;
+      if (!val || parseFloat(val) <= 0) { toast('Enter an amount', 'error'); return; }
+      try {
+        const parsed = ethers.parseEther(val);
+        if (parsed > bnbRemain) { toast('Exceeds your remaining quota', 'error'); return; }
+        const btn = $('depositBnbBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> Confirming...';
+        const tx = await presaleC.depositBNB({ value: parsed });
+        toast('Transaction submitted...', 'info');
+        await tx.wait();
+        toast('BNB contributed!', 'success');
+        $('bnbAmount').value = '';
+        bnbSliderCtrl.reset();
+        await loadUser();
+        await loadBalances();
+        await loadGlobal();
+      } catch (e) {
+        console.error(e);
+        toast(e.reason || e.shortMessage || e.message || 'Failed', 'error');
+      } finally {
+        const btn = $('depositBnbBtn');
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg> Contribute BNB';
+      }
+    }
+
+    async function depositMule() {
+      if (!signer || !isCorrectNetwork) { toast('Please connect wallet on BSC', 'error'); return; }
+      const val = $('muleAmount').value;
+      if (!val || parseFloat(val) <= 0) { toast('Enter an amount', 'error'); return; }
+      try {
+        const parsed = ethers.parseEther(val);
+        if (parsed > muleRemain) { toast('Exceeds your remaining quota', 'error'); return; }
+        const btn = $('depositMuleBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> Confirming...';
+        const allow = await muleC.allowance(userAddr, PRESALE);
+        if (allow < parsed) {
+          toast('Approving MULE...', 'info');
+          const atx = await muleC.approve(PRESALE, parsed);
+          await atx.wait();
+        }
+        toast('Contributing MULE...', 'info');
+        const tx = await presaleC.depositMULE(parsed);
+        await tx.wait();
+        toast('MULE contributed!', 'success');
+        $('muleAmount').value = '';
+        muleSliderCtrl.reset();
+        await loadUser();
+        await loadBalances();
+        await loadGlobal();
+      } catch (e) {
+        console.error(e);
+        toast(e.reason || e.shortMessage || e.message || 'Failed', 'error');
+      } finally {
+        const btn = $('depositMuleBtn');
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg> Approve & Contribute MULE';
+      }
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const t = tab.dataset.tab;
+        $('bnbForm').style.display = t === 'bnb' ? 'block' : 'none';
+        $('muleForm').style.display = t === 'mule' ? 'block' : 'none';
+      });
+    });
+
+    bnbSliderCtrl = setupSlider('bnbSlider', 'bnbPct', 'bnbQuick',
+      document.querySelector('#bnbForm .slider-marks'),
+      () => bnbBalance < bnbRemain ? bnbBalance : bnbRemain,
+      (v) => { $('bnbAmount').value = v; }
+    );
+    muleSliderCtrl = setupSlider('muleSlider', 'mulePct', 'muleQuick',
+      document.querySelector('#muleForm .slider-marks'),
+      () => muleBalance < muleRemain ? muleBalance : muleRemain,
+      (v) => { $('muleAmount').value = v; }
+    );
+
+    $('bnbAmount').addEventListener('input', () => {
+      const v = parseFloat($('bnbAmount').value) || 0;
+      const max = parseFloat(ethers.formatEther(bnbRemain));
+      const pct = max > 0 ? Math.round((v / max) * 100) : 0;
+      bnbSliderCtrl.setPct(Math.min(100, pct));
+    });
+    $('muleAmount').addEventListener('input', () => {
+      const v = parseFloat($('muleAmount').value) || 0;
+      const max = parseFloat(ethers.formatEther(muleRemain));
+      const pct = max > 0 ? Math.round((v / max) * 100) : 0;
+      muleSliderCtrl.setPct(Math.min(100, pct));
+    });
+
+    $('connectBtn').addEventListener('click', async () => {
+      console.log('Button clicked, userAddr:', userAddr, 'isCorrectNetwork:', isCorrectNetwork);
+      if (userAddr && !isCorrectNetwork) {
+        try {
+          await provider.send('wallet_switchEthereumChain', [{ chainId: BSC.hex }]);
+        } catch (e) {
+          if (e.code === 4902) {
+            await provider.send('wallet_addEthereumChain', [{
+              chainId: BSC.hex, chainName: BSC.name,
+              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+              rpcUrls: [BSC.rpc], blockExplorerUrls: [BSC.explorer]
+            }]);
+          } else {
+            toast('Please switch network manually', 'error');
+          }
+        }
+      } else {
+        await connect();
+      }
+    });
+    $('depositBnbBtn').addEventListener('click', depositBnb);
+    $('depositMuleBtn').addEventListener('click', depositMule);
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', handleAccountChange);
+      window.ethereum.on('chainChanged', handleChainChange);
+      window.ethereum.on('disconnect', () => {
+        userAddr = null;
+        signer = null;
+        presaleC = null;
+        muleC = null;
+        bnbRemain = 0n;
+        muleRemain = 0n;
+        $('userBnbDeposited').textContent = '0 BNB';
+        $('userMuleDeposited').textContent = '0 MULE';
+        $('bnbRemaining').textContent = '0.5 BNB';
+        $('muleRemaining').textContent = '10,000 MULE';
+        $('bnbBalance').textContent = '0.000000';
+        $('muleBalance').textContent = '0.000000';
+        updateConnectionUI();
+        toast('Wallet disconnected', 'info');
+      });
+    }
+
+    loadGlobal();
+    setInterval(loadGlobal, 30000);
+    updateConnectionUI();
+  </script>
+</body>
+</html>
