@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f8f7f3" />
   <meta name="description" content="WOOF Token Presale on BSC - WoofSwap Platform Token" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="https://www.woofswap.finance/favicon.ico" />
+  <link rel="icon" type="image/svg+xml" href="https://www.woofswap.finance/favicon.svg" />
   <title>WOOF Presale · BSC Network</title>
   <style>
     @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;800&display=swap");
@@ -86,11 +86,6 @@
     .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); min-width: 0; }
     .progress-bar-fill.bnb { background: linear-gradient(90deg, var(--bsc-yellow), #d4a20a); }
     .progress-bar-fill.mule { background: linear-gradient(90deg, var(--green), #3d5a44); }
-
-    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
-    .stat-chip { background: #fafaf6; border: 1px solid var(--line); padding: 10px 12px; border-radius: 10px; }
-    .stat-chip-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
-    .stat-chip-value { font-size: 14px; font-weight: 700; font-family: "Manrope", sans-serif; }
 
     .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #f4f4ef; padding: 3px; border-radius: 10px; }
     .tab { flex: 1; padding: 10px 8px; border-radius: 8px; font-weight: 600; font-size: 13px; text-align: center; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -209,27 +204,16 @@
         <div class="progress-item">
           <div class="progress-header">
             <span class="progress-label">BNB Raised</span>
-            <span class="progress-value" id="bnbProgress">0 / 200 BNB</span>
+            <span class="progress-value" id="bnbProgress">0 BNB</span>
           </div>
           <div class="progress-bar-bg"><div class="progress-bar-fill bnb" id="bnbBar" style="width:0%"></div></div>
         </div>
         <div class="progress-item">
           <div class="progress-header">
             <span class="progress-label">MULE Raised</span>
-            <span class="progress-value" id="muleProgress">0 / 10,000,000 MULE</span>
+            <span class="progress-value" id="muleProgress">0 MULE</span>
           </div>
           <div class="progress-bar-bg"><div class="progress-bar-fill mule" id="muleBar" style="width:0%"></div></div>
-        </div>
-      </div>
-
-      <div class="stats-row">
-        <div class="stat-chip">
-          <div class="stat-chip-label">Per Wallet BNB</div>
-          <div class="stat-chip-value">0.5 BNB</div>
-        </div>
-        <div class="stat-chip">
-          <div class="stat-chip-label">Per Wallet MULE</div>
-          <div class="stat-chip-value">10,000 MULE</div>
         </div>
       </div>
 
@@ -280,10 +264,6 @@
             <span class="info-label">Your Contribution</span>
             <span class="info-value" id="userBnbDeposited">0 BNB</span>
           </div>
-          <div class="info-row">
-            <span class="info-label">Remaining Quota</span>
-            <span class="info-value" id="bnbRemaining">0.5 BNB</span>
-          </div>
         </div>
 
         <button class="submit-btn" id="depositBnbBtn">
@@ -328,10 +308,6 @@
             <span class="info-label">Your Contribution</span>
             <span class="info-value" id="userMuleDeposited">0 MULE</span>
           </div>
-          <div class="info-row">
-            <span class="info-label">Remaining Quota</span>
-            <span class="info-value" id="muleRemaining">10,000 MULE</span>
-          </div>
         </div>
 
         <button class="submit-btn" id="depositMuleBtn">
@@ -341,7 +317,7 @@
       </div>
 
       <div class="contract-row">
-        <a class="contract-link" href="https://bscscan.com/address/0xFc0C329eB10939def9AB4Ad7A8A2f37C28B55daa" target="_blank" rel="noopener">
+        <a class="contract-link" href="https://bscscan.com/address/0x145C10a9Bc834CfF69c31Ff905085eB8a6B25EB0" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           View Contract on BSCScan
         </a>
@@ -355,10 +331,9 @@
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@6.15.0/+esm';
 
     const BSC = { chainId: 56, hex: '0x38', name: 'BNB Smart Chain', rpc: 'https://bsc-dataseed.binance.org/', explorer: 'https://bscscan.com' };
-    const PRESALE = '0xFc0C329eB10939def9AB4Ad7A8A2f37C28B55daa';
+    const PRESALE = '0x145C10a9Bc834CfF69c31Ff905085eB8a6B25EB0';
     const MULE_ADDR = '0x5cBE32F9a420A0fC006aDF99115d782e6b848888';
-    const BNB_CAP = ethers.parseEther('200');
-    const MULE_CAP = ethers.parseEther('10000000');
+    // No caps - unlimited
 
     const PRESALE_ABI = [
       'function depositBNB() external payable',
@@ -366,11 +341,7 @@
       'function totalBNBDeposited() view returns (uint256)',
       'function totalMULEDeposited() view returns (uint256)',
       'function userBNBDeposited(address) view returns (uint256)',
-      'function userMULEDeposited(address) view returns (uint256)',
-      'function getUserRemainingBNBQuota(address) view returns (uint256)',
-      'function getUserRemainingMULEQuota(address) view returns (uint256)',
-      'function SINGLE_USER_BNB_LIMIT() view returns (uint256)',
-      'function SINGLE_USER_MULE_LIMIT() view returns (uint256)'
+      'function userMULEDeposited(address) view returns (uint256)'
     ];
     const ERC20_ABI = [
       'function allowance(address,address) view returns (uint256)',
@@ -386,7 +357,6 @@
     let userAddr = null;
     let currentChainId = 0;
     let isCorrectNetwork = false;
-    let bnbRemain = 0n, muleRemain = 0n;
     let bnbBalance = 0n, muleBalance = 0n;
     let bnbSliderCtrl, muleSliderCtrl;
 
@@ -575,12 +545,8 @@
         signer = null;
         presaleC = null;
         muleC = null;
-        bnbRemain = 0n;
-        muleRemain = 0n;
         $('userBnbDeposited').textContent = '0 BNB';
         $('userMuleDeposited').textContent = '0 MULE';
-        $('bnbRemaining').textContent = '0.5 BNB';
-        $('muleRemaining').textContent = '10,000 MULE';
         $('bnbBalance').textContent = '0.000000';
         $('muleBalance').textContent = '0.000000';
         updateConnectionUI();
@@ -610,10 +576,10 @@
       try {
         const pub = new ethers.Contract(PRESALE, PRESALE_ABI, new ethers.JsonRpcProvider(BSC.rpc));
         const [tb, tm] = await Promise.all([pub.totalBNBDeposited(), pub.totalMULEDeposited()]);
-        const bp = Math.min(100, Number((tb * 10000n) / BNB_CAP) / 100);
-        const mp = Math.min(100, Number((tm * 10000n) / MULE_CAP) / 100);
-        $('bnbProgress').textContent = fmt6(tb) + ' / 200 BNB';
-        $('muleProgress').textContent = fmt6(tm) + ' / 10,000,000 MULE';
+        const bp = 0;
+        const mp = 0;
+        $('bnbProgress').textContent = fmt6(tb) + ' BNB';
+        $('muleProgress').textContent = fmt6(tm) + ' MULE';
         $('bnbBar').style.width = bp + '%';
         $('muleBar').style.width = mp + '%';
       } catch (e) { console.error(e); }
@@ -622,18 +588,12 @@
     async function loadUser() {
       if (!userAddr || !presaleC || !isCorrectNetwork) return;
       try {
-        const [ub, um, br, mr] = await Promise.all([
+        const [ub, um] = await Promise.all([
           presaleC.userBNBDeposited(userAddr),
-          presaleC.userMULEDeposited(userAddr),
-          presaleC.getUserRemainingBNBQuota(userAddr),
-          presaleC.getUserRemainingMULEQuota(userAddr)
+          presaleC.userMULEDeposited(userAddr)
         ]);
-        bnbRemain = br;
-        muleRemain = mr;
         $('userBnbDeposited').textContent = fmt6(ub) + ' BNB';
         $('userMuleDeposited').textContent = fmt6(um) + ' MULE';
-        $('bnbRemaining').textContent = fmt6(br) + ' BNB';
-        $('muleRemaining').textContent = fmt6(mr) + ' MULE';
       } catch (e) { console.error('Load user error:', e); }
     }
 
@@ -643,7 +603,7 @@
       if (!val || parseFloat(val) <= 0) { toast('Enter an amount', 'error'); return; }
       try {
         const parsed = ethers.parseEther(val);
-        if (parsed > bnbRemain) { toast('Exceeds your remaining quota', 'error'); return; }
+        // No quota check - unlimited
         const btn = $('depositBnbBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="loading"></span> Confirming...';
@@ -672,7 +632,7 @@
       if (!val || parseFloat(val) <= 0) { toast('Enter an amount', 'error'); return; }
       try {
         const parsed = ethers.parseEther(val);
-        if (parsed > muleRemain) { toast('Exceeds your remaining quota', 'error'); return; }
+        // No quota check - unlimited
         const btn = $('depositMuleBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="loading"></span> Confirming...';
@@ -713,24 +673,24 @@
 
     bnbSliderCtrl = setupSlider('bnbSlider', 'bnbPct', 'bnbQuick',
       document.querySelector('#bnbForm .slider-marks'),
-      () => bnbBalance < bnbRemain ? bnbBalance : bnbRemain,
+      () => bnbBalance,
       (v) => { $('bnbAmount').value = v; }
     );
     muleSliderCtrl = setupSlider('muleSlider', 'mulePct', 'muleQuick',
       document.querySelector('#muleForm .slider-marks'),
-      () => muleBalance < muleRemain ? muleBalance : muleRemain,
+      () => muleBalance,
       (v) => { $('muleAmount').value = v; }
     );
 
     $('bnbAmount').addEventListener('input', () => {
       const v = parseFloat($('bnbAmount').value) || 0;
-      const max = parseFloat(ethers.formatEther(bnbRemain));
+      const max = parseFloat(ethers.formatEther(bnbBalance));
       const pct = max > 0 ? Math.round((v / max) * 100) : 0;
       bnbSliderCtrl.setPct(Math.min(100, pct));
     });
     $('muleAmount').addEventListener('input', () => {
       const v = parseFloat($('muleAmount').value) || 0;
-      const max = parseFloat(ethers.formatEther(muleRemain));
+      const max = parseFloat(ethers.formatEther(muleBalance));
       const pct = max > 0 ? Math.round((v / max) * 100) : 0;
       muleSliderCtrl.setPct(Math.min(100, pct));
     });
@@ -766,12 +726,8 @@
         signer = null;
         presaleC = null;
         muleC = null;
-        bnbRemain = 0n;
-        muleRemain = 0n;
         $('userBnbDeposited').textContent = '0 BNB';
         $('userMuleDeposited').textContent = '0 MULE';
-        $('bnbRemaining').textContent = '0.5 BNB';
-        $('muleRemaining').textContent = '10,000 MULE';
         $('bnbBalance').textContent = '0.000000';
         $('muleBalance').textContent = '0.000000';
         updateConnectionUI();
