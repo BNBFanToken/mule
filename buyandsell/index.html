@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PancakeSwap V2 刷单机器人</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F4F6FA;
+  --card: #FFFFFF;
+  --border: #E2E8F0;
+  --text: #1A202C;
+  --text2: #64748B;
+  --text3: #94A3B8;
+  --primary: #2563EB;
+  --primary-light: #DBEAFE;
+  --primary-dark: #1D4ED8;
+  --success: #10B981;
+  --success-light: #D1FAE5;
+  --danger: #EF4444;
+  --danger-light: #FEE2E2;
+  --warning: #F59E0B;
+  --warning-light: #FEF3C7;
+  --accent: #8B5CF6;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+#app { max-width: 1200px; margin: 0 auto; padding: 0 16px 40px; }
+
+/* Header */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+  flex-wrap: wrap; gap: 10px;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.logo-icon { flex-shrink: 0; }
+.app-title { font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
+.app-subtitle { font-size: .78rem; color: var(--text2); font-weight: 500; }
+.header-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.network-badge, .rpc-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  padding: 5px 12px; border-radius: 20px; font-size: .78rem; font-weight: 500;
+}
+.network-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+.rpc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.rpc-dot.ok { background: var(--success); }
+.rpc-dot.err { background: var(--danger); }
+
+/* Tabs */
+.tab-nav {
+  display: flex; gap: 4px; padding: 12px 0 0; overflow-x: auto;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 18px; border: none; background: transparent;
+  font-family: var(--font); font-size: .88rem; font-weight: 500;
+  color: var(--text2); cursor: pointer; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  white-space: nowrap; transition: all .2s;
+}
+.tab-btn:hover { color: var(--primary); background: var(--primary-light); }
+.tab-btn.active {
+  color: var(--primary); background: var(--card);
+  box-shadow: var(--shadow); font-weight: 600;
+}
+.tab-btn svg { flex-shrink: 0; }
+
+/* Tab Content */
+.tab-content { background: var(--card); border-radius: 0 0 var(--radius) var(--radius); box-shadow: var(--shadow); min-height: 60vh; }
+.tab-panel { display: none; padding: 24px; }
+.tab-panel.active { display: block; }
+
+/* Cards & Sections */
+.section-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.section-title svg { color: var(--primary); }
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+}
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.card-label { font-weight: 600; font-size: .92rem; }
+
+/* Forms */
+label { display: block; font-size: .82rem; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+input[type="text"], input[type="number"], textarea, select {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-family: var(--font); font-size: .9rem;
+  background: #FAFBFC; transition: border-color .2s, box-shadow .2s;
+  color: var(--text);
+}
+input:focus, textarea:focus, select:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+textarea { resize: vertical; font-family: var(--mono); font-size: .82rem; line-height: 1.6; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.form-group { margin-bottom: 14px; }
+.form-hint { font-size: .75rem; color: var(--text3); margin-top: 4px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 20px; border: none; border-radius: var(--radius-sm);
+  font-family: var(--font); font-size: .88rem; font-weight: 600;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover:not(:disabled) { background: #059669; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #DC2626; }
+.btn-warning { background: var(--warning); color: #fff; }
+.btn-warning:hover:not(:disabled) { background: #D97706; }
+.btn-outline {
+  background: transparent; color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+.btn-outline:hover:not(:disabled) { background: var(--primary-light); }
+.btn-sm { padding: 6px 14px; font-size: .82rem; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th { text-align: left; padding: 10px 12px; background: #F8FAFC; font-weight: 600; color: var(--text2); border-bottom: 2px solid var(--border); white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:hover td { background: #F8FAFC; }
+.addr { font-family: var(--mono); font-size: .8rem; }
+.tx-link { color: var(--primary); text-decoration: none; font-family: var(--mono); font-size: .8rem; }
+.tx-link:hover { text-decoration: underline; }
+
+/* Stats Cards */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card {
+  background: linear-gradient(135deg, #F8FAFC, #FFFFFF);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.stat-card.blue::before { background: var(--primary); }
+.stat-card.green::before { background: var(--success); }
+.stat-card.orange::before { background: var(--warning); }
+.stat-card.purple::before { background: var(--accent); }
+.stat-label { font-size: .78rem; color: var(--text2); font-weight: 500; margin-bottom: 6px; }
+.stat-value { font-size: 1.3rem; font-weight: 700; font-family: var(--mono); }
+.stat-sub { font-size: .75rem; color: var(--text3); margin-top: 4px; }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600;
+}
+.badge-success { background: var(--success-light); color: #065F46; }
+.badge-danger { background: var(--danger-light); color: #991B1B; }
+.badge-warning { background: var(--warning-light); color: #92400E; }
+.badge-info { background: var(--primary-light); color: #1E40AF; }
+.badge-neutral { background: #F1F5F9; color: var(--text2); }
+
+/* Status indicator */
+.status-bar {
+  display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+  border-radius: var(--radius-sm); margin-bottom: 16px; font-weight: 600; font-size: .9rem;
+}
+.status-bar.running { background: var(--success-light); color: #065F46; }
+.status-bar.paused { background: var(--warning-light); color: #92400E; }
+.status-bar.stopped { background: #F1F5F9; color: var(--text2); }
+.status-bar .pulse {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.status-bar.running .pulse { background: var(--success); animation: pulse 1.5s infinite; }
+.status-bar.paused .pulse { background: var(--warning); }
+.status-bar.stopped .pulse { background: var(--text3); }
+@keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
+
+/* Log area */
+.log-area {
+  background: #0F172A; color: #E2E8F0; border-radius: var(--radius-sm);
+  padding: 16px; font-family: var(--mono); font-size: .78rem;
+  line-height: 1.7; max-height: 500px; overflow-y: auto;
+  white-space: pre-wrap; word-break: break-all;
+}
+.log-area .log-time { color: #64748B; }
+.log-area .log-buy { color: #34D399; }
+.log-area .log-sell { color: #F87171; }
+.log-area .log-info { color: #60A5FA; }
+.log-area .log-warn { color: #FBBF24; }
+.log-area .log-err { color: #EF4444; }
+
+/* Token info display */
+.token-info-bar {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  flex-wrap: wrap; margin-top: 10px;
+}
+.token-info-bar .token-name { font-weight: 700; font-size: 1rem; }
+.token-info-bar .token-symbol { color: var(--text2); font-weight: 500; }
+.token-info-bar .token-detail { font-size: .8rem; color: var(--text3); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: #1E293B; color: #fff; padding: 12px 24px; border-radius: var(--radius-sm);
+  font-size: .88rem; font-weight: 500; z-index: 9999;
+  opacity: 0; transition: all .3s ease; pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
+.empty-state svg { margin-bottom: 12px; opacity: .4; }
+.empty-state p { font-size: .92rem; }
+
+/* Strategy type selector */
+.strategy-types { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.strategy-type-card {
+  padding: 16px; border: 2px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; transition: all .2s; text-align: center;
+}
+.strategy-type-card:hover { border-color: var(--primary); background: var(--primary-light); }
+.strategy-type-card.selected { border-color: var(--primary); background: var(--primary-light); }
+.strategy-type-card .st-icon { font-size: 1.5rem; margin-bottom: 6px; }
+.strategy-type-card .st-name { font-weight: 700; font-size: .92rem; margin-bottom: 4px; }
+.strategy-type-card .st-desc { font-size: .78rem; color: var(--text2); }
+
+/* Scrollbar for log */
+.log-area::-webkit-scrollbar { width: 6px; }
+.log-area::-webkit-scrollbar-track { background: transparent; }
+.log-area::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  html { font-size: 14px; }
+  #app { padding: 0 10px 30px; }
+  .tab-panel { padding: 16px; }
+  .form-row { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .strategy-types { grid-template-columns: 1fr; }
+  .app-header { padding: 12px 0; }
+  .header-right { width: 100%; justify-content: flex-start; }
+  .tab-btn { padding: 8px 12px; font-size: .78rem; gap: 4px; }
+  .tab-btn svg { width: 15px; height: 15px; }
+  .btn-group { flex-direction: column; }
+  .btn-group .btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="14" fill="#D18800"/><text x="14" y="19" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">P</text></svg>
+      </div>
+      <div>
+        <h1 class="app-title">PancakeBot</h1>
+        <p class="app-subtitle">BSC · PancakeSwap V2</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="network-badge">
+        <span class="network-dot"></span>
+        <span>BSC 主网</span>
+      </div>
+      <div class="rpc-badge" id="rpcStatus" title="RPC状态">
+        <span class="rpc-dot"></span>
+        <span>RPC</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="wallets">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="16" cy="14" r="1.5"/></svg>
+      <span>钱包管理</span>
+    </button>
+    <button class="tab-btn" data-tab="strategy">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <span>策略配置</span>
+    </button>
+    <button class="tab-btn" data-tab="dashboard">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>监控面板</span>
+    </button>
+    <button class="tab-btn" data-tab="logs">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>日志</span>
+    </button>
+  </nav>
+
+  <!-- Tab Contents -->
+  <main class="tab-content">
+    <!-- TAB: Wallets -->
+    <section class="tab-panel active" id="tab-wallets">
+      <div class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        钱包管理
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">导入私钥</span>
+          <span class="badge badge-neutral" id="walletCount">0 / 1000</span>
+        </div>
+        <div class="form-group">
+          <textarea id="privateKeyInput" rows="6" placeholder="粘贴私钥，一行一个&#10;支持带 0x 或不带 0x 前缀&#10;例如：&#10;0xabc123...&#10;def456..."></textarea>
+          <div class="form-hint">最多支持 1000 个钱包，私钥仅在本地内存中使用，关闭页面即清除</div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="importWallets()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            导入并解析
+          </button>
+          <button class="btn btn-outline" onclick="clearWallets()">清空钱包</button>
+          <button class="btn btn-outline" onclick="refreshAllBalances()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            刷新全部余额
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">钱包列表</span>
+          <div class="btn-group">
+            <span class="badge badge-info" id="totalBnb">总BNB: 0</span>
+            <span class="badge badge-success" id="totalToken">总代币: 0</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>地址</th>
+                <th>BNB 余额</th>
+                <th>代币余额</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="walletTableBody">
+              <tr><td colspan="5" class="empty-state"><p>暂无钱包，请先导入私钥</p></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: Strategy -->
+    <section class="tab-panel" id="tab-strategy">
+      <div class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        策略配置
+      </div>
+
+      <!-- Token Config -->
+      <div class="card">
+        <div class="card-header"><span class="card-label">代币设置</span></div>
+        <div class="form-row">
+          <div>
+            <label>代币合约地址</label>
+            <input type="text" id="tokenAddress" placeholder="0x..." oninput="debounceDetectToken()">
+            <div class="form-hint">输入BSC上的代币合约地址</div>
+          </div>
+          <div>
+            <label>RPC 节点地址</label>
+            <input type="text" id="rpcUrl" value="https://bsc-dataseed1.binance.org/" placeholder="https://...">
+            <div class="form-hint">留空使用默认公共节点</div>
+          </div>
+        </div>
+        <div id="tokenInfoBar" style="display:none" class="token-info-bar">
+          <span class="token-name" id="tkName">-</span>
+          <span class="token-symbol" id="tkSymbol">-</span>
+          <span class="token-detail" id="tkDecimals">-</span>
+          <span class="token-detail" id="tkPool">-</span>
+          <span class="token-detail" id="tkPrice">-</span>
+        </div>
+      </div>
+
+      <!-- Strategy Type -->
+      <div class="card">
+        <div class="card-header"><span class="card-label">选择策略</span></div>
+        <div class="strategy-types">
+          <div class="strategy-type-card" data-strategy="wash" onclick="selectStrategy('wash')">
+            <div class="st-icon">🔄</div>
+            <div class="st-name">对敲模式</div>
+            <div class="st-desc">A买B卖，制造交易量</div>
+          </div>
+          <div class="strategy-type-card" data-strategy="buy" onclick="selectStrategy('buy')">
+            <div class="st-icon">📈</div>
+            <div class="st-name">只买模式</div>
+            <div class="st-desc">持续买入推高价格</div>
+          </div>
+          <div class="strategy-type-card" data-strategy="sell" onclick="selectStrategy('sell')">
+            <div class="st-icon">📉</div>
+            <div class="st-name">只卖模式</div>
+            <div class="st-desc">分批卖出模拟出货</div>
+          </div>
+          <div class="strategy-type-card" data-strategy="protect" onclick="selectStrategy('protect')">
+            <div class="st-icon">🛡️</div>
+            <div class="st-name">护盘模式</div>
+            <div class="st-desc">跌破阈值自动买入</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trade Parameters -->
+      <div class="card">
+        <div class="card-header"><span class="card-label">交易参数</span></div>
+
+        <!-- 买入参数（对敲/只买/护盘模式显示） -->
+        <div id="buyParams">
+          <div class="form-group">
+            <label>每笔买入金额 (BNB)</label>
+            <div class="form-row" style="margin-bottom:0">
+              <input type="number" id="buyMin" value="0.005" step="0.001" min="0.0001">
+              <input type="number" id="buyMax" value="0.02" step="0.001" min="0.0001">
+            </div>
+            <div class="form-hint">最小 ~ 最大 BNB，每笔随机取值</div>
+          </div>
+        </div>
+
+        <!-- 卖出参数（对敲/只卖模式显示） -->
+        <div id="sellParams">
+          <div class="form-group">
+            <label>卖出方式</label>
+            <select id="sellMode" onchange="toggleSellMode()">
+              <option value="fixed">按固定数量卖出</option>
+              <option value="percent">按持仓比例卖出</option>
+            </select>
+          </div>
+          <div id="sellFixed">
+            <div class="form-group">
+              <label>每笔卖出数量 (代币)</label>
+              <div class="form-row" style="margin-bottom:0">
+                <input type="number" id="sellMin" value="1000" step="1" min="0">
+                <input type="number" id="sellMax" value="5000" step="1" min="0">
+              </div>
+              <div class="form-hint">最小 ~ 最大代币数量，每笔随机取值</div>
+            </div>
+          </div>
+          <div id="sellPercent" style="display:none">
+            <div class="form-group">
+              <label>每笔卖出比例 (%)</label>
+              <div class="form-row" style="margin-bottom:0">
+                <input type="number" id="sellPctMin" value="5" step="1" min="1" max="100">
+                <input type="number" id="sellPctMax" value="15" step="1" min="1" max="100">
+              </div>
+              <div class="form-hint">按钱包持仓的百分比随机卖出</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>滑点 (%)</label>
+            <input type="number" id="slippage" value="5" step="0.5" min="0.1" max="100">
+            <div class="form-hint">带税代币建议 10~25%</div>
+          </div>
+          <div>
+            <label>Gas 价格 (Gwei)</label>
+            <input type="number" id="gasPrice" value="3" step="0.5" min="1" max="50">
+            <div class="form-hint">BSC 默认 3 Gwei 即可</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Gas 上限</label>
+            <input type="number" id="gasLimit" value="250000" step="10000" min="100000" max="1000000">
+            <div class="form-hint">一般 250000 足够</div>
+          </div>
+          <div>
+            <label>交易间隔 (秒)</label>
+            <div class="form-row" style="margin-bottom:0">
+              <input type="number" id="intervalMin" value="30" step="5" min="3">
+              <input type="number" id="intervalMax" value="120" step="5" min="3">
+            </div>
+            <div class="form-hint">最小 ~ 最大，随机等待</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>失败重试次数</label>
+            <input type="number" id="retryCount" value="3" step="1" min="0" max="10">
+          </div>
+          <div>
+            <label>重试间隔 (秒)</label>
+            <input type="number" id="retryInterval" value="5" step="1" min="1" max="60">
+          </div>
+        </div>
+      </div>
+
+      <!-- 钱包范围设置（所有模式都有） -->
+      <div class="card" id="walletRangeSettings">
+        <div class="card-header"><span class="card-label">钱包范围设置</span></div>
+        <!-- 对敲模式：买方+卖方 -->
+        <div id="washRange">
+          <div class="form-row">
+            <div>
+              <label>买方钱包范围</label>
+              <div class="form-row" style="margin-bottom:0">
+                <input type="number" id="buyerStart" value="1" step="1" min="1" placeholder="起始序号">
+                <input type="number" id="buyerEnd" value="5" step="1" min="1" placeholder="结束序号">
+              </div>
+              <div class="form-hint">钱包序号范围（包含两端）</div>
+            </div>
+            <div>
+              <label>卖方钱包范围</label>
+              <div class="form-row" style="margin-bottom:0">
+                <input type="number" id="sellerStart" value="6" step="1" min="1" placeholder="起始序号">
+                <input type="number" id="sellerEnd" value="10" step="1" min="1" placeholder="结束序号">
+              </div>
+              <div class="form-hint">钱包序号范围（包含两端）</div>
+            </div>
+          </div>
+        </div>
+        <!-- 其他模式：单一钱包范围 -->
+        <div id="singleRange" style="display:none">
+          <div class="form-group">
+            <label>参与钱包范围</label>
+            <div class="form-row" style="margin-bottom:0">
+              <input type="number" id="rangeStart" value="1" step="1" min="1" placeholder="起始序号">
+              <input type="number" id="rangeEnd" value="10" step="1" min="1" placeholder="结束序号">
+            </div>
+            <div class="form-hint">钱包序号范围（包含两端），留空或超出则使用全部钱包</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 护盘模式专属设置 -->
+      <div class="card" id="protectSettings" style="display:none">
+        <div class="card-header"><span class="card-label">护盘模式设置</span></div>
+        <div class="form-row">
+          <div>
+            <label>价格阈值 (BNB)</label>
+            <input type="number" id="protectPrice" value="0.0000001" step="0.0000001" min="0">
+            <div class="form-hint">当价格低于此值（以BNB计价）时自动买入</div>
+          </div>
+          <div>
+            <label>价格检查间隔 (秒)</label>
+            <input type="number" id="protectInterval" value="10" step="1" min="3">
+            <div class="form-hint">每隔多久检查一次价格</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Control Buttons -->
+      <div class="card">
+        <div class="btn-group" style="justify-content:center">
+          <button class="btn btn-success" id="btnStart" onclick="startStrategy()" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            启动策略
+          </button>
+          <button class="btn btn-warning" id="btnPause" onclick="pauseStrategy()" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            暂停
+          </button>
+          <button class="btn btn-danger" id="btnStop" onclick="stopStrategy()" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            停止
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: Dashboard -->
+    <section class="tab-panel" id="tab-dashboard">
+      <div class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        监控面板
+      </div>
+
+      <div id="statusBar" class="status-bar stopped">
+        <div class="pulse"></div>
+        <span id="statusText">未运行</span>
+        <span style="margin-left:auto;font-size:.8rem;font-weight:400;color:var(--text3)" id="runTime"></span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-label">当前价格</div>
+          <div class="stat-value" id="dashPrice">0 BNB</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">总买入</div>
+          <div class="stat-value" id="dashBuyCount">0</div>
+          <div class="stat-sub" id="dashBuyAmount">0 BNB</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">总卖出</div>
+          <div class="stat-value" id="dashSellCount">0</div>
+          <div class="stat-sub" id="dashSellAmount">0 代币</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Gas 消耗</div>
+          <div class="stat-value" id="dashGas">0</div>
+          <div class="stat-sub">BNB</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-label">净买入量</div>
+          <div class="stat-value" id="dashNetBuy">0 BNB</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">成功交易</div>
+          <div class="stat-value" id="dashSuccess">0</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">失败交易</div>
+          <div class="stat-value" id="dashFailed">0</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">运行时长</div>
+          <div class="stat-value" id="dashUptime">00:00:00</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">最近交易</span>
+          <button class="btn btn-outline btn-sm" onclick="switchTab('logs')">查看全部日志</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>钱包</th>
+                <th>类型</th>
+                <th>金额</th>
+                <th>交易哈希</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="recentTxBody">
+              <tr><td colspan="6" class="empty-state"><p>暂无交易记录</p></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: Logs -->
+    <section class="tab-panel" id="tab-logs">
+      <div class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        运行日志
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="btn-group">
+          <span class="badge badge-success" id="logSuccessCount">成功: 0</span>
+          <span class="badge badge-danger" id="logFailCount">失败: 0</span>
+          <span class="badge badge-info" id="logTotalCount">总计: 0</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="clearLogs()">清空日志</button>
+      </div>
+
+      <div class="log-area" id="logArea">等待启动...</div>
+    </section>
+  </main>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const STATE = {
+  wallets: [],          // { address, privateKey, bnbBalance, tokenBalance }
+  selectedStrategy: null,
+  running: false,
+  paused: false,
+  startTime: null,
+  timerInterval: null,
+  loopTimeout: null,
+  tokenInfo: null,      // { name, symbol, decimals, totalSupply, pairAddress, price }
+  provider: null,
+  _rpcUrl: '',
+  stats: {
+    buyCount: 0, sellCount: 0,
+    buyBnb: 0, sellToken: 0,
+    gasUsed: 0, success: 0, failed: 0,
+    consecutiveFails: 0  // 连续失败计数（熔断用）
+  },
+  logs: [],
+  recentTx: [],
+  nonceMap: {}          // 手动 nonce 管理: { address: nextNonce }
+};
+
+const PANCAKE_ROUTER = '0x10ED43C718714eb63d5aA57B78B54704E256024E';
+const PANCAKE_FACTORY = '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73';
+const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
+const ERC20_ABI = [
+  'function name() view returns (string)',
+  'function symbol() view returns (string)',
+  'function decimals() view returns (uint8)',
+  'function totalSupply() view returns (uint256)',
+  'function balanceOf(address) view returns (uint256)',
+  'function approve(address,uint256) returns (bool)',
+  'function allowance(address,address) view returns (uint256)'
+];
+const ROUTER_ABI = [
+  'function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns (uint256[])',
+  'function swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) returns (uint256[])',
+  'function getAmountsOut(uint256 amountIn, address[] path) view returns (uint256[])'
+];
+const FACTORY_ABI = [
+  'function getPair(address,address) view returns (address)'
+];
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function $(id) { return document.getElementById(id); }
+function shortAddr(a) { return a ? a.slice(0,6) + '...' + a.slice(-4) : '-'; }
+function shortTx(h) { return h ? h.slice(0,10) + '...' : '-'; }
+function rand(min, max) { return Math.random() * (max - min) + min; }
+function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function fmtNum(n, d=4) { return Number(n).toFixed(d); }
+function fmtBnb(n) { return fmtNum(n, 6); }
+function now() { return new Date().toLocaleTimeString('zh-CN', {hour12:false}); }
+function fmtDuration(s) {
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sec = String(Math.floor(s%60)).padStart(2,'0');
+  return `${h}:${m}:${sec}`;
+}
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function addLog(msg, type='info') {
+  const entry = { time: now(), msg, type };
+  STATE.logs.push(entry);
+  const area = $('logArea');
+  const span = document.createElement('span');
+  const safeMsg = escapeHtml(msg);
+  const safeTime = escapeHtml(entry.time);
+  span.innerHTML = `<span class="log-time">[${safeTime}]</span> <span class="log-${type}">${safeMsg}</span>\n`;
+  area.appendChild(span);
+  area.scrollTop = area.scrollHeight;
+  // keep max 2000 lines
+  if (STATE.logs.length > 2000) {
+    STATE.logs.shift();
+    if (area.firstChild) area.removeChild(area.firstChild);
+  }
+  $('logTotalCount').textContent = `总计: ${STATE.logs.length}`;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// ============================================================
+// PROVIDER
+// ============================================================
+function getProvider() {
+  const rpc = $('rpcUrl').value.trim() || 'https://bsc-dataseed1.binance.org/';
+  // 缓存 provider，避免重复创建；仅当 RPC 地址变化时重建
+  if (!STATE.provider || STATE._rpcUrl !== rpc) {
+    STATE.provider = new ethers.JsonRpcProvider(rpc);
+    STATE._rpcUrl = rpc;
+  }
+  return STATE.provider;
+}
+
+async function checkRpc() {
+  try {
+    const p = getProvider();
+    const block = await p.getBlockNumber();
+    $('rpcStatus').querySelector('.rpc-dot').className = 'rpc-dot ok';
+    addLog(`RPC 连接成功，当前区块: ${block}`, 'info');
+    return true;
+  } catch(e) {
+    $('rpcStatus').querySelector('.rpc-dot').className = 'rpc-dot err';
+    addLog(`RPC 连接失败: ${e.message}`, 'err');
+    return false;
+  }
+}
+
+// ============================================================
+// WALLET MANAGEMENT
+// ============================================================
+function importWallets() {
+  const raw = $('privateKeyInput').value.trim();
+  if (!raw) { showToast('请输入私钥'); return; }
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const unique = [...new Set(lines)];
+  if (unique.length > 1000) { showToast('最多支持 1000 个钱包'); return; }
+
+  const newWallets = [];
+  let errors = 0;
+  for (const line of unique) {
+    try {
+      let pk = line;
+      if (!pk.startsWith('0x')) pk = '0x' + pk;
+      if (!/^0x[0-9a-fA-F]{64}$/.test(pk)) { errors++; continue; }
+      const wallet = new ethers.Wallet(pk);
+      // avoid duplicates
+      if (STATE.wallets.find(w => w.address.toLowerCase() === wallet.address.toLowerCase())) continue;
+      if (newWallets.find(w => w.address.toLowerCase() === wallet.address.toLowerCase())) continue;
+      newWallets.push({
+        address: wallet.address,
+        privateKey: pk,
+        bnbBalance: '0',
+        tokenBalance: '0'
+      });
+    } catch(e) { errors++; }
+  }
+
+  STATE.wallets = [...STATE.wallets, ...newWallets];
+  renderWalletTable();
+  $('walletCount').textContent = `${STATE.wallets.length} / 1000`;
+  $('privateKeyInput').value = '';
+  showToast(`成功导入 ${newWallets.length} 个钱包${errors ? `，${errors} 个格式错误` : ''}`);
+  addLog(`导入 ${newWallets.length} 个钱包`, 'info');
+  updateStartBtn();
+}
+
+function clearWallets() {
+  if (STATE.running) { showToast('请先停止策略'); return; }
+  STATE.wallets = [];
+  renderWalletTable();
+  $('walletCount').textContent = '0 / 1000';
+  $('totalBnb').textContent = '总BNB: 0';
+  $('totalToken').textContent = '总代币: 0';
+  showToast('已清空所有钱包');
+}
+
+function renderWalletTable() {
+  const tbody = $('walletTableBody');
+  if (STATE.wallets.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><p>暂无钱包，请先导入私钥</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = STATE.wallets.map((w, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td class="addr">${escapeHtml(shortAddr(w.address))}</td>
+      <td class="addr">${escapeHtml(fmtBnb(w.bnbBalance))}</td>
+      <td class="addr">${escapeHtml(fmtNum(w.tokenBalance, 2))}</td>
+      <td><span class="badge badge-success">就绪</span></td>
+    </tr>
+  `).join('');
+}
+
+async function refreshAllBalances() {
+  if (STATE.wallets.length === 0) { showToast('暂无钱包'); return; }
+  showToast('正在刷新余额...');
+  addLog('开始刷新所有钱包余额...', 'info');
+  const provider = getProvider();
+  let totalBnb = 0, totalToken = 0;
+  const tokenAddr = $('tokenAddress').value.trim();
+  let tokenContract = null;
+  if (tokenAddr && /^0x[0-9a-fA-F]{40}$/.test(tokenAddr)) {
+    tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, provider);
+  }
+
+  // batch in groups of 20 to avoid RPC pressure
+  for (let i = 0; i < STATE.wallets.length; i += 20) {
+    const batch = STATE.wallets.slice(i, i + 20);
+    await Promise.all(batch.map(async (w) => {
+      try {
+        const bnb = await provider.getBalance(w.address);
+        w.bnbBalance = ethers.formatEther(bnb);
+        totalBnb += parseFloat(w.bnbBalance);
+        if (tokenContract) {
+          const tb = await tokenContract.balanceOf(w.address);
+          w.tokenBalance = ethers.formatUnits(tb, STATE.tokenInfo?.decimals || 18);
+          totalToken += parseFloat(w.tokenBalance);
+        }
+      } catch(e) { /* skip */ }
+    }));
+    if (i + 20 < STATE.wallets.length) await sleep(200);
+  }
+
+  renderWalletTable();
+  $('totalBnb').textContent = `总BNB: ${fmtBnb(totalBnb)}`;
+  $('totalToken').textContent = `总代币: ${fmtNum(totalToken, 2)}`;
+  addLog(`余额刷新完成，总BNB: ${fmtBnb(totalBnb)}`, 'info');
+  showToast('余额刷新完成');
+}
+
+// ============================================================
+// TOKEN DETECTION
+// ============================================================
+const debounceDetectToken = debounce(detectToken, 800);
+
+async function detectToken() {
+  const addr = $('tokenAddress').value.trim();
+  if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) {
+    $('tokenInfoBar').style.display = 'none';
+    return;
+  }
+  try {
+    const provider = getProvider();
+    const token = new ethers.Contract(addr, ERC20_ABI, provider);
+    const factory = new ethers.Contract(PANCAKE_FACTORY, FACTORY_ABI, provider);
+
+    const [name, symbol, decimals, pairAddr] = await Promise.all([
+      token.name().catch(() => 'Unknown'),
+      token.symbol().catch(() => '???'),
+      token.decimals().catch(() => 18),
+      factory.getPair(addr, WBNB)
+    ]);
+
+    const hasPool = pairAddr && pairAddr !== ethers.ZeroAddress;
+    STATE.tokenInfo = { name, symbol, decimals: Number(decimals), pairAddress: pairAddr, price: 0, hasPool };
+
+    $('tkName').textContent = name;
+    $('tkSymbol').textContent = `(${symbol})`;
+    $('tkDecimals').textContent = `精度: ${decimals}`;
+    $('tkPool').textContent = hasPool ? `✅ 池子存在` : '❌ 未找到池子';
+    $('tkPool').style.color = hasPool ? 'var(--success)' : 'var(--danger)';
+    $('tkPrice').textContent = '';
+    $('tokenInfoBar').style.display = 'flex';
+
+    addLog(`代币检测成功: ${name} (${symbol}), 精度: ${decimals}, 池子: ${hasPool ? '存在' : '不存在'}`, hasPool ? 'info' : 'warn');
+    updateStartBtn();
+  } catch(e) {
+    $('tokenInfoBar').style.display = 'none';
+    addLog(`代币检测失败: ${e.message}`, 'err');
+  }
+}
+
+async function fetchCurrentPrice() {
+  if (!STATE.tokenInfo || !STATE.tokenInfo.hasPool) return 0;
+  try {
+    const provider = getProvider();
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
+    // 使用 1000 个代币查询价格，避免低流动性池精度不足
+    const queryAmount = ethers.parseUnits('1000', STATE.tokenInfo.decimals);
+    const amounts = await router.getAmountsOut(queryAmount, [$('tokenAddress').value.trim(), WBNB]);
+    const bnbFor1000 = parseFloat(ethers.formatEther(amounts[1]));
+    const bnbPrice = bnbFor1000 / 1000;
+    STATE.tokenInfo.price = bnbPrice;
+    $('tkPrice').textContent = `1 ${STATE.tokenInfo.symbol} = ${fmtNum(bnbPrice, 8)} BNB`;
+    $('dashPrice').textContent = `${fmtNum(bnbPrice, 8)} BNB`;
+    return bnbPrice;
+  } catch(e) {
+    return 0;
+  }
+}
+
+// ============================================================
+// STRATEGY SELECTION
+// ============================================================
+function selectStrategy(type) {
+  STATE.selectedStrategy = type;
+  document.querySelectorAll('.strategy-type-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.strategy === type);
+  });
+
+  // 显示/隐藏买入参数
+  const showBuy = ['wash', 'buy', 'protect'].includes(type);
+  $('buyParams').style.display = showBuy ? 'block' : 'none';
+
+  // 显示/隐藏卖出参数
+  const showSell = ['wash', 'sell'].includes(type);
+  $('sellParams').style.display = showSell ? 'block' : 'none';
+
+  // 显示/隐藏护盘设置
+  $('protectSettings').style.display = type === 'protect' ? 'block' : 'none';
+
+  // 钱包范围设置
+  if (type === 'wash') {
+    $('washRange').style.display = 'block';
+    $('singleRange').style.display = 'none';
+  } else {
+    $('washRange').style.display = 'none';
+    $('singleRange').style.display = 'block';
+  }
+
+  updateStartBtn();
+}
+
+function toggleSellMode() {
+  const mode = $('sellMode').value;
+  $('sellFixed').style.display = mode === 'fixed' ? 'block' : 'none';
+  $('sellPercent').style.display = mode === 'percent' ? 'block' : 'none';
+}
+
+function updateStartBtn() {
+  const canStart = STATE.wallets.length > 0 && STATE.selectedStrategy && STATE.tokenInfo?.hasPool;
+  $('btnStart').disabled = !canStart || STATE.running;
+}
+
+// ============================================================
+// TRADING ENGINE
+// ============================================================
+function getConfig() {
+  const sellMode = $('sellMode')?.value || 'fixed';
+  const rawBuyMin = parseFloat($('buyMin').value) || 0.005;
+  const rawBuyMax = parseFloat($('buyMax').value) || 0.02;
+  const rawSellMin = parseFloat($('sellMin').value) || 1000;
+  const rawSellMax = parseFloat($('sellMax').value) || 5000;
+  const rawSellPctMin = parseFloat($('sellPctMin').value) || 5;
+  const rawSellPctMax = parseFloat($('sellPctMax').value) || 15;
+  const rawIntervalMin = parseInt($('intervalMin').value) || 30;
+  const rawIntervalMax = parseInt($('intervalMax').value) || 120;
+  
+  return {
+    buyMin: Math.min(rawBuyMin, rawBuyMax),
+    buyMax: Math.max(rawBuyMin, rawBuyMax),
+    sellMode: sellMode,
+    sellMin: Math.min(rawSellMin, rawSellMax),
+    sellMax: Math.max(rawSellMin, rawSellMax),
+    sellPctMin: Math.min(rawSellPctMin, rawSellPctMax),
+    sellPctMax: Math.max(rawSellPctMin, rawSellPctMax),
+    slippage: parseFloat($('slippage').value) || 5,
+    gasPrice: parseFloat($('gasPrice').value) || 3,
+    gasLimit: parseInt($('gasLimit').value) || 250000,
+    intervalMin: Math.min(rawIntervalMin, rawIntervalMax),
+    intervalMax: Math.max(rawIntervalMin, rawIntervalMax),
+    retryCount: parseInt($('retryCount').value) || 3,
+    retryInterval: parseInt($('retryInterval').value) || 5,
+    // 对敲模式钱包范围
+    buyerStart: parseInt($('buyerStart').value) || 1,
+    buyerEnd: parseInt($('buyerEnd').value) || 5,
+    sellerStart: parseInt($('sellerStart').value) || 6,
+    sellerEnd: parseInt($('sellerEnd').value) || 10,
+    // 其他模式钱包范围
+    rangeStart: parseInt($('rangeStart').value) || 1,
+    rangeEnd: parseInt($('rangeEnd').value) || 10,
+    // 护盘模式
+    protectPrice: parseFloat($('protectPrice').value) || 1e-7,
+    protectInterval: parseInt($('protectInterval').value) || 10
+  };
+}
+
+function pickWallet(minIdx, maxIdx) {
+  const lo = Math.max(0, minIdx - 1);
+  const hi = Math.min(STATE.wallets.length, maxIdx);
+  if (lo >= hi) return null;
+  const idx = randInt(lo, hi - 1);
+  return STATE.wallets[idx];
+}
+
+// 获取下一个 nonce（手动管理，避免冲突）
+async function getNextNonce(address) {
+  const provider = getProvider();
+  if (!STATE.nonceMap[address]) {
+    // 首次使用，从链上获取
+    STATE.nonceMap[address] = await provider.getTransactionCount(address, 'pending');
+  }
+  const nonce = STATE.nonceMap[address];
+  STATE.nonceMap[address]++;
+  return nonce;
+}
+
+// 重置 nonce（交易失败时调用）
+function resetNonce(address) {
+  delete STATE.nonceMap[address];
+}
+
+async function executeBuy(wallet, bnbAmount) {
+  const provider = getProvider();
+  const wc = new ethers.Wallet(wallet.privateKey, provider);
+  const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
+  const tokenAddr = $('tokenAddress').value.trim();
+  const cfg = getConfig();
+
+  // 检查 BNB 余额（需要包含 Gas 费用）
+  try {
+    const bnbBalance = await provider.getBalance(wc.address);
+    const requiredBnb = ethers.parseEther(bnbAmount.toString());
+    const gasCostBnb = (cfg.gasPrice * cfg.gasLimit) / 1e9; // Gwei * 单位 / 1e9 = BNB
+    const gasReserve = ethers.parseEther(gasCostBnb.toString());
+    const totalRequired = requiredBnb + gasReserve;
+    
+    if (bnbBalance < totalRequired) {
+      addLog(`钱包 ${shortAddr(wc.address)} BNB 余额不足 (${ethers.formatEther(bnbBalance)} < ${ethers.formatEther(totalRequired)})`, 'warn');
+      return 'skip'; // 余额不足不需要重试
+    }
+  } catch(e) {
+    addLog(`查询 BNB 余额失败: ${e.message}`, 'warn');
+  }
+
+  const walletRouter = router.connect(wc);
+  const value = ethers.parseEther(bnbAmount.toString());
+  const deadline = Math.floor(Date.now() / 1000) + 300;
+  const slippageBps = Math.floor(cfg.slippage * 100);
+
+  try {
+    // estimate output
+    const amounts = await router.getAmountsOut(value, [WBNB, tokenAddr]);
+    const slippageMultiplier = BigInt(Math.max(1, 10000 - slippageBps)); // 确保至少为 1，避免 minOut = 0
+    const minOut = amounts[1] * slippageMultiplier / 10000n;
+    
+    // 额外检查：如果 minOut 为 0，记录警告但仍然尝试（某些池子可能允许）
+    if (minOut === 0n) {
+      addLog(`警告: 计算的最小输出为 0，可能是滑点设置过高或流动性不足`, 'warn');
+    }
+
+    const nonce = await getNextNonce(wc.address);
+    const tx = await walletRouter.swapExactETHForTokens(
+      minOut,
+      [WBNB, tokenAddr],
+      wc.address,
+      deadline,
+      { value, gasLimit: cfg.gasLimit, gasPrice: ethers.parseUnits(cfg.gasPrice.toString(), 'gwei'), nonce }
+    );
+
+    addLog(`买入 TX 已发送: ${shortTx(tx.hash)} | ${shortAddr(wc.address)} | ${bnbAmount} BNB`, 'buy');
+    const receipt = await tx.wait();
+    if (!receipt) {
+      addLog(`买入交易被替换: ${shortTx(tx.hash)}`, 'warn');
+      resetNonce(wc.address);
+      return false;
+    }
+    const effectiveGasPrice = receipt.gasPrice || ethers.parseUnits(cfg.gasPrice.toString(), 'gwei');
+    const gasCost = ethers.formatEther(receipt.gasUsed * effectiveGasPrice);
+    STATE.stats.buyCount++;
+    STATE.stats.buyBnb += bnbAmount;
+    STATE.stats.gasUsed += parseFloat(gasCost);
+    STATE.stats.success++;
+    STATE.stats.consecutiveFails = 0; // 重置连续失败
+    addTxRecord(wc.address, 'buy', `${bnbAmount} BNB`, tx.hash, true);
+    addLog(`买入成功 ✓ Gas: ${fmtBnb(gasCost)} BNB`, 'buy');
+    return true;
+  } catch(e) {
+    resetNonce(wc.address); // 失败时重置 nonce，下次重新获取
+    STATE.stats.failed++;
+    STATE.stats.consecutiveFails++;
+    addTxRecord(wc.address, 'buy', `${bnbAmount} BNB`, '', false);
+    const errMsg = e.reason || e.shortMessage || e.message || '未知错误';
+    addLog(`买入失败: ${errMsg}`, 'err');
+    return false;
+  }
+}
+
+async function executeSell(wallet, tokenAmount) {
+  const provider = getProvider();
+  const wc = new ethers.Wallet(wallet.privateKey, provider);
+  const tokenAddr = $('tokenAddress').value.trim();
+  const cfg = getConfig();
+  const tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, wc);
+  const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
+
+  let amountIn;
+  
+  // 如果是按百分比卖出，先查询余额
+  if (typeof tokenAmount === 'string' && tokenAmount.endsWith('%')) {
+    const percent = parseFloat(tokenAmount);
+    try {
+      const balance = await tokenContract.balanceOf(wc.address);
+      amountIn = balance * BigInt(Math.floor(percent * 100)) / 10000n;
+      if (amountIn === 0n) {
+        addLog(`钱包 ${shortAddr(wc.address)} 代币余额为 0，跳过`, 'warn');
+        return 'skip'; // 余额为0不需要重试
+      }
+      tokenAmount = ethers.formatUnits(amountIn, STATE.tokenInfo.decimals);
+      addLog(`按 ${percent}% 比例卖出 ${tokenAmount} 代币`, 'info');
+    } catch(e) {
+      addLog(`查询代币余额失败: ${e.message}`, 'warn');
+      return false;
+    }
+  } else {
+    // 固定数量卖出，检查余额
+    amountIn = ethers.parseUnits(tokenAmount.toString(), STATE.tokenInfo.decimals);
+    try {
+      const balance = await tokenContract.balanceOf(wc.address);
+      if (balance < amountIn) {
+        addLog(`钱包 ${shortAddr(wc.address)} 代币余额不足 (${ethers.formatUnits(balance, STATE.tokenInfo.decimals)} < ${tokenAmount})`, 'warn');
+        return 'skip'; // 余额不足不需要重试
+      }
+    } catch(e) {
+      addLog(`查询代币余额失败: ${e.message}`, 'warn');
+    }
+  }
+
+  // 检查 BNB 余额是否足够支付 Gas
+  try {
+    const bnbBalance = await provider.getBalance(wc.address);
+    const gasCostBnb = (cfg.gasPrice * cfg.gasLimit) / 1e9; // Gwei * 单位 / 1e9 = BNB
+    const gasReserve = ethers.parseEther(gasCostBnb.toString());
+    if (bnbBalance < gasReserve) {
+      addLog(`钱包 ${shortAddr(wc.address)} BNB 不足支付 Gas (${ethers.formatEther(bnbBalance)})`, 'warn');
+      return 'skip'; // 余额不足不需要重试
+    }
+  } catch(e) {
+    addLog(`查询 BNB 余额失败: ${e.message}`, 'warn');
+  }
+
+  const walletToken = tokenContract.connect(wc);
+  const walletRouter = router.connect(wc);
+
+  try {
+    // 检查授权额度，查询失败则直接重新授权
+    try {
+      const allowance = await walletToken.allowance(wc.address, PANCAKE_ROUTER);
+      if (allowance < amountIn) {
+        addLog(`授权额度不足，正在授权... ${shortAddr(wc.address)}`, 'info');
+        const approveNonce = await getNextNonce(wc.address);
+        const approveTx = await walletToken.approve(PANCAKE_ROUTER, ethers.MaxUint256, {
+          gasLimit: 100000, gasPrice: ethers.parseUnits(cfg.gasPrice.toString(), 'gwei'), nonce: approveNonce
+        });
+        const approveReceipt = await approveTx.wait();
+        if (!approveReceipt) {
+          addLog(`授权交易被替换: ${shortTx(approveTx.hash)}`, 'warn');
+          resetNonce(wc.address);
+          return false;
+        }
+        addLog(`授权成功 ✓ (交易哈希: ${shortTx(approveReceipt.hash)})`, 'info');
+      }
+    } catch(allowErr) {
+      addLog(`授权查询异常，直接执行授权: ${allowErr.message || allowErr}`, 'warn');
+      const approveNonce = await getNextNonce(wc.address);
+      const approveTx = await walletToken.approve(PANCAKE_ROUTER, ethers.MaxUint256, {
+        gasLimit: 100000, gasPrice: ethers.parseUnits(cfg.gasPrice.toString(), 'gwei'), nonce: approveNonce
+      });
+      const approveReceipt = await approveTx.wait();
+      if (!approveReceipt) {
+        addLog(`授权交易被替换`, 'warn');
+        resetNonce(wc.address);
+        return false;
+      }
+      addLog(`授权成功 ✓`, 'info');
+    }
+
+    const amounts = await router.getAmountsOut(amountIn, [tokenAddr, WBNB]);
+    const slippageBps = Math.floor(cfg.slippage * 100);
+    const slippageMultiplier = BigInt(Math.max(1, 10000 - slippageBps)); // 确保至少为 1
+    const minOut = amounts[1] * slippageMultiplier / 10000n;
+    
+    // 额外检查：如果 minOut 为 0，记录警告
+    if (minOut === 0n) {
+      addLog(`警告: 计算的最小输出为 0，可能是滑点设置过高或流动性不足`, 'warn');
+    }
+    
+    const deadline = Math.floor(Date.now() / 1000) + 300;
+
+    const swapNonce = await getNextNonce(wc.address);
+    const tx = await walletRouter.swapExactTokensForETH(
+      amountIn,
+      minOut,
+      [tokenAddr, WBNB],
+      wc.address,
+      deadline,
+      { gasLimit: cfg.gasLimit, gasPrice: ethers.parseUnits(cfg.gasPrice.toString(), 'gwei'), nonce: swapNonce }
+    );
+
+    addLog(`卖出 TX 已发送: ${shortTx(tx.hash)} | ${shortAddr(wc.address)} | ${tokenAmount} 代币`, 'sell');
+    const receipt = await tx.wait();
+    if (!receipt) {
+      addLog(`卖出交易被替换: ${shortTx(tx.hash)}`, 'warn');
+      resetNonce(wc.address);
+      return false;
+    }
+    const effectiveGasPrice = receipt.gasPrice || ethers.parseUnits(cfg.gasPrice.toString(), 'gwei');
+    const gasCost = ethers.formatEther(receipt.gasUsed * effectiveGasPrice);
+    STATE.stats.sellCount++;
+    STATE.stats.sellToken += parseFloat(tokenAmount);
+    STATE.stats.gasUsed += parseFloat(gasCost);
+    STATE.stats.success++;
+    STATE.stats.consecutiveFails = 0; // 重置连续失败
+    addTxRecord(wc.address, 'sell', `${tokenAmount} 代币`, tx.hash, true);
+    addLog(`卖出成功 ✓ Gas: ${fmtBnb(gasCost)} BNB`, 'sell');
+    return true;
+  } catch(e) {
+    resetNonce(wc.address); // 失败时重置 nonce
+    STATE.stats.failed++;
+    STATE.stats.consecutiveFails++;
+    addTxRecord(wc.address, 'sell', `${tokenAmount} 代币`, '', false);
+    const errMsg = e.reason || e.shortMessage || e.message || '未知错误';
+    addLog(`卖出失败: ${errMsg}`, 'err');
+    return false;
+  }
+}
+
+async function executeTradeWithRetry(fn, retries) {
+  for (let i = 0; i <= retries; i++) {
+    const result = await fn();
+    if (result === true) return true;
+    if (result === 'skip') return false; // 余额不足等不可重试错误，直接跳过
+    if (i < retries) {
+      const cfg = getConfig();
+      addLog(`第 ${i+1} 次重试，等待 ${cfg.retryInterval} 秒...`, 'warn');
+      await sleep(cfg.retryInterval * 1000);
+    }
+  }
+  return false;
+}
+
+// ============================================================
+// STRATEGY LOOP
+// ============================================================
+async function strategyLoop() {
+  if (!STATE.running || STATE.paused) return;
+  
+  // 熔断检查：连续失败 5 次自动暂停
+  if (STATE.stats.consecutiveFails >= 5) {
+    addLog(`⚠ 连续失败 ${STATE.stats.consecutiveFails} 次，自动暂停策略。请检查代币合约或余额`, 'err');
+    pauseStrategy();
+    return;
+  }
+  
+  const cfg = getConfig();
+  const strat = STATE.selectedStrategy;
+
+  try {
+    if (strat === 'wash') {
+      // 对敲模式：买方+卖方分开
+      const buyer = pickWallet(cfg.buyerStart, cfg.buyerEnd);
+      let buySuccess = false;
+      if (buyer) {
+        const amt = parseFloat(rand(cfg.buyMin, cfg.buyMax).toFixed(6));
+        buySuccess = await executeTradeWithRetry(() => executeBuy(buyer, amt), cfg.retryCount);
+      } else {
+        addLog('买方钱包范围无效', 'warn');
+      }
+      
+      // 买入后检查是否暂停/停止
+      if (!STATE.running || STATE.paused) return;
+      
+      // 只有买入成功才等待并尝试卖出
+      if (buySuccess) {
+        await sleep(1500); // BSC 出块约 0.75s，等 1.5s 确保买方代币到账
+        
+        // 睡眠后再次检查
+        if (!STATE.running || STATE.paused) return;
+        
+        const seller = pickWallet(cfg.sellerStart, cfg.sellerEnd);
+        if (seller) {
+          let sellAmt;
+          if (cfg.sellMode === 'percent') {
+            sellAmt = parseFloat(rand(cfg.sellPctMin, cfg.sellPctMax).toFixed(1)) + '%';
+          } else {
+            sellAmt = parseFloat(rand(cfg.sellMin, cfg.sellMax).toFixed(4));
+          }
+          await executeTradeWithRetry(() => executeSell(seller, sellAmt), cfg.retryCount);
+        } else {
+          addLog('卖方钱包范围无效', 'warn');
+        }
+      }
+    } else if (strat === 'buy') {
+      // 只买模式：使用单一钱包范围
+      const w = pickWallet(cfg.rangeStart, cfg.rangeEnd);
+      if (w) {
+        const amt = parseFloat(rand(cfg.buyMin, cfg.buyMax).toFixed(6));
+        await executeTradeWithRetry(() => executeBuy(w, amt), cfg.retryCount);
+      }
+    } else if (strat === 'sell') {
+      // 只卖模式：使用单一钱包范围
+      const w = pickWallet(cfg.rangeStart, cfg.rangeEnd);
+      if (w) {
+        let sellAmt;
+        if (cfg.sellMode === 'percent') {
+          sellAmt = parseFloat(rand(cfg.sellPctMin, cfg.sellPctMax).toFixed(1)) + '%';
+        } else {
+          sellAmt = parseFloat(rand(cfg.sellMin, cfg.sellMax).toFixed(4));
+        }
+        await executeTradeWithRetry(() => executeSell(w, sellAmt), cfg.retryCount);
+      }
+    } else if (strat === 'protect') {
+      // 护盘模式：检查价格，低于阈值则买入
+      const price = await fetchCurrentPrice();
+      if (price > 0 && price < cfg.protectPrice) {
+        addLog(`价格 ${fmtNum(price,8)} < 阈值 ${fmtNum(cfg.protectPrice, 10)}，触发护盘买入`, 'warn');
+        const w = pickWallet(cfg.rangeStart, cfg.rangeEnd);
+        if (w) {
+          const amt = parseFloat(rand(cfg.buyMin, cfg.buyMax).toFixed(6));
+          await executeTradeWithRetry(() => executeBuy(w, amt), cfg.retryCount);
+        }
+      } else {
+        addLog(`价格 ${fmtNum(price,8)} ${price > 0 ? '>=' : '获取失败'} 阈值 ${fmtNum(cfg.protectPrice, 10)}，跳过`, 'info');
+      }
+      // 护盘模式使用专属间隔
+      const interval = cfg.protectInterval * 1000;
+      STATE.loopTimeout = setTimeout(strategyLoop, interval);
+      return;
+    }
+  } catch(e) {
+    addLog(`策略循环异常: ${e.message}`, 'err');
+  }
+
+  updateDashboard();
+  const wait = rand(cfg.intervalMin, cfg.intervalMax) * 1000;
+  addLog(`等待 ${Math.round(wait/1000)} 秒后执行下一笔...`, 'info');
+  STATE.loopTimeout = setTimeout(strategyLoop, wait);
+}
+
+// ============================================================
+// START / PAUSE / STOP
+// ============================================================
+function startStrategy() {
+  if (STATE.wallets.length === 0) { showToast('请先导入钱包'); return; }
+  if (!STATE.tokenInfo?.hasPool) { showToast('请先设置有效代币'); return; }
+  if (!STATE.selectedStrategy) { showToast('请选择策略'); return; }
+
+  STATE.running = true;
+  STATE.paused = false;
+  STATE.startTime = Date.now();
+  STATE.nonceMap = {}; // 清空 nonce 缓存
+  STATE.stats.consecutiveFails = 0; // 重置连续失败
+
+  $('btnStart').disabled = true;
+  $('btnPause').disabled = false;
+  $('btnStop').disabled = false;
+
+  const bar = $('statusBar');
+  bar.className = 'status-bar running';
+  $('statusText').textContent = `运行中 - ${getStrategyName()}`;
+
+  // start timer
+  STATE.timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - STATE.startTime) / 1000);
+    $('runTime').textContent = `已运行 ${fmtDuration(elapsed)}`;
+    $('dashUptime').textContent = fmtDuration(elapsed);
+  }, 1000);
+
+  addLog(`========== 策略启动: ${getStrategyName()} ==========`, 'info');
+  fetchCurrentPrice();
+  strategyLoop();
+  switchTab('dashboard');
+}
+
+function pauseStrategy() {
+  if (!STATE.running) return;
+  STATE.paused = !STATE.paused;
+  clearTimeout(STATE.loopTimeout);
+
+  const bar = $('statusBar');
+  if (STATE.paused) {
+    bar.className = 'status-bar paused';
+    $('statusText').textContent = `已暂停 - ${getStrategyName()}`;
+    $('btnPause').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 恢复';
+    addLog('策略已暂停', 'warn');
+  } else {
+    bar.className = 'status-bar running';
+    $('statusText').textContent = `运行中 - ${getStrategyName()}`;
+    $('btnPause').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> 暂停';
+    addLog('策略已恢复', 'info');
+    strategyLoop();
+  }
+}
+
+function stopStrategy() {
+  STATE.running = false;
+  STATE.paused = false;
+  STATE.stats.consecutiveFails = 0; // 重置连续失败计数
+  clearTimeout(STATE.loopTimeout);
+  clearInterval(STATE.timerInterval);
+
+  $('btnStart').disabled = false;
+  $('btnPause').disabled = true;
+  $('btnStop').disabled = true;
+  $('btnPause').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> 暂停';
+
+  const bar = $('statusBar');
+  bar.className = 'status-bar stopped';
+  $('statusText').textContent = '已停止';
+  $('runTime').textContent = '';
+
+  // 清除连续失败标记
+  const existing = document.querySelector('.badge-danger[data-consecutive]');
+  if (existing) existing.remove();
+
+  addLog(`========== 策略停止 ==========`, 'info');
+  updateDashboard();
+}
+
+function getStrategyName() {
+  const map = { wash: '对敲模式', buy: '只买模式', sell: '只卖模式', protect: '护盘模式' };
+  return map[STATE.selectedStrategy] || '-';
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function updateDashboard() {
+  $('dashBuyCount').textContent = STATE.stats.buyCount;
+  $('dashBuyAmount').textContent = `${fmtNum(STATE.stats.buyBnb, 4)} BNB`;
+  $('dashSellCount').textContent = STATE.stats.sellCount;
+  $('dashSellAmount').textContent = `${fmtNum(STATE.stats.sellToken, 2)} 代币`;
+  $('dashGas').textContent = fmtBnb(STATE.stats.gasUsed);
+  $('dashNetBuy').textContent = `${fmtNum(STATE.stats.buyBnb, 4)} BNB`;
+  $('dashSuccess').textContent = STATE.stats.success;
+  $('dashFailed').textContent = STATE.stats.failed;
+  $('logSuccessCount').textContent = `成功: ${STATE.stats.success}`;
+  $('logFailCount').textContent = `失败: ${STATE.stats.failed}`;
+  
+  // 显示连续失败次数（如果有的话）
+  if (STATE.stats.consecutiveFails > 0) {
+    const failBadge = document.createElement('span');
+    failBadge.className = 'badge badge-danger';
+    failBadge.textContent = `连续失败: ${STATE.stats.consecutiveFails}/5`;
+    const existing = document.querySelector('.badge-danger[data-consecutive]');
+    if (existing) existing.remove();
+    failBadge.setAttribute('data-consecutive', 'true');
+    $('logFailCount').parentElement.appendChild(failBadge);
+  } else {
+    const existing = document.querySelector('.badge-danger[data-consecutive]');
+    if (existing) existing.remove();
+  }
+}
+
+function addTxRecord(wallet, type, amount, txHash, success) {
+  const record = { time: now(), wallet, type, amount, txHash, success };
+  STATE.recentTx.unshift(record);
+  if (STATE.recentTx.length > 50) STATE.recentTx.pop();
+  renderRecentTx();
+}
+
+function renderRecentTx() {
+  const tbody = $('recentTxBody');
+  if (STATE.recentTx.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>暂无交易记录</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = STATE.recentTx.slice(0, 20).map(r => `
+    <tr>
+      <td style="white-space:nowrap">${escapeHtml(r.time)}</td>
+      <td class="addr">${escapeHtml(shortAddr(r.wallet))}</td>
+      <td><span class="badge ${r.type==='buy'?'badge-success':'badge-danger'}">${r.type==='buy'?'买入':'卖出'}</span></td>
+      <td>${escapeHtml(r.amount)}</td>
+      <td>${r.txHash ? `<a class="tx-link" href="https://bscscan.com/tx/${r.txHash}" target="_blank">${escapeHtml(shortTx(r.txHash))}</a>` : '-'}</td>
+      <td><span class="badge ${r.success?'badge-success':'badge-danger'}">${r.success?'成功':'失败'}</span></td>
+    </tr>
+  `).join('');
+}
+
+function clearLogs() {
+  STATE.logs = [];
+  $('logArea').textContent = '日志已清空';
+  $('logTotalCount').textContent = '总计: 0';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+checkRpc();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"75124c326cb447fe934cde04713ae013","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
