@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f8f7f3">
+  <meta name="description" content="Mint your exclusive Shiba Inu Yacht Club NFT on BSC. Each piece is unique with randomly generated traits.">
+  <link rel="icon" type="image/x-icon" href="https://www.woofswap.finance/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="https://www.woofswap.finance/favicon.svg">
+  <title>SIYC NFT Mint - WoofSwap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --yellow: #f1ce59;
+      --muted: #8b8d83;
+      --line: #e7e7df;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #f8f7f3, #f3f1ea);
+      min-height: 100vh;
+      color: #292b27;
+    }
+    
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 40px; max-width: 1200px; margin: 0 auto;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo img { width: 36px; height: 36px; }
+    .logo span {
+      font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800;
+      letter-spacing: -1px; color: #292b27;
+    }
+    .logo .light { font-weight: 500; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .lang-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: #fff; border: 1px solid var(--line);
+      padding: 10px 16px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; color: #555; cursor: pointer;
+    }
+    .lang-btn:hover { background: #f5f4ef; }
+    .connect-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--yellow); border: 1px solid #e8c451;
+      padding: 10px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 650; color: #292b27; cursor: pointer;
+    }
+    .connect-btn:hover { background: #ecc64a; }
+    .wallet-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff; border: 1px solid var(--line);
+      padding: 10px 16px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; color: #292b27;
+    }
+    .wallet-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+    
+    /* Hero */
+    .hero { max-width: 1200px; margin: 48px auto 0; padding: 0 40px; text-align: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; letter-spacing: 2px; color: #777d66; font-weight: 650; margin-bottom: 16px;
+    }
+    .eyebrow-dot { width: 6px; height: 6px; background: #8d996e; border-radius: 50%; }
+    .title {
+      font-family: 'Manrope', sans-serif; font-size: 56px; font-weight: 750;
+      line-height: 1.1; letter-spacing: -3px; color: #292b27; margin: 0 0 20px;
+    }
+    .title-accent { color: #b99733; }
+    .subtitle { font-size: 16px; color: #85877d; line-height: 1.7; max-width: 520px; margin: 0 auto; }
+    
+    /* Features */
+    .features { display: flex; justify-content: center; gap: 40px; margin-top: 40px; flex-wrap: wrap; }
+    .feature { display: flex; align-items: center; gap: 14px; text-align: left; }
+    .feature-icon {
+      width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+      background: #fff; border: 1px solid var(--line); border-radius: 14px; color: #b99733;
+    }
+    .feature-title { font-size: 14px; font-weight: 700; color: #292b27; margin-bottom: 2px; }
+    .feature-desc { font-size: 12px; color: #85877d; }
+    
+    /* Main Content */
+    .main-content { max-width: 520px; margin: 48px auto 0; padding: 0 16px; }
+    
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 8px; background: #fff; border: 1px solid var(--line);
+      border-radius: 14px; padding: 6px; margin-bottom: 20px;
+    }
+    .tab {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px; font-size: 14px; font-weight: 600; color: #85877d;
+      background: transparent; border: none; border-radius: 10px; cursor: pointer;
+    }
+    .tab:hover { color: #555; background: #f8f7f3; }
+    .tab.active { color: #292b27; background: var(--yellow); border: 1px solid #e8c451; }
+    .tab-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 20px; height: 20px; padding: 0 6px;
+      font-size: 11px; font-weight: 700; color: #fff; background: #b99733; border-radius: 10px;
+    }
+    
+    /* Mint Card */
+    .mint-card {
+      background: #fff; border-radius: 20px; border: 1px solid var(--line);
+      overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+    }
+    .progress { padding: 20px 28px; background: #faf9f5; border-bottom: 1px solid var(--line); }
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13px; font-weight: 600; color: #85877d; margin-bottom: 10px;
+    }
+    .progress-value { color: #292b27; font-weight: 700; }
+    .progress-bar { height: 6px; background: #e7e7df; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #f1ce59, #b99733); border-radius: 3px; transition: width 0.5s; }
+    .mint-body { padding: 28px; }
+    
+    /* Empty State */
+    .empty-state { text-align: center; padding: 48px 24px; color: #85877d; }
+    .empty-state svg { margin-bottom: 16px; opacity: 0.4; }
+    .empty-state p { font-size: 14px; font-weight: 500; }
+    
+    /* User Stats */
+    .user-stats { display: flex; gap: 12px; margin-bottom: 24px; }
+    .user-stat {
+      flex: 1; background: #faf9f5; border: 1px solid var(--line);
+      border-radius: 12px; padding: 16px; text-align: center;
+    }
+    .user-stat-label {
+      display: block; font-size: 11px; font-weight: 600; color: #85877d;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .user-stat-value {
+      display: block; font-family: 'Manrope', sans-serif;
+      font-size: 22px; font-weight: 700; color: #292b27;
+    }
+    
+    /* Field */
+    .field { margin-bottom: 20px; }
+    .label {
+      display: block; font-size: 12px; font-weight: 650; color: #555;
+      margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    
+    /* Payment Toggle */
+    .payment-toggle { display: flex; gap: 8px; margin-bottom: 8px; }
+    .payment-btn {
+      flex: 1; padding: 12px 16px; border: 1.5px solid var(--line);
+      border-radius: 10px; background: #f5f4ef; color: #85877d;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .payment-btn:hover:not(:disabled) { background: #eeeee7; border-color: #d5d4cc; color: #555; }
+    .payment-btn.active { background: var(--yellow); border-color: #e8c451; color: #292b27; box-shadow: 0 2px 8px rgba(241,206,89,0.25); }
+    .payment-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    /* Presets */
+    .presets { display: flex; gap: 8px; margin-bottom: 12px; }
+    .preset-btn {
+      flex: 1; padding: 12px 0; font-size: 15px; font-weight: 650;
+      background: #f5f4ef; border: 1.5px solid var(--line);
+      border-radius: 10px; color: #555; cursor: pointer;
+    }
+    .preset-btn:hover:not(:disabled) { background: #eeeee7; }
+    .preset-btn.active { background: var(--yellow); border-color: #e8c451; color: #292b27; }
+    
+    /* Quantity Input */
+    .qty-input {
+      display: flex; align-items: center; background: #f5f4ef;
+      border: 1.5px solid var(--line); border-radius: 12px; overflow: hidden;
+    }
+    .qty-input button {
+      width: 52px; height: 52px; font-size: 20px; font-weight: 600;
+      color: #555; background: transparent; border: none; cursor: pointer;
+    }
+    .qty-input button:hover:not(:disabled) { background: #eeeee7; }
+    .qty-input input {
+      flex: 1; text-align: center; font-size: 22px; font-weight: 700;
+      font-family: 'Manrope', sans-serif; border: none; background: transparent;
+      padding: 14px 0; color: #292b27; -moz-appearance: textfield;
+    }
+    .qty-input input::-webkit-outer-spin-button,
+    .qty-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    
+    /* Summary */
+    .summary { background: #faf9f5; border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13px; color: #666; }
+    .summary-divider { height: 1px; background: var(--line); margin: 10px 0; }
+    .summary-total { font-size: 16px; font-weight: 700; color: #292b27; }
+    
+    /* Buttons */
+    .btn {
+      width: 100%; padding: 16px 24px; font-size: 15px; font-weight: 650;
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      gap: 8px; cursor: pointer; border: none;
+    }
+    .btn-primary { background: var(--yellow); color: #292b27; border: 1.5px solid #e8c451; }
+    .btn-primary:hover:not(:disabled) { background: #ecc64a; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: #555; border: 1.5px solid var(--line); margin-top: 12px; }
+    .btn-ghost:hover { background: #f5f4ef; }
+    .btn-small { width: auto; padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 8px; }
+    
+    /* Messages */
+    .error {
+      display: flex; align-items: center; gap: 8px; margin-top: 14px;
+      padding: 12px 16px; background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 10px; font-size: 12px; color: #991b1b;
+    }
+    .success {
+      text-align: center; padding: 28px 20px; margin-top: 20px;
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px;
+    }
+    .success svg { color: #16a34a; margin-bottom: 12px; }
+    .success h3 { font-size: 20px; font-weight: 700; color: #166534; margin: 0 0 8px; }
+    .success p { font-size: 14px; color: #15803d; margin: 0 0 16px; }
+    .success-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 13px; font-weight: 600; color: #16a34a; margin-bottom: 12px;
+    }
+    
+    /* NFT Grid */
+    .nft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; margin-top: 16px; }
+    .nft-card {
+      background: #faf9f5; border: 1px solid var(--line); border-radius: 14px;
+      overflow: hidden; transition: all 0.2s;
+    }
+    .nft-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .nft-image {
+      width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #f5f4ef, #e7e7df);
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .nft-image img { width: 100%; height: 100%; object-fit: cover; }
+    .nft-placeholder { color: #b99733; opacity: 0.5; }
+    .nft-info { padding: 12px; }
+    .nft-name { font-size: 13px; font-weight: 650; color: #292b27; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nft-id { font-size: 11px; color: #85877d; font-weight: 500; }
+    .nft-actions { display: flex; gap: 8px; padding: 0 12px 12px; align-items: center; }
+    .nft-actions .btn-small { flex: 1; }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .modal { background: #fff; border-radius: 20px; max-width: 420px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; border-bottom: 1px solid var(--line);
+    }
+    .modal-header h3 { font-size: 18px; font-weight: 700; color: #292b27; }
+    .modal-close {
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      background: #f5f4ef; border: none; border-radius: 10px; color: #555; cursor: pointer;
+    }
+    .modal-body { padding: 24px; }
+    .transfer-preview {
+      display: flex; align-items: center; gap: 16px; padding: 16px;
+      background: #faf9f5; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 20px;
+    }
+    .transfer-preview .nft-image { width: 80px; height: 80px; flex-shrink: 0; border-radius: 10px; }
+    .transfer-info { flex: 1; min-width: 0; }
+    .transfer-info .nft-name { font-size: 15px; margin-bottom: 6px; }
+    .transfer-info .nft-id { font-size: 12px; }
+    .input {
+      width: 100%; padding: 14px 16px; font-size: 14px;
+      background: #f5f4ef; border: 1.5px solid var(--line);
+      border-radius: 12px; color: #292b27;
+    }
+    .input:focus { outline: none; border-color: var(--yellow); background: #fff; }
+    
+    /* Footer */
+    .footer { text-align: center; margin-top: 60px; padding: 24px 40px; }
+    .footer p { font-size: 12px; color: var(--muted); }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header { padding: 14px 16px; }
+      .logo { font-size: 20px; }
+      .logo img { width: 30px; height: 30px; }
+      .hero { margin-top: 24px; padding: 0 16px; }
+      .title { font-size: 32px; letter-spacing: -1.5px; margin-bottom: 14px; }
+      .subtitle { font-size: 14px; }
+      .features { flex-direction: column; gap: 14px; margin-top: 24px; }
+      .main-content { margin-top: 24px; }
+      .mint-body { padding: 20px; }
+      .user-stats { flex-direction: column; }
+      .nft-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    }
+    @media (max-width: 480px) {
+      .title { font-size: 26px; letter-spacing: -1px; }
+      .presets { flex-wrap: wrap; }
+      .preset-btn { flex: 0 0 calc(50% - 4px); }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <a class="logo" href="https://www.woofswap.finance/">
+        <img src="https://www.woofswap.finance/logo.png" alt="">
+        <span>woof<span class="light">swap</span></span>
+      </a>
+      <div class="header-right">
+        <button class="lang-btn" onclick="toggleLang()">🌐 <span id="langText">中文</span></button>
+        <div id="walletArea">
+          <button class="connect-btn" onclick="connectWallet()">🔗 <span id="connectText">Connect Wallet</span></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="eyebrow"><span class="eyebrow-dot"></span><span id="eyebrowText">SHIBA INU YACHT CLUB</span></div>
+      <h1 class="title"><span id="titleText">Mint SIYC</span> <span class="title-accent">NFT</span></h1>
+      <p class="subtitle" id="subtitleText">Mint your exclusive Shiba Inu Yacht Club NFT.</p>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">✨</div>
+          <div>
+            <div class="feature-title" id="feat1Title">Unique Traits</div>
+            <div class="feature-desc" id="feat1Desc">Each NFT has 7 randomly generated attributes</div>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <div>
+            <div class="feature-title" id="feat2Title">BNB / WOOF Payment</div>
+            <div class="feature-desc" id="feat2Desc">Mint with BNB or WOOF on BSC</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Tabs (shown when wallet connected) -->
+      <div class="tabs" id="tabsArea" style="display:none">
+        <button class="tab active" id="tabMint" onclick="switchTab('mint')">✨ <span id="tabMintText">Mint</span></button>
+        <button class="tab" id="tabNfts" onclick="switchTab('nfts')">👛 <span id="tabNftsText">My NFTs</span> <span class="tab-badge" id="nftBadge" style="display:none">0</span></button>
+      </div>
+
+      <!-- Mint Section -->
+      <div id="mintSection">
+        <div class="mint-card">
+          <div class="progress">
+            <div class="progress-header">
+              <span id="mintedLabel">NFTs Minted</span>
+              <span class="progress-value" id="progressText">0 / 10,000</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+          </div>
+          <div class="mint-body" id="mintBody">
+            <div class="empty-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M9 12l2 2 4-4"/></svg>
+              <p id="connectPrompt">Connect Wallet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NFTs Section (hidden by default) -->
+      <div id="nftsSection" style="display:none">
+        <div class="mint-card">
+          <div class="progress">
+            <div class="progress-header">
+              <span id="yourNftsLabel">Your NFTs</span>
+              <span class="progress-value" id="nftCountText">0</span>
+            </div>
+          </div>
+          <div class="mint-body" id="nftsBody">
+            <div class="empty-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M9 12l2 2 4-4"/></svg>
+              <p id="noNftsText">You don't have any SIYC NFTs yet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div class="modal-overlay" id="transferModal" style="display:none" onclick="closeTransferModal(event)">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3 id="transferTitle">Transfer NFT</h3>
+          <button class="modal-close" onclick="closeTransferModal()">✕</button>
+        </div>
+        <div class="modal-body" id="transferBody">
+          <div class="transfer-preview" id="transferPreview"></div>
+          <div class="field">
+            <label class="label" id="recipientLabel">Recipient Address</label>
+            <input type="text" class="input" id="recipientInput" placeholder="0x...">
+          </div>
+          <div id="transferMsg"></div>
+          <button class="btn btn-primary" id="transferBtn" onclick="doTransfer()">📤 <span id="sendText">Send</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p id="footerText">Shiba Inu Yacht Club · BSC Network</p>
+    </footer>
+  </div>
+  <script>
+    // ===== Config =====
+    const SIYC_ADDRESS = '0x587Da5e7AaF9c596C0521B713056a155AEFfDd1E';
+    const WOOF_ADDRESS = '0x3c8a098cb87fdd41e82de1dfdb85dabf41888888';
+    const BSC_CHAIN_ID = 56;
+    const BSC_CHAIN_ID_HEX = '0x38';
+    const BSC_EXPLORER = 'https://bscscan.com';
+
+    const SIYC_ABI = [
+      'function mintWithWoof(uint256 quantity) external',
+      'function mintWithBnb(uint256 quantity) payable external',
+      'function totalSupply() view returns (uint256)',
+      'function maxSupply() view returns (uint256)',
+      'function woofPrice() view returns (uint256)',
+      'function bnbPrice() view returns (uint256)',
+      'function balanceOf(address) view returns (uint256)',
+      'function ownerNFT(address,uint256) view returns (uint256 id, uint256 seed)',
+      'function ownerNFTCount(address) view returns (uint256)',
+      'function tokenURI(uint256) view returns (string)',
+      'function transferFrom(address,address,uint256)',
+      'function ownerOf(uint256) view returns (address)',
+    ];
+    const ERC20_ABI = [
+      'function balanceOf(address) view returns (uint256)',
+      'function allowance(address,address) view returns (uint256)',
+      'function approve(address,uint256) returns (bool)',
+    ];
+
+    // ===== Translations =====
+    const T = {
+      en: {
+        lang: '中文', eyebrow: 'SHIBA INU YACHT CLUB', title: 'Mint SIYC',
+        subtitle: 'Mint your exclusive Shiba Inu Yacht Club NFT. Each piece is unique with randomly generated traits.',
+        connectWallet: 'Connect Wallet', connectPrompt: 'Connect Wallet',
+        switchNetwork: 'Switch to BSC', wrongNetwork: 'Wrong Network - Please switch to BSC',
+        quantity: 'Quantity', pricePerNft: 'Price per NFT', totalCost: 'Total Cost',
+        woofBalance: 'Your WOOF Balance', bnbBalance: 'Your BNB Balance', payWith: 'Pay With',
+        nftsMinted: 'NFTs Minted', yourNfts: 'Your NFTs', remaining: 'remaining',
+        approve: 'Approve WOOF', mint: 'Mint Now', minting: 'Minting...', approving: 'Approving...',
+        success: 'Success!', minted: 'You minted', nfts: 'NFTs',
+        viewOnExplorer: 'View on BscScan', insufficientWoof: 'Insufficient WOOF balance',
+        insufficientBnb: 'Insufficient BNB balance', approved: 'WOOF Approved',
+        approvedDesc: 'You can now mint your NFTs', close: 'Close',
+        tabMint: 'Mint', tabMyNfts: 'My NFTs', loadingNfts: 'Loading NFTs...',
+        noNfts: "You don't have any SIYC NFTs yet", transfer: 'Transfer',
+        transferNft: 'Transfer NFT', recipientAddress: 'Recipient Address',
+        tokenId: 'Token ID', send: 'Send', sending: 'Sending...',
+        transferSuccess: 'Transfer Successful!', invalidAddress: 'Invalid address',
+        cannotSendSelf: 'Cannot transfer to yourself',
+        confirmTransfer: 'Confirm Transfer',
+        transferWarning: 'You are about to transfer this NFT to:',
+        transferIrreversible: 'This action cannot be undone.',
+        feat1Title: 'Unique Traits', feat1Desc: 'Each NFT has 7 randomly generated attributes',
+        feat2Title: 'BNB / WOOF Payment', feat2Desc: 'Mint with BNB or WOOF on BSC',
+        footer: 'Shiba Inu Yacht Club · BSC Network', soldOut: 'Sold Out',
+      },
+      zh: {
+        lang: 'English', eyebrow: '柴犬游艇俱乐部', title: '铸造 SIYC',
+        subtitle: '铸造您的专属柴犬游艇俱乐部 NFT。每件作品都有随机生成的独特属性。',
+        connectWallet: '连接钱包', connectPrompt: '连接钱包',
+        switchNetwork: '切换到 BSC', wrongNetwork: '网络错误 - 请切换到 BSC',
+        quantity: '数量', pricePerNft: '单价', totalCost: '总费用',
+        woofBalance: '您的 WOOF 余额', bnbBalance: '您的 BNB 余额', payWith: '支付方式',
+        nftsMinted: '已铸造', yourNfts: '您的 NFT', remaining: '剩余',
+        approve: '授权 WOOF', mint: '立即铸造', minting: '铸造中...', approving: '授权中...',
+        success: '成功！', minted: '您铸造了', nfts: '个 NFT',
+        viewOnExplorer: '在 BscScan 查看', insufficientWoof: 'WOOF 余额不足',
+        insufficientBnb: 'BNB 余额不足', approved: 'WOOF 已授权',
+        approvedDesc: '您现在可以铸造 NFT 了', close: '关闭',
+        tabMint: '铸造', tabMyNfts: '我的 NFT', loadingNfts: '加载 NFT 中...',
+        noNfts: '您还没有 SIYC NFT', transfer: '转账',
+        transferNft: '转账 NFT', recipientAddress: '接收地址',
+        tokenId: '代币 ID', send: '发送', sending: '发送中...',
+        transferSuccess: '转账成功！', invalidAddress: '无效地址',
+        cannotSendSelf: '不能转给自己',
+        confirmTransfer: '确认转账',
+        transferWarning: '您即将将此 NFT 转账给：',
+        transferIrreversible: '此操作无法撤销。',
+        feat1Title: '独特属性', feat1Desc: '每个 NFT 有 7 个随机生成的属性',
+        feat2Title: 'BNB / WOOF 支付', feat2Desc: '在 BSC 上使用 BNB 或 WOOF 铸造',
+        footer: '柴犬游艇俱乐部 · BSC 网络', soldOut: '已售罄',
+      }
+    };
+
+    // ===== State =====
+    let lang = localStorage.getItem('siyc-lang') || 'en';
+    let account = null;
+    let chainId = 0;
+    let paymentMethod = 'bnb';
+    let quantity = 1;
+    let woofPrice = 0n;
+    let bnbPrice = 0n;
+    let woofBalance = 0n;
+    let bnbBalance = 0n;
+    let woofAllowance = 0n;
+    let totalSupply = 0;
+    let maxSupply = 10000;
+    let userNftBalance = 0;
+    let userNfts = [];
+    let activeTab = 'mint';
+    let txPending = false;
+    let txHash = '';
+    let txSuccess = false;
+    let txError = '';
+    let approving = false;
+    let approveSuccess = false;
+    let selectedNft = null;
+    let transferring = false;
+
+    // ===== Helpers =====
+    function t(key) { return T[lang][key] || key; }
+    function shortAddr(a) { return a ? a.slice(0,6) + '...' + a.slice(-4) : ''; }
+    function formatUnits(val, dec) {
+      const s = val.toString().padStart(dec + 1, '0');
+      const int = s.slice(0, s.length - dec) || '0';
+      const frac = s.slice(s.length - dec).replace(/0+$/, '');
+      return frac ? int + '.' + frac : int;
+    }
+
+    function getProvider() {
+      if (window.ethereum) return new ethers.BrowserProvider(window.ethereum);
+      return null;
+    }
+
+    // ===== i18n =====
+    function applyLang() {
+      document.getElementById('langText').textContent = t('lang');
+      document.getElementById('eyebrowText').textContent = t('eyebrow');
+      document.getElementById('titleText').textContent = t('title');
+      document.getElementById('subtitleText').textContent = t('subtitle');
+      document.getElementById('connectText').textContent = t('connectWallet');
+      document.getElementById('connectPrompt').textContent = t('connectPrompt');
+      document.getElementById('mintedLabel').textContent = t('nftsMinted');
+      document.getElementById('yourNftsLabel').textContent = t('yourNfts');
+      document.getElementById('noNftsText').textContent = t('noNfts');
+      document.getElementById('tabMintText').textContent = t('tabMint');
+      document.getElementById('tabNftsText').textContent = t('tabMyNfts');
+      document.getElementById('transferTitle').textContent = t('transferNft');
+      document.getElementById('recipientLabel').textContent = t('recipientAddress');
+      document.getElementById('sendText').textContent = t('send');
+      document.getElementById('feat1Title').textContent = t('feat1Title');
+      document.getElementById('feat1Desc').textContent = t('feat1Desc');
+      document.getElementById('feat2Title').textContent = t('feat2Title');
+      document.getElementById('feat2Desc').textContent = t('feat2Desc');
+      document.getElementById('footerText').textContent = t('footer');
+    }
+
+    function toggleLang() {
+      lang = lang === 'en' ? 'zh' : 'en';
+      localStorage.setItem('siyc-lang', lang);
+      applyLang();
+      renderMintBody();
+      renderNftsBody();
+    }
+
+    // ===== Wallet =====
+    async function connectWallet() {
+      if (!window.ethereum) { alert('Please install MetaMask'); return; }
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        account = accounts[0];
+        const cid = await window.ethereum.request({ method: 'net_version' });
+        chainId = parseInt(cid);
+        if (chainId !== BSC_CHAIN_ID) await switchNetwork();
+        renderWallet();
+        fetchData();
+        fetchUserNfts();
+      } catch (e) { console.error(e); }
+    }
+
+    async function switchNetwork() {
+      try {
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: BSC_CHAIN_ID_HEX }] });
+      } catch (e) {
+        if (e.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{ chainId: BSC_CHAIN_ID_HEX, chainName: 'BNB Smart Chain', nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 }, rpcUrls: ['https://bsc-dataseed.binance.org/'], blockExplorerUrls: [BSC_EXPLORER] }]
+          });
+        }
+      }
+    }
+
+    function renderWallet() {
+      const area = document.getElementById('walletArea');
+      const tabs = document.getElementById('tabsArea');
+      if (account) {
+        const isCorrect = chainId === BSC_CHAIN_ID;
+        area.innerHTML = `<div class="wallet-badge"><div class="wallet-dot"></div>${shortAddr(account)}</div>`;
+        if (isCorrect) {
+          tabs.style.display = 'flex';
+          renderMintBody();
+        } else {
+          tabs.style.display = 'none';
+          document.getElementById('mintBody').innerHTML = `
+            <div class="error" style="margin-bottom:16px">⚠️ ${t('wrongNetwork')}</div>
+            <button class="btn btn-primary" onclick="switchNetwork()">${t('switchNetwork')}</button>`;
+        }
+      } else {
+        area.innerHTML = `<button class="connect-btn" onclick="connectWallet()">🔗 <span id="connectText">${t('connectWallet')}</span></button>`;
+        tabs.style.display = 'none';
+      }
+    }
+
+    // ===== Data =====
+    async function fetchData() {
+      const provider = getProvider();
+      if (!provider) return;
+      try {
+        const nft = new ethers.Contract(SIYC_ADDRESS, SIYC_ABI, provider);
+        const woof = new ethers.Contract(WOOF_ADDRESS, ERC20_ABI, provider);
+        const [supply, max, wp, bp] = await Promise.all([
+          nft.totalSupply(), nft.maxSupply(), nft.woofPrice(), nft.bnbPrice()
+        ]);
+        totalSupply = Number(supply);
+        maxSupply = Number(max);
+        woofPrice = wp;
+        bnbPrice = bp;
+        document.getElementById('progressText').textContent =
+          `${totalSupply.toLocaleString()} / ${maxSupply.toLocaleString()}`;
+        const pct = maxSupply > 0 ? (totalSupply / maxSupply) * 100 : 0;
+        document.getElementById('progressFill').style.width = pct + '%';
+
+        if (account) {
+          const [cnt, wb, wa, bb] = await Promise.all([
+            nft.ownerNFTCount(account),
+            woof.balanceOf(account),
+            woof.allowance(account, SIYC_ADDRESS),
+            provider.getBalance(account)
+          ]);
+          userNftBalance = Number(cnt);
+          woofBalance = wb;
+          woofAllowance = wa;
+          bnbBalance = bb;
+          document.getElementById('nftBadge').textContent = userNftBalance;
+          document.getElementById('nftBadge').style.display = userNftBalance > 0 ? '' : 'none';
+          document.getElementById('nftCountText').textContent = userNftBalance;
+          renderMintBody();
+        }
+      } catch (e) { console.error('fetchData error:', e); }
+    }
+
+    async function fetchUserNfts() {
+      if (!account) return;
+      const provider = getProvider();
+      if (!provider) return;
+      document.getElementById('nftsBody').innerHTML = `<div class="empty-state"><p>${t('loadingNfts')}</p></div>`;
+      try {
+        const nft = new ethers.Contract(SIYC_ADDRESS, SIYC_ABI, provider);
+        const count = Number(await nft.ownerNFTCount(account));
+        userNfts = [];
+        for (let i = 0; i < count; i++) {
+          try {
+            const [tokenId] = await nft.ownerNFT(account, i);
+            const id = Number(tokenId);
+            let image = '';
+            try {
+              const raw = await nft.tokenURI(id);
+              if (raw.startsWith('data:application/json;base64,')) {
+                const json = JSON.parse(atob(raw.slice(29)));
+                image = (json.image || '').replace('ipfs://', 'https://ipfs.io/ipfs/');
+              } else if (raw.startsWith('data:application/json,')) {
+                const json = JSON.parse(decodeURIComponent(raw.slice(22)));
+                image = (json.image || '').replace('ipfs://', 'https://ipfs.io/ipfs/');
+              } else if (raw.startsWith('ipfs://')) {
+                const resp = await fetch(raw.replace('ipfs://', 'https://ipfs.io/ipfs/'));
+                const json = await resp.json();
+                image = (json.image || '').replace('ipfs://', 'https://ipfs.io/ipfs/');
+              } else if (raw.startsWith('http')) {
+                const resp = await fetch(raw);
+                const json = await resp.json();
+                image = (json.image || '').replace('ipfs://', 'https://ipfs.io/ipfs/');
+              }
+            } catch (e) {}
+            userNfts.push({ tokenId: id, image, name: `SIYC #${id}` });
+          } catch (e) { console.error(e); }
+        }
+        renderNftsBody();
+      } catch (e) { console.error('fetchUserNfts error:', e); }
+    }
+
+    // ===== Render =====
+    function renderMintBody() {
+      if (!account) {
+        document.getElementById('mintBody').innerHTML = `
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M9 12l2 2 4-4"/></svg>
+            <p>${t('connectPrompt')}</p>
+          </div>`;
+        return;
+      }
+      if (chainId !== BSC_CHAIN_ID) { renderWallet(); return; }
+
+      const isSoldOut = totalSupply >= maxSupply;
+      if (isSoldOut) {
+        document.getElementById('mintBody').innerHTML = `
+          <div class="empty-state">
+            <div style="font-size:48px;margin-bottom:16px">✅</div>
+            <p>${t('soldOut')}</p>
+          </div>`;
+        return;
+      }
+
+      const totalCostWoof = woofPrice * BigInt(quantity);
+      const totalCostBnb = bnbPrice * BigInt(quantity);
+      const hasEnough = paymentMethod === 'woof' ? woofBalance >= totalCostWoof : bnbBalance >= totalCostBnb;
+      const hasAllowance = paymentMethod === 'woof' ? woofAllowance >= totalCostWoof : true;
+      const remaining = Math.max(0, maxSupply - totalSupply);
+      const maxQty = Math.min(100, remaining);
+      const presets = [1, 3, 5, 10].filter(q => q <= maxQty);
+
+      const balanceHtml = paymentMethod === 'woof'
+        ? `<div class="user-stat"><span class="user-stat-label">${t('woofBalance')}</span><span class="user-stat-value">${formatUnits(woofBalance, 18).split('.')[0]}</span></div>`
+        : `<div class="user-stat"><span class="user-stat-label">${t('bnbBalance')}</span><span class="user-stat-value">${formatUnits(bnbBalance, 18).slice(0, 8)}</span></div>`;
+
+      const priceText = paymentMethod === 'woof'
+        ? (woofPrice > 0n ? formatUnits(woofPrice, 18) + ' WOOF' : '...')
+        : (bnbPrice > 0n ? formatUnits(bnbPrice, 18) + ' BNB' : '...');
+
+      const totalText = paymentMethod === 'woof'
+        ? (woofPrice > 0n ? (Number(formatUnits(woofPrice, 18)) * quantity).toLocaleString() + ' WOOF' : '...')
+        : (bnbPrice > 0n ? (Number(formatUnits(bnbPrice, 18)) * quantity).toFixed(4) + ' BNB' : '...');
+
+      let btnHtml;
+      if (paymentMethod === 'woof' && !hasAllowance) {
+        btnHtml = `<button class="btn btn-primary" onclick="handleApprove()" ${approving || !hasEnough ? 'disabled' : ''}>
+          ${approving ? '⏳ ' + t('approving') : t('approve')}</button>`;
+      } else {
+        btnHtml = `<button class="btn btn-primary" onclick="handleMint()" ${txPending || !hasEnough ? 'disabled' : ''}>
+          ${txPending ? '⏳ ' + t('minting') : '✨ ' + t('mint')}</button>`;
+      }
+
+      let msgHtml = '';
+      if (txError) msgHtml += `<div class="error">⚠️ ${txError}</div>`;
+      if (!hasEnough) msgHtml += `<div class="error">⚠️ ${paymentMethod === 'woof' ? t('insufficientWoof') : t('insufficientBnb')}</div>`;
+      if (txSuccess || approveSuccess) {
+        msgHtml = `<div class="success">
+          <div style="font-size:36px;color:#16a34a;margin-bottom:12px">✅</div>
+          <h3>${t('success')}</h3>
+          <p>${txSuccess ? t('minted') + ' ' + quantity + ' ' + t('nfts') : t('approvedDesc')}</p>
+          ${txHash ? `<a class="success-link" href="${BSC_EXPLORER}/tx/${txHash}" target="_blank">${t('viewOnExplorer')} ↗</a><br>` : ''}
+          <button class="btn btn-ghost" onclick="resetTx()">${t('close')}</button>
+        </div>`;
+      }
+
+      document.getElementById('mintBody').innerHTML = `
+        <div class="user-stats">
+          <div class="user-stat"><span class="user-stat-label">${t('yourNfts')}</span><span class="user-stat-value">${userNftBalance}</span></div>
+          ${balanceHtml}
+        </div>
+        <div class="field">
+          <label class="label">${t('payWith')}</label>
+          <div class="payment-toggle">
+            <button class="payment-btn ${paymentMethod === 'bnb' ? 'active' : ''}" onclick="setPayment('bnb')" ${txPending ? 'disabled' : ''}>BNB</button>
+            <button class="payment-btn ${paymentMethod === 'woof' ? 'active' : ''}" onclick="setPayment('woof')" ${txPending ? 'disabled' : ''}>WOOF</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">${t('quantity')}</label>
+          <div class="presets">${presets.map(q => `<button class="preset-btn ${quantity === q ? 'active' : ''}" onclick="setQty(${q})" ${txPending ? 'disabled' : ''}>${q}</button>`).join('')}</div>
+          <div class="qty-input">
+            <button onclick="setQty(Math.max(1, quantity - 1))" ${txPending ? 'disabled' : ''}>−</button>
+            <input type="number" value="${quantity}" onchange="setQty(Math.max(1, Math.min(${maxQty}, parseInt(this.value) || 1)))" min="1" max="${maxQty}" ${txPending ? 'disabled' : ''}>
+            <button onclick="setQty(Math.min(${maxQty}, quantity + 1))" ${txPending ? 'disabled' : ''}>+</button>
+          </div>
+        </div>
+        <div class="summary">
+          <div class="summary-row"><span>${t('pricePerNft')}</span><span>${priceText}</span></div>
+          <div class="summary-row"><span>${t('quantity')}</span><span>×${quantity}</span></div>
+          <div class="summary-divider"></div>
+          <div class="summary-row summary-total"><span>${t('totalCost')}</span><span>${totalText}</span></div>
+        </div>
+        ${btnHtml}
+        ${msgHtml}`;
+    }
+
+    function renderNftsBody() {
+      if (!userNfts.length) {
+        document.getElementById('nftsBody').innerHTML = `
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p>${t('noNfts')}</p>
+          </div>`;
+        return;
+      }
+      document.getElementById('nftsBody').innerHTML = `<div class="nft-grid">${userNfts.map(nft => `
+        <div class="nft-card">
+          <div class="nft-image">
+            ${nft.image ? `<img src="${nft.image}" alt="${nft.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="nft-placeholder" style="display:none">✨</div>` : '<div class="nft-placeholder">✨</div>'}
+          </div>
+          <div class="nft-info">
+            <div class="nft-name">${nft.name}</div>
+            <div class="nft-id">#${nft.tokenId}</div>
+          </div>
+          <div class="nft-actions">
+            <button class="btn btn-primary btn-small" onclick="openTransfer(${nft.tokenId})">📤 ${t('transfer')}</button>
+            <a class="btn btn-ghost btn-small" href="${BSC_EXPLORER}/token/${SIYC_ADDRESS}?a=${account}" target="_blank">↗</a>
+          </div>
+        </div>`).join('')}</div>`;
+    }
+
+    // ===== Actions =====
+    function setPayment(m) { paymentMethod = m; renderMintBody(); }
+    function setQty(q) { quantity = q; renderMintBody(); }
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById('tabMint').className = 'tab' + (tab === 'mint' ? ' active' : '');
+      document.getElementById('tabNfts').className = 'tab' + (tab === 'nfts' ? ' active' : '');
+      document.getElementById('mintSection').style.display = tab === 'mint' ? '' : 'none';
+      document.getElementById('nftsSection').style.display = tab === 'nfts' ? '' : 'none';
+      if (tab === 'nfts') fetchUserNfts();
+    }
+    function resetTx() { txHash = ''; txSuccess = false; txError = ''; approveSuccess = false; renderMintBody(); }
+
+    async function handleApprove() {
+      if (!window.ethereum || !account) return;
+      approving = true; txError = ''; renderMintBody();
+      try {
+        const provider = getProvider();
+        const signer = await provider.getSigner();
+        const woof = new ethers.Contract(WOOF_ADDRESS, ERC20_ABI, signer);
+        const totalCost = woofPrice * BigInt(quantity);
+        const tx = await woof.approve(SIYC_ADDRESS, totalCost);
+        txHash = tx.hash;
+        await tx.wait(2);
+        approveSuccess = true;
+        await fetchData();
+      } catch (e) { txError = e.reason || e.message || 'Transaction failed'; }
+      approving = false;
+      renderMintBody();
+    }
+
+    async function handleMint() {
+      if (!window.ethereum || !account) return;
+      txPending = true; txError = ''; txSuccess = false; renderMintBody();
+      try {
+        const provider = getProvider();
+        const signer = await provider.getSigner();
+        const nft = new ethers.Contract(SIYC_ADDRESS, SIYC_ABI, signer);
+        let tx;
+        if (paymentMethod === 'bnb') {
+          const totalCostBnb = bnbPrice * BigInt(quantity);
+          tx = await nft.mintWithBnb(quantity, { value: totalCostBnb });
+        } else {
+          tx = await nft.mintWithWoof(quantity);
+        }
+        txHash = tx.hash;
+        await tx.wait(2);
+        txSuccess = true;
+        await fetchData();
+        await fetchUserNfts();
+      } catch (e) { txError = e.reason || e.message || 'Transaction failed'; }
+      txPending = false;
+      renderMintBody();
+    }
+
+    // ===== Transfer =====
+    function openTransfer(tokenId) {
+      const nft = userNfts.find(n => n.tokenId === tokenId);
+      if (!nft) return;
+      selectedNft = nft;
+      document.getElementById('transferPreview').innerHTML = `
+        <div class="nft-image" style="width:80px;height:80px;flex-shrink:0;border-radius:10px">
+          ${nft.image ? `<img src="${nft.image}" alt="${nft.name}">` : '<div class="nft-placeholder">✨</div>'}
+        </div>
+        <div class="transfer-info">
+          <div class="nft-name">${nft.name}</div>
+          <div class="nft-id">${t('tokenId')}: #${tokenId}</div>
+        </div>`;
+      document.getElementById('transferMsg').innerHTML = '';
+      document.getElementById('recipientInput').value = '';
+      document.getElementById('transferModal').style.display = 'flex';
+    }
+
+    function closeTransferModal(e) {
+      if (e && e.target !== document.getElementById('transferModal')) return;
+      if (transferring) return;
+      document.getElementById('transferModal').style.display = 'none';
+      selectedNft = null;
+    }
+
+    async function doTransfer() {
+      const to = document.getElementById('recipientInput').value.trim();
+      if (!/^0x[a-fA-F0-9]{40}$/.test(to)) {
+        document.getElementById('transferMsg').innerHTML = `<div class="error">⚠️ ${t('invalidAddress')}</div>`;
+        return;
+      }
+      if (to.toLowerCase() === account.toLowerCase()) {
+        document.getElementById('transferMsg').innerHTML = `<div class="error">⚠️ ${t('cannotSendSelf')}</div>`;
+        return;
+      }
+      transferring = true;
+      document.getElementById('sendText').textContent = t('sending');
+      document.getElementById('transferBtn').disabled = true;
+      document.getElementById('transferMsg').innerHTML = '';
+      try {
+        const provider = getProvider();
+        const signer = await provider.getSigner();
+        const nft = new ethers.Contract(SIYC_ADDRESS, SIYC_ABI, signer);
+        const tx = await nft.transferFrom(account, to, selectedNft.tokenId);
+        txHash = tx.hash;
+        await tx.wait(2);
+        document.getElementById('transferMsg').innerHTML = `
+          <div class="success">
+            <div style="font-size:36px;color:#16a34a;margin-bottom:12px">✅</div>
+            <h3>${t('transferSuccess')}</h3>
+            <a class="success-link" href="${BSC_EXPLORER}/tx/${txHash}" target="_blank">${t('viewOnExplorer')} ↗</a>
+          </div>`;
+        setTimeout(() => { closeTransferModal(); fetchUserNfts(); fetchData(); }, 2000);
+      } catch (e) {
+        document.getElementById('transferMsg').innerHTML = `<div class="error">⚠️ ${e.reason || e.message || 'Failed'}</div>`;
+      }
+      transferring = false;
+      document.getElementById('sendText').textContent = t('send');
+      document.getElementById('transferBtn').disabled = false;
+    }
+
+    // ===== Events =====
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accs) => {
+        account = accs[0] || null;
+        renderWallet();
+        if (account) { fetchData(); fetchUserNfts(); }
+      });
+      window.ethereum.on('chainChanged', (cid) => {
+        chainId = parseInt(cid);
+        renderWallet();
+        if (account) fetchData();
+      });
+    }
+
+    // ===== Init =====
+    applyLang();
+    if (window.ethereum) {
+      window.ethereum.request({ method: 'eth_accounts' }).then(accs => {
+        if (accs.length > 0) {
+          account = accs[0];
+          window.ethereum.request({ method: 'net_version' }).then(cid => {
+            chainId = parseInt(cid);
+            renderWallet();
+            fetchData();
+            fetchUserNfts();
+          });
+        }
+      });
+    }
+  </script>
+</body>
+</html>
