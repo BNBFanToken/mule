@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MULE 锁仓奖励金库</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;800;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAF8F2; --card:#FFFFFF; --line:#E7E2D4; --line-soft:#F0EDE3;
+  --ink:#1C1E1A; --ink-2:#585A50; --ink-3:#8B8C81;
+  --gold:#B98118; --gold-deep:#8F630F; --gold-soft:#F6EBD2; --gold-line:#E9D6AC;
+  --green:#2F7D5B; --green-soft:#E3F1E9;
+  --red:#B3402A; --red-soft:#F8E8E2;
+  --serif:'Noto Serif SC',"Songti SC","SimSun",serif;
+  --sans:'Noto Sans SC',system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:'IBM Plex Mono',"SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;
+  background-image:radial-gradient(#F1ECDE 1px,transparent 1px);background-size:22px 22px;}
+::selection{background:var(--gold-soft)}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+a{color:var(--gold-deep);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--mono);font-size:.86em;word-break:break-all}
+
+/* ---------- 顶栏 ---------- */
+header{position:sticky;top:0;z-index:40;background:rgba(250,248,242,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{max-width:1060px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--serif);font-weight:900;font-size:19px;letter-spacing:.5px;color:var(--ink)}
+.seal{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--gold) 0%,#D9A63F 55%,var(--gold-deep) 100%);
+  color:#FFF9EC;display:grid;place-items:center;font-size:19px;box-shadow:0 3px 10px rgba(185,129,24,.35);}
+.brand small{display:block;font-family:var(--sans);font-weight:400;font-size:11px;color:var(--ink-3);letter-spacing:2px}
+.net-chip{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);background:var(--card);
+  border:1px solid var(--line);border-radius:99px;padding:5px 13px;cursor:pointer}
+.net-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+.net-chip.bad .dot{background:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+#btnConnect{background:var(--ink);color:#FDFBF5;border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:700;transition:.18s}
+#btnConnect:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(28,30,26,.22)}
+#btnConnect.connected{background:var(--card);color:var(--ink);border:1px solid var(--line);font-family:var(--mono);font-size:12.5px;font-weight:600}
+
+/* ---------- 主体 ---------- */
+main{max-width:1060px;margin:0 auto;padding:22px 20px 64px}
+
+/* 金库头卡 */
+.vault{display:grid;grid-template-columns:1.15fr .85fr;gap:0;background:var(--card);border:1px solid var(--line);border-radius:18px;
+  overflow:hidden;box-shadow:0 14px 40px -18px rgba(90,70,20,.18);margin-bottom:18px}
+.vault-l{padding:30px 32px 26px}
+.eyebrow{font-size:12px;letter-spacing:3px;color:var(--gold-deep);font-weight:700;margin-bottom:8px}
+.pool-num{font-family:var(--serif);font-weight:900;font-size:clamp(38px,6vw,58px);line-height:1.05;color:var(--ink);display:flex;align-items:baseline;gap:10px}
+.pool-num i{font-style:normal;font-family:var(--mono);font-size:.36em;font-weight:600;color:var(--ink-3);letter-spacing:1px}
+.pool-sub{color:var(--ink-2);font-size:13.5px;margin-top:10px}
+.pool-bar{margin-top:24px}
+.pool-bar .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3);margin-bottom:6px}
+.stack{height:14px;border-radius:7px;background:var(--line-soft);display:flex;overflow:hidden}
+.stack i{height:100%;display:block}
+.mini-stats{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2)}
+.mini-stats b{font-family:var(--mono);color:var(--ink);font-size:14px;display:block}
+.vault-r{background:linear-gradient(215deg,#FBF3E0, #F6EBD2 40%,#F1E3C3);border-left:1px solid var(--gold-line);
+  padding:30px 32px;display:flex;flex-direction:column;gap:9px;justify-content:center}
+.rrow{display:flex;justify-content:space-between;font-size:13.5px;color:#6E5A2E;padding:6px 0;border-bottom:1px dashed #E3D3A9}
+.rrow:last-child{border-bottom:none}
+.rrow b{font-family:var(--mono);font-weight:600;color:var(--gold-deep)}
+@media (max-width:820px){.vault{grid-template-columns:1fr}.vault-r{border-left:none;border-top:1px solid var(--gold-line)}}
+
+/* tabs */
+nav.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:6px;margin-bottom:20px;flex-wrap:wrap}
+nav.tabs button{border:none;background:transparent;padding:9px 17px;border-radius:9px;font-size:14.5px;font-weight:600;color:var(--ink-2);transition:.15s;position:relative}
+nav.tabs button:hover{background:var(--paper);color:var(--ink)}
+nav.tabs button.on{background:var(--ink);color:#FDFBF5}
+nav.tabs button.owner-only{display:none}
+nav.tabs button.owner-only.show{display:inline-block}
+nav.tabs button.owner-only::after{content:"管理";position:absolute;top:-7px;right:-4px;font-size:9.5px;background:var(--gold);color:#fff;border-radius:6px;padding:0 5px;font-weight:700}
+
+/* 卡片与通用 */
+section.tab{display:none;animation:rise .3s ease}
+section.tab.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){section.tab{animation:none}*{transition:none!important}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px}
+.card h3{font-family:var(--serif);font-weight:800;font-size:18px;margin-bottom:4px}
+.card .hint{font-size:13px;color:var(--ink-3);margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+
+/* 温度计（签名组件） */
+.thermo{margin:22px 0 6px}
+.thermo .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.thermo .val{font-family:var(--serif);font-size:30px;font-weight:900}
+.thermo .val em{font-style:normal;font-family:var(--mono);font-size:15px;font-weight:600;color:var(--ink-3);margin-left:6px}
+.thermo .goal{font-size:12.5px;color:var(--ink-2);font-family:var(--mono)}
+.track{position:relative;height:22px;border-radius:11px;background:var(--gold-soft);border:1px solid var(--gold-line);overflow:hidden}
+.fill{position:absolute;inset:0 auto 0 0;border-radius:11px;background:linear-gradient(90deg,#D9A63F,var(--gold) 70%,var(--gold-deep));width:0%;transition:width .7s cubic-bezier(.22,1,.36,1)}
+.fill::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.55) 50%,transparent 80%);
+  transform:translateX(-100%);animation:shimmer 2.6s ease-in-out infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}55%{transform:translateX(120%)}100%{transform:translateX(120%)}}
+.tick{position:absolute;right:0;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.thermo .scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3);margin-top:5px;font-family:var(--mono)}
+.status-pill{display:inline-flex;gap:7px;align-items:center;font-size:13px;font-weight:700;border-radius:99px;padding:5px 14px}
+.st-ok{background:var(--green-soft);color:var(--green)} .st-no{background:var(--red-soft);color:var(--red)}
+.st-in{background:var(--gold-soft);color:var(--gold-deep)}
+.badge{display:inline-block;font-size:11.5px;border-radius:6px;padding:1.5px 8px;font-weight:700;vertical-align:1px}
+.b-ok{background:var(--green-soft);color:var(--green)} .b-no{background:var(--line-soft);color:var(--ink-3)}
+.b-warn{background:var(--gold-soft);color:var(--gold-deep)} .b-err{background:var(--red-soft);color:var(--red)}
+
+/* 表格 */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{color:var(--ink-3);font-weight:600;text-align:left;font-size:12px;letter-spacing:1px;padding:8px 10px;border-bottom:1.5px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FDFBF4}
+.num{font-family:var(--mono);font-size:12.5px;text-align:right;display:block}
+td.right,th.right{text-align:right}
+.addr-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mini-btn{font-size:11.5px;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:1px 8px;color:var(--ink-2)}
+.mini-btn:hover{border-color:var(--gold);color:var(--gold-deep)}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px;font-size:13px;color:var(--ink-2)}
+.pager button{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 12px;font-size:13px}
+.pager button:disabled{opacity:.4;cursor:not-allowed}
+
+/* 按钮 */
+.btn{border:1px solid var(--line);background:var(--card);border-radius:11px;padding:11px 22px;font-size:14.5px;font-weight:700;color:var(--ink);transition:.15s}
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 14px rgba(28,30,26,.10)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:linear-gradient(160deg,var(--gold),var(--gold-deep));color:#FFF9EC;border:1px solid var(--gold-deep)}
+.btn-primary:hover:not(:disabled){box-shadow:0 8px 20px rgba(185,129,24,.4)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-sm{padding:6px 13px;font-size:13px;border-radius:9px}
+.row-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.empty{padding:34px 16px;text-align:center;color:var(--ink-3);font-size:13.5px}
+.empty b{display:block;font-size:15px;color:var(--ink-2);font-family:var(--serif);margin-bottom:5px}
+
+/* 表单 */
+label.f{display:block;font-size:12.5px;color:var(--ink-2);margin:14px 0 5px;font-weight:600}
+input[type=text]{width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:10px;padding:10px 13px;font-family:var(--mono);font-size:13px;color:var(--ink)}
+input[type=text]:focus{border-color:var(--gold);outline:none;background:#fff}
+.field-note{font-size:12px;color:var(--ink-3);margin-top:5px}
+
+/* 弹窗 */
+#overlay{position:fixed;inset:0;background:rgba(28,30,26,.45);backdrop-filter:blur(3px);display:none;z-index:60;align-items:center;justify-content:center;padding:18px}
+#overlay.show{display:flex}
+.modal{background:var(--card);border-radius:16px;max-width:480px;width:100%;padding:26px 28px;box-shadow:0 30px 70px -20px rgba(0,0,0,.5);animation:rise .25s ease}
+.modal h4{font-family:var(--serif);font-size:18px;font-weight:800;margin-bottom:8px}
+.modal .m-body{font-size:14px;color:var(--ink-2);margin-bottom:16px}
+.modal .m-warn{background:var(--red-soft);border:1px solid #EEC9BD;color:var(--red);border-radius:10px;padding:11px 14px;font-size:13px;margin-bottom:14px}
+.m-actions{display:flex;gap:10px;justify-content:flex-end}
+
+/* toast */
+#toasts{position:fixed;right:18px;bottom:18px;z-index:70;display:flex;flex-direction:column;gap:10px;max-width:340px}
+.toast{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:11px;padding:12px 15px;font-size:13.5px;box-shadow:0 10px 30px -8px rgba(0,0,0,.25);animation:rise .3s ease}
+.toast.ok{border-left-color:var(--green)} .toast.err{border-left-color:var(--red)} .toast.wait{border-left-color:var(--ink-3)}
+.toast b{display:block;font-size:13.5px}
+.toast .tx{font-family:var(--mono);font-size:11.5px}
+
+footer{max-width:1060px;margin:0 auto;padding:8px 20px 40px;font-size:12.5px;color:var(--ink-3)}
+footer .line{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between}
+.skel{background:linear-gradient(90deg,var(--line-soft),#FBF9F2,var(--line-soft));border-radius:8px;height:18px;animation:sk 1.2s infinite}
+@keyframes sk{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand"><span class="seal">🛄</span>
+      <span>MULE 锁仓奖励金库<small>LOCK · EARN · DISTRIBUTE</small></span>
+    </div>
+    <span class="net-chip" id="netChip" title="点击重试连接"><span class="dot"></span><span id="netText">BSC 主网 · 连接中…</span></span>
+    <button id="btnConnect" title="左键：连接 / 查看我的资格；右键：断开本页面">连接钱包</button>
+  </div>
+</header>
+
+<main>
+  <!-- 金库头卡 -->
+  <div class="vault">
+    <div class="vault-l">
+      <div class="eyebrow">当前奖励池</div>
+      <div class="pool-num"><span id="poolBnb" class="skel" style="width:180px;height:44px;display:inline-block"></span><i>BNB</i></div>
+      <div class="pool-sub">锁仓达标成员按 <b>剩余锁仓量占比</b> 直接分得池内 BNB，任何人点击「发放奖励」即可到账，无需领取。</div>
+      <div class="pool-bar">
+        <div class="lab"><span>成员份额构成</span><span id="shareTip"></span></div>
+        <div class="stack" id="stackBar"><i style="width:100%;background:var(--line-soft)"></i></div>
+      </div>
+      <div class="mini-stats" id="miniStats"></div>
+    </div>
+    <div class="vault-r">
+      <div class="rrow"><span>入池门槛</span><b>≥ 200,000 MULE</b></div>
+      <div class="rrow"><span>锁仓到期须晚于</span><b>2027-11-01 (UTC)</b></div>
+      <div class="rrow"><span>锁仓依据</span><b>PinkLock02 链上实时核验</b></div>
+      <div class="rrow"><span>计算口径</span><b>剩余锁仓（含多笔合计）</b></div>
+      <div class="rrow"><span>发放方式</span><b>自动打款，无认领步骤</b></div>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button data-t="vault" class="on">金库概览</button>
+    <button data-t="me">我的资格</button>
+    <button data-t="members">成员与分成</button>
+    <button data-t="activity">动态记录</button>
+    <button data-t="admin" class="owner-only">管理面板</button>
+  </nav>
+
+  <!-- 金库概览 -->
+  <section class="tab on" id="tab-vault">
+    <div class="grid2">
+      <div class="card">
+        <h3>运作规则</h3>
+        <div class="hint">合约完全按链上锁仓数据自动运行，规则固化、不可更改。</div>
+        <p style="font-size:14px;color:var(--ink-2)">
+          ① 用户在 <span class="mono">PinkLock02</span> 锁定 MULE，到期要求在 2027-11-01（UTC）之后；<br>
+          ② 同一地址多笔锁仓自动合计，按<b>未解锁的剩余数量</b>计权重；<br>
+          ③ 任何人可向本合约转入 BNB 作为奖励；<br>
+          ④ 任何人点击「发放奖励」，BNB 按权重实时占比直接打到各成员地址；<br>
+          ⑤ 每轮发放前实时重算：锁仓跌破 20 万当轮得 0，补回后自动恢复。
+        </p>
+        <div class="row-actions">
+          <button class="btn btn-primary" id="btnDistribute">发放奖励</button>
+          <button class="btn" id="btnDeposit" >转入 BNB</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>链上参数</h3>
+        <div class="hint">来自已验证合约，只读。</div>
+        <div id="paramList"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>本轮发放预览</h3>
+      <div class="hint">与真正执行「发放奖励」逐枚 BNB 一致，点击执行前先看结果。</div>
+      <div id="previewWrap"><div class="empty"><b>正在加载…</b></div></div>
+    </div>
+  </section>
+
+  <!-- 我的资格 -->
+  <section class="tab" id="tab-me">
+    <div class="card" id="meCard">
+      <h3>我的锁仓资格</h3>
+      <div class="hint" id="meHint">连接钱包后自动检测；也可在下方查询任意地址。</div>
+      <label class="f">查询地址</label>
+      <input type="text" id="qAddr" placeholder="0x… 粘贴或连接钱包自动填入">
+      <button class="btn btn-sm" id="btnQuery" style="margin-top:10px">查询</button>
+      <div id="meBody"></div>
+    </div>
+  </section>
+
+  <!-- 成员 -->
+  <section class="tab" id="tab-members">
+    <div class="card">
+      <h3>白名单成员</h3>
+      <div class="hint" id="memHint">达标加入后长期有效；权重每轮发放时实时重算。</div>
+      <div id="memTable"></div>
+    </div>
+  </section>
+
+  <!-- 动态 -->
+  <section class="tab" id="tab-activity">
+    <div class="card">
+      <h3>金库动态</h3>
+      <div class="hint">加入名单、移出、充值、发放、救援等链上事件（自合约部署起，最多 300 条）。</div>
+      <div id="actList"></div>
+    </div>
+  </section>
+
+  <!-- 管理 -->
+  <section class="tab" id="tab-admin">
+    <div id="ownerBanner" class="card" style="display:none"></div>
+    <div class="card" id="cardNominate" style="display:none">
+      <h3>转让管理权</h3>
+      <div class="hint">两步确认：先提名，再由新管理地址接受。管理权无法放弃、不能转让给零地址。</div>
+      <label class="f">提名的新管理地址</label>
+      <input type="text" id="inNominee" placeholder="0x…">
+      <div class="row-actions"><button class="btn" id="btnNominate">提名</button></div>
+      <p class="field-note" id="pendingNote"></p>
+    </div>
+    <div class="card" id="cardMembers" style="display:none">
+      <h3>成员管理</h3>
+      <div class="hint">移除只影响分红，不动对方的锁仓；被移除者若仍达标，任何人可再次加入。</div>
+      <div id="adminMemTable"></div>
+    </div>
+    <div class="card" id="cardRescue" style="display:none">
+      <h3>紧急救援</h3>
+      <div class="hint">仅管理地址可用。BNB 救援会取走池内<b>全部</b>资金（含尚未发放的奖励），请确认后操作。</div>
+      <div class="grid2">
+        <div>
+          <label class="f">提取全部 BNB 至</label>
+          <input type="text" id="inBnbTo" placeholder="0x…">
+          <div class="row-actions"><button class="btn btn-danger" id="btnRescueBnb">提取全部 BNB</button></div>
+        </div>
+        <div>
+          <label class="f">提取 ERC20 代币（任意种类，全额）</label>
+          <input type="text" id="inTokAddr" placeholder="代币合约地址 0x…">
+          <div style="margin-top:8px" id="tokPeek"></div>
+          <div class="row-actions">
+            <button class="btn btn-sm" id="btnTokPeek">查询代币</button>
+            <button class="btn btn-danger" id="btnRescueTok" disabled>提取到指定地址…</button>
+          </div>
+          <input type="text" id="inTokTo" placeholder="接收地址 0x…" style="margin-top:8px">
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="line">
+  <span>合约已开源验证：<a href="https://bscscan.com/address/0x27cEF767122b3DB85E27fe6535991e6E79cDb886#code" target="_blank" rel="noopener">在 BscScan 查看源码</a></span>
+  <span class="mono" style="font-size:11px">0x27cEF767122b3DB85E27fe6535991e6E79cDb886</span>
+</div></footer>
+
+<div id="overlay"><div class="modal" id="modalBox"></div></div>
+<div id="toasts"></div>
+<script>
+window.__ethersReady = new Promise((res) => {
+  const t = setInterval(() => { if (window.ethers) { clearInterval(t); res(true); } }, 150);
+  setTimeout(() => { clearInterval(t); res(!!window.ethers); }, 20000);
+  const sc = document.createElement("script");
+  sc.src = "https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js";
+  sc.onerror = () => import("https://esm.sh/ethers@6.13.4")
+      .then((m) => { window.ethers = m.ethers || m; })
+      .catch(() => {});
+  document.head.appendChild(sc);
+});
+</script>
+<script id="abi" type="application/json">[{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"BNBRescued","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"round","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"totalWeight","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"paid","type":"uint256"}],"name":"DistributionCompleted","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"round","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"pool","type":"uint256"},{"indexed":false,"internalType":"address[]","name":"memberList","type":"address[]"}],"name":"DistributionStarted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ERC20Rescued","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"round","type":"uint256"},{"indexed":true,"internalType":"address","name":"member","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"MemberPaid","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"member","type":"address"}],"name":"MemberRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"round","type":"uint256"},{"indexed":true,"internalType":"address","name":"member","type":"address"},{"indexed":false,"internalType":"uint256","name":"share","type":"uint256"}],"name":"MemberSkipped","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previous","type":"address"},{"indexed":true,"internalType":"address","name":"next","type":"address"}],"name":"OwnershipNominated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previous","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"member","type":"address"},{"indexed":false,"internalType":"uint256","name":"weight","type":"uint256"}],"name":"Whitelisted","type":"event"},{"inputs":[],"name":"MAX_LOCK_LOOKUPS","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_MEMBERS","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MIN_LOCKED","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MULE","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"PINK_LOCK","outputs":[{"internalType":"contract IPinkLock02","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"UNLOCK_AFTER","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"acceptOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addToWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"deposit","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"distRound","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"distribute","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"start","type":"uint256"},{"internalType":"uint256","name":"count","type":"uint256"}],"name":"getMembers","outputs":[{"internalType":"address[]","name":"page","type":"address[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"isMember","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"isQualified","outputs":[{"internalType":"bool","name":"qualified","type":"bool"},{"internalType":"uint256","name":"weight","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"lastDistPaid","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"lastDistTotalWeight","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"memberCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"start","type":"uint256"},{"internalType":"uint256","name":"count","type":"uint256"}],"name":"memberLocks","outputs":[{"internalType":"uint256","name":"total","type":"uint256"},{"components":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"tgeDate","type":"uint256"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"unlockedAmount","type":"uint256"},{"internalType":"uint256","name":"remaining","type":"uint256"},{"internalType":"bool","name":"qualifies","type":"bool"}],"internalType":"struct MuleRewardDistributor.LockRow[]","name":"page","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"members","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"next","type":"address"}],"name":"nominateTransferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"pendingOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"start","type":"uint256"},{"internalType":"uint256","name":"count","type":"uint256"}],"name":"previewRewards","outputs":[{"internalType":"uint256","name":"pool","type":"uint256"},{"internalType":"uint256","name":"totalWeight","type":"uint256"},{"internalType":"uint256","name":"qualifiedCount","type":"uint256"},{"components":[{"internalType":"address","name":"member","type":"address"},{"internalType":"uint256","name":"weight","type":"uint256"},{"internalType":"bool","name":"qualified","type":"bool"},{"internalType":"uint256","name":"expectedShare","type":"uint256"}],"internalType":"struct MuleRewardDistributor.RewardRow[]","name":"page","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"qualifyingWeight","outputs":[{"internalType":"uint256","name":"weight","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeFromWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"}],"name":"rescueBNB","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"to","type":"address"}],"name":"rescueERC20","outputs":[],"stateMutability":"nonpayable","type":"function"}]</script>
+<script>
+"use strict";
+/* ================= 基础常量 ================= */
+const ADDR = "0x27cEF767122b3DB85E27fe6535991e6E79cDb886";
+const DEPLOY_BLOCK = 131570407;
+const BSC = { chainId: 0x38, chainIdDec: 56, name: "BNB Smart Chain", native: "BNB",
+  rpc: "https://bsc-dataseed.binance.org",Explorer: "https://bscscan.com" };
+const RPCS = ["https://bsc-dataseed.binance.org", "https://bsc-dataseed1.defibit.io", "https://bsc-dataseed1.bnbchain.org"];
+const MIN_LOCKED = 200000n, F = 10n ** 18n;
+const DEADLINE_TXT = "2027-11-01 00:00 UTC";
+const abi = JSON.parse(document.getElementById("abi").textContent);
+const $ = (s) => document.querySelector(s);
+
+/* ================= 工具 ================= */
+const short = (a) => a ? a.slice(0, 6) + "…" + a.slice(-4) : "—";
+const fmtMule = (wei) => { const v = Number(wei / 10n ** 16n) / 100; return v.toLocaleString("zh-CN", {maximumFractionDigits: 2}); };
+const fmtBnb = (wei) => { const v = Number(wei) / 1e18; return v.toLocaleString("zh-CN", {maximumFractionDigits: v < 1 ? 6 : 4}); };
+const fmtDate = (ts) => { const d = new Date(Number(ts) * 1000);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); };
+const esc = (s) => String(s).replace(/[&<"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const REVERTS = {"not qualified":"该地址锁仓不足 20 万或到期日不合规","full":"名单已满 500 人","not member":"该地址不在名单中",
+  "reentrant":"正有一轮发放在链上打包，稍候几秒再试","no BNB":"池内还没有 BNB","no members":"名单为空",
+  "no qualified member":"本轮没有达标成员","zero":"目标地址无效","empty":"合约内没有可提取的资金","fail":"提取转账失败",
+  "transfer fail":"代币转账失败","not owner":"仅管理地址可操作","not nominee":"只有被提名地址能接受","same":"该地址已是管理地址"};
+function errReason(e) {
+  const m = String(e && (e.reason || e.shortMessage || e.message) || e || "未知错误");
+  for (const k in REVERTS) { if (m.includes(k)) return REVERTS[k]; }
+  if (/user denied|rejected|用户拒绝|denied by user/i.test(m)) return "你在钱包中取消了操作";
+  if (/missing revert data|execution reverted|CALL_EXCEPTION/i.test(m)) return "合约拒绝了本次操作（常见原因：余额不足 / 资格或权限不满足 / 名单已满）";
+  if (/insufficient funds|not enough funds/i.test(m)) return "钱包内 BNB 不够支付 gas";
+  return m.slice(0, 100);
+}
+function toast(kind, title, body, tx) {
+  const el = document.createElement("div");
+  el.className = "toast " + kind;
+  el.innerHTML = `<b>${esc(title)}</b><span>${esc(body||"")}</span>` +
+    (tx ? ` <a class="tx" href="${BSC.Explorer}/tx/${tx}" target="_blank" rel="noopener">${short(tx)}</a>` : "");
+  $("#toasts").appendChild(el);
+  setTimeout(() => { el.style.opacity = "0"; el.style.transition = ".4s"; setTimeout(() => el.remove(), 450); }, kind === "err" ? 7000 : 5200);
+  return el;
+}
+/* ================= 状态 ================= */
+const S = { ro: null, walletProv: null, acct: null, owner: null, pending: null,
+  consts: {}, pool: 0n, memCount: 0n, round: 0n, lastPaid: 0n, rows: [], loading: false };
+function roProvider() {
+  for (const r of RPCS) { try { const p = new ethers.JsonRpcProvider(r, BSC.chainIdDec, {staticNetwork: {chainId: BSC.chainIdDec, name: "bsc"}}); return p; } catch(e){} }
+  return new ethers.JsonRpcProvider(RPCS[0], BSC.chainIdDec);
+}
+const roC = () => new ethers.Contract(ADDR, abi, S.ro);
+async function signerC() { const si = await S.walletProv.getSigner(); return new ethers.Contract(ADDR, abi, si); }
+
+/* ================= 弹窗确认 ================= */
+function confirmModal({ title, html, danger, phrase, onOk, okText = "确认执行" }) {
+  return new Promise((resolve) => {
+    const box = $("#modalBox");
+    box.innerHTML = `<h4>${esc(title)}</h4><div class="m-body">${html||""}</div>` +
+      (danger ? `<div class="m-warn">⚠️ 本操作不可撤销${phrase?`：请输入 <b>${phrase}</b> 以确认`:""}</div>`:`<div></div>`) +
+      (phrase ? `<input type="text" id="mPhrase" placeholder="${esc(phrase)}" style="margin-bottom:14px">` : "") +
+      `<div class="m-actions"><button class="btn btn-sm" id="mNo">取消</button>
+        <button class="btn btn-sm ${danger?"btn-danger":"btn-green"}" id="mYes" ${phrase?"disabled":""}>${esc(okText)}</button></div>`;
+    $("#overlay").classList.add("show");
+    const close = (v) => { $("#overlay").classList.remove("show"); resolve(v); };
+    $("#mNo").onclick = () => close(false);
+    if (phrase) $("#mPhrase").addEventListener("input", e => $("#mYes").disabled = e.target.value.trim() !== phrase);
+    $("#mYes").onclick = async () => {
+      $("#mYes").disabled = true;
+      if (onOk) { const keep = await onOk(); if (keep === false) { $("#mYes").disabled = false; return; } }
+      close(true);
+    };
+    $("#overlay").onclick = (e) => { if (e.target.id === "overlay") close(false); };
+  });
+}
+/* ================= 钱包 ================= */
+function walletDetected() { return typeof window.ethereum !== "undefined"; }
+async function connect() {
+  if (!walletDetected()) {
+    await confirmModal({ title: "没有检测到钱包", html: "请在 PC 端安装 <b>MetaMask</b>（或支持 WalletConnect 的币安 / TP 等钱包内置浏览器）后打开本页；本页面也支持<b>不连钱包只读浏览</b>。", phrase: "", okText: "知道了" });
+    return;
+  }
+  try {
+    S.walletProv = new ethers.BrowserProvider(window.ethereum);
+    const accts = await S.walletProv.send("eth_requestAccounts", []);
+    S.acct = accts[0];
+    const net = await S.walletProv.getNetwork();
+    if (Number(net.chainId) !== BSC.chainId) await switchChain();
+    onWalletConnected();
+  } catch (e) { if (!/user denied|rejected/i.test(e.message||"")) toast("err", "连接失败", errReason(e)); }
+}
+async function switchChain() {
+  try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: BSC.chainId }]}); }
+  catch (e) {
+    if (e.code === 4902 || /unknown/i.test(e.message || ""))
+      await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: BSC.chainId, chainName: BSC.name,
+        nativeCurrency: BSC, rpcUrls: [BSC.rpc], blockExplorerUrls: [BSC.Explorer] }]});
+    else throw e;
+  }
+}
+async function onWalletConnected() {
+  $("#btnConnect").textContent = short(S.acct);
+  $("#btnConnect").classList.add("connected");
+  await refreshOwner();
+  $("#qAddr").value = S.acct;
+  $("#inBnbTo").value = S.acct; $("#inTokTo").value = S.acct;
+  renderTabs(); if (canAccept() && S.walletProv) { try { S.owner = await roC().owner(); } catch(e){} }
+  await refreshAll(); showTab("me"); queryMe(S.acct);
+  toast("ok", "钱包已连接", short(S.acct) + (S.acct.toLowerCase() === (S.owner||"").toLowerCase() ? " · 检测到你是管理地址，已开启管理面板" : ""));
+}
+async function refreshOwner() {
+  if (!roC()) return;
+  try { S.owner = await roC().owner(); S.pending = await roC().pendingOwner(); } catch (e) { S.owner = null; }
+  $("#ownerBanner").style.display = "none";
+}
+function isOwnerNow() { return S.acct && S.owner && S.acct.toLowerCase() === S.owner.toLowerCase(); }
+function canAccept() { return S.acct && S.pending && S.pending !== ethers.ZeroAddress && S.acct.toLowerCase() === S.pending.toLowerCase(); }
+function renderTabs() { $(".tabs button[data-t=admin]"); $("nav.tabs button[data-t='admin']").classList.toggle("show", !!(isOwnerNow() || canAccept())); }
+/* ================= 数据刷新 ================= */
+async function refreshAll() {
+  if (S.loading) return; S.loading = true;
+  try {
+    const c = roC();
+    const [bal, mc, rd, lp, minLk, ua, mm, mll, tgeMule /* MULE address via constant */] = await Promise.all([
+      S.ro.getBalance(ADDR), c.memberCount(), c.distRound(), c.lastDistPaid(),
+      c.MIN_LOCKED(), c.UNLOCK_AFTER(), c.MAX_MEMBERS(), c.MAX_LOCK_LOOKUPS(), c.MULE()]);
+    S.pool = bal; S.memCount = mc; S.round = rd; S.lastPaid = lp;
+    S.consts = { minLk, ua, mm, mll, mule: tgeMule };
+    $("#netChip").classList.remove("bad"); $("#netText").textContent = "BSC 主网 · 实时读取";
+    renderPoolHeader(); renderParams();
+    if (mc > 0n) {
+      const pv = await c.previewRewards(0, 1200);
+      S.rows = pv[3].map(r => ({ member: r.member, weight: r.weight, qualified: r.qualified, share: r.expectedShare }));
+      S.pvPool = pv[0]; S.pvTotal = pv[1]; S.pvQual = pv[2];
+    } else S.rows = [];
+    renderStackBar(); renderPreviewCard(); renderMembersTable(); renderAdminMembers();
+  } catch (e) {
+    $("#netChip").classList.add("bad"); $("#netText").textContent = "节点连接异常，点击重试";
+    $("#poolBnb").textContent = "—"; $("#poolBnb").classList.remove?.("skel");
+  } finally { S.loading = false; }
+}
+/* ================= 渲染 ================= */
+const addrLink = (a) => `<a href="${BSC.Explorer}/address/${a}" target="_blank" rel="noopener">${short(a)}</a>
+  <button class="mini-btn" data-copy="${a}">复制</button>`;
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-copy]");
+  if (b) { navigator.clipboard.writeText(b.dataset.copy).then(() => toast("ok", "已复制", b.dataset.copy)); }
+});
+function renderPoolHeader() {
+  const el = $("#poolBnb"); el.classList.remove("skel"); el.style.height = ""; el.style.width="";
+  el.textContent = fmtBnb(S.pool);
+  const qual = S.rows.filter(r => r.qualified).length;
+  $("#miniStats").innerHTML = [
+    [`白名单成员`, S.memCount + " 人"], [`本轮达标`, qual + " 人"],
+    [`已累计发放`, S.round + " 轮"], [`上轮发出`, fmtBnb(S.lastPaid) + " BNB"]
+  ].map(([k, v]) => `<span><b>${v}</b>${k}</span>`).join("");
+  $("#shareTip").textContent = S.memCount > 0n ? `按权重实时占比 · 共 ${S.memCount} 人（达标 ${qual}）` : "尚无成员";
+}
+function renderParams() {
+  const c = S.consts;
+  $("#paramList").innerHTML = [
+    ["入池门槛", fmtMule(c.minLk) + " MULE（按剩余量）"],
+    ["到期须晚于", fmtDate(c.ua) + "（" + DEADLINE_TXT + "）"],
+    ["名单上限 / 单人核验锁单", c.mm + " 人 / " + c.mll + " 笔"],
+    ["MULE 代币", addrLink(c.mule)],
+    ["锁仓数据源 PinkLock02", addrLink("0x407993575c91ce7643a4d4cCACc9A98c36eE1BBE")],
+    ["本合约", addrLink(ADDR)],
+  ].map(([k, v]) => `<div class="rrow" style="border-bottom:1px dashed var(--line);padding:9px 0"><span style="color:var(--ink-2);font-size:13px">${k}</span><span class="mono" style="font-size:12px">${v}</span></div>`).join("");
+}
+const PAL = ["#C6902A","#2F7D5B","#8F630F","#B98118","#A47134","#5E8C6B","#D9A63F","#7A6A45","#B3402A","#94A98F","#5C5346","#E0BC72"];
+function renderStackBar() {
+  const bar = $("#stackBar");
+  const rows = [...S.rows].sort((a, b) => b.share - a.share);
+  if (!rows.length || S.pvPool === undefined || S.pvPool === 0n) { bar.innerHTML = '<i style="width:100%;background:var(--line-soft)"></i>'; return; }
+  let html = "";
+  const top = rows.slice(0, 11), rest = rows.slice(11);
+  top.forEach((r, i) => { const p = Number(r.share * 10000n / S.pvPool) / 100;
+    html += `<i style="width:${p}%;background:${PAL[i % PAL.length]}" title="${short(r.member)} ≈ ${fmtBnb(r.share)} BNB"></i>`; });
+  if (rest.length) { const p = Number(rest.reduce((s, r) => s + r.share, 0n) * 10000n / S.pvPool) / 100;
+    html += `<i style="width:${p}%;background:#C9C4B4" title="其余 ${rest.length} 人合计"></i>`; }
+  bar.innerHTML = html || '<i style="width:100%;background:var(--line-soft)"></i>';
+}
+function previewRowsHtml(rows, withAct) {
+  if (!rows.length) return "";
+  return `<table><thead><tr><th>#</th><th>成员地址</th><th class="right">剩余锁仓(MULE)</th><th class="right">权重占比</th><th class="right">预计 BNB</th>${withAct?"<th></th>":""}</tr></thead><tbody>` +
+  rows.map((r, i) => `<tr>
+    <td>${i + 1}</td><td><div class="addr-line">${addrLink(r.member)}${r.qualified ? "" : `<span class="badge b-err">本轮锁仓不足</span>`}${S.acct && r.member.toLowerCase() === S.acct.toLowerCase() ? `<span class="badge st-in" style="background:var(--gold-soft);color:var(--gold-deep)">我</span>` : ""}</div></td>
+    <td class="right"><span class="num">${fmtMule(r.weight)}</span></td>
+    <td class="right"><span class="num">${S.pvTotal > 0n ? Number(r.weight * 10000n / S.pvTotal) / 100 : 0}%</span></td>
+    <td class="right"><span class="num" style="color:${r.share > 0n ? "var(--gold-deep)" : "var(--ink-3)"};font-weight:${r.share>0n?600:400}">${fmtBnb(r.share)}</span></td>
+    ${withAct ? `<td class="right"><button class="btn btn-sm" data-kick="${r.member}" style="color:var(--red);border-color:#EBC5BB">移出</button></td>` : ""}
+  </tr>`).join("") + "</tbody></table>";
+}
+function renderPreviewCard() {
+  const w = $("#previewWrap");
+  if (!S.memCount || S.pool === 0n) {
+    w.innerHTML = S.memCount ? `<div class="empty"><b>池内暂无 BNB</b>任何人转入 BNB 后即可发放。</div>`
+      : `<div class="empty"><b>名单还是空的</b>让达标用户到「我的资格」页加入白名单，或先在「金库概览」点「转入 BNB」建立奖池。</div>`;
+    return;
+  }
+  const rows = [...S.rows].sort((a, b) => b.weight - a.weight).slice(0, 8);
+  w.innerHTML = previewRowsHtml(rows, false) +
+    (S.rows.length > 8 ? `<p class="field-note" style="margin-top:10px">仅展示权重前 8 名，完整名单见「成员与分成」。共 ${S.rows.length} 位成员。</p>` : "");
+}
+let mpage = 0;
+function renderMembersTable() {
+  const w = $("#memTable"); const size = 10;
+  if (!S.rows.length) { w.innerHTML = `<div class="empty"><b>还没有成员</b>达标用户可随时自主加入，无需审批：锁满 20 万枚 MULE 且到期日晚于 ${DEADLINE_TXT}。</div>`; return; }
+  $("#memHint").textContent = `共 ${S.rows.length} 位成员 · 权重实时重算 · 执行一次发放即刷新一次预览`;
+  const rows = [...S.rows].sort((a, b) => b.weight - a.weight);
+  const pages = Math.ceil(rows.length / size); mpage = Math.min(mpage, pages - 1);
+  const page = rows.slice(mpage * size, mpage * size + size);
+  w.innerHTML = `<table><thead><tr><th>#</th><th>成员地址</th><th class="right">剩余锁仓(MULE)</th><th class="right">占比</th><th class="right">预计 BNB</th><th>状态</th></tr></thead><tbody>` +
+    page.map((r, i) => `<tr><td>${mpage * size + i + 1}</td><td><div class="addr-line">${addrLink(r.member)}</div></td>
+      <td class="right"><span class="num">${fmtMule(r.weight)}</span></td>
+      <td class="right"><span class="num">${S.pvTotal > 0n ? Number(r.weight * 10000n / S.pvTotal) / 100 : 0}%</span></td>
+      <td class="right"><span class="num">${fmtBnb(r.share)}</span></td>
+      <td>${r.qualified ? `<span class="badge b-ok">达标</span>` : `<span class="badge b-no">本轮为 0</span>`}</td></tr>`).join("") +
+    `</tbody></table><div class="pager"><button id="pgPrev" ${mpage === 0 ? "disabled" : ""}>‹ 上一页</button>
+      <span>${mpage + 1} / ${pages}</span><button id="pgNext" ${mpage >= pages - 1 ? "disabled" : ""}>下一页 ›</button></div>`;
+  $("#pgPrev").onclick = () => { mpage--; renderMembersTable(); };
+  $("#pgNext").onclick = () => { mpage++; renderMembersTable(); };
+}
+function renderAdminMembers() {
+  const w = $("#adminMemTable"); if (!w) return;
+  if (!S.rows.length) { w.innerHTML = `<div class="empty" style="padding:18px">暂无成员</div>`; return; }
+  w.innerHTML = previewRowsHtml([...S.rows].sort((a,b)=>b.weight-a.weight), true);
+}
+/* -------- 我的资格 -------- */
+function body0() { $("#meBody").innerHTML = `<div class="empty"><b>输入地址开始核查</b>连接钱包会自动填入你的地址；也可粘贴任意地址查询其锁仓资格明细。</div>`; }
+async function queryMe(addr) {
+  const body = $("#meBody");
+  if (!addr || !ethers.isAddress(addr)) { body.innerHTML = `<div class="empty"><b>地址无效</b>需要 42 位、以 0x 开头的 BSC 地址。</div>`; return; }
+  body.innerHTML = `<div class="empty"><b>正在链上核验…</b>实时读取 PinkLock02 锁仓数据</div>`;
+  try {
+    const c = roC();
+    const [[qualified, weight], member, ml] = await Promise.all([
+      c.isQualified(addr), c.isMember(addr), c.memberLocks(addr, 0, 260)]);
+    const rows = ml[1];
+    const pct = Number(weight * 10000n / (MIN_LOCKED * F)) / 100;
+    let pill, cta;
+    if (member) { pill = `<span class="status-pill st-in">✓ 已在白名单</span>`;
+      const mineRow = S.rows.find(r => r.member && r.member.toLowerCase() === addr.toLowerCase());
+      const est = mineRow && mineRow.share > 0n
+        ? `<div style="margin:6px 0 2px;font-size:14px">按当前池 <b>${fmtBnb(S.pool)} BNB</b>，你本轮预计可得 <b class="mono" style="color:var(--gold-deep);font-size:18px">${fmtBnb(mineRow.share)}</b> BNB，发放时自动到账</div>`
+        : `<p class="field-note">已在名单中；池内 BNB 将在下轮发放时自动打入你的地址，无需领取。</p>`;
+      cta = `<div class="row-actions"><button class="btn" id="btnRefreshW">刷新我的份额</button></div>` + est; }
+    else if (qualified) { pill = `<span class="status-pill st-ok">达标 · 可加入</span>`;
+      cta = S.acct
+        ? `<div class="row-actions"><button class="btn btn-primary" id="btnJoin">加入白名单</button></div>
+           <p class="field-note">加入只需一笔链上交易（gas 约 0.0001 BNB），加入后自动参与此后每一轮发放。</p>`
+        : `<div class="row-actions"><button class="btn btn-primary" id="btnJoinNeedWallet">加入白名单（先连接钱包）</button></div>`; }
+    else { pill = `<span class="status-pill st-no">未达标</span>`;
+      cta = `<p class="field-note" style="margin-top:12px">先把 MULE 锁定到 PinkLock02：到期日晚于 ${DEADLINE_TXT}，多笔合计剩余 ≥ 20 万枚即可加入（LP 锁仓不计入）。</p>`; }
+    body.innerHTML = `
+    <div class="thermo">
+      <div class="row"><span class="val">${fmtMule(weight)}<em>MULE 有效锁仓</em></span>${pill}</div>
+      <div class="track"><div class="fill" id="tFill"></div><span class="tick"></span></div>
+      <div class="scale"><span>0</span><span>门槛 ${fmtMule(MIN_LOCKED * F)} · 完成 ${Math.min(pct,100).toFixed(1)}%${pct>100?" · 超出部分同样计入分成":""}</span></div>
+    </div>
+    <div>${cta}</div>
+    <div style="margin-top:22px" class="hint">PinkLock02 上该地址的锁仓：<b>${ml[0]}</b> 笔${Number(ml[0])>256?`（仅前 256 笔参与核验）`:""}</div>
+    ${rows.length ? `<table><thead><tr><th>锁单</th><th>币种</th><th class="right">锁定量</th><th class="right">已解锁</th><th class="right">剩余</th><th>到期日</th><th>计入权重</th></tr></thead><tbody>` +
+      rows.map(r => `<tr><td class="num">#${r.id}</td>
+        <td>${r.token.toLowerCase() === (S.consts.mule||"").toLowerCase() ? `<span class="badge b-warn">MULE</span>` : `<span class="mono">${short(r.token)}</span>`}</td>
+        <td class="right"><span class="num">${fmtMule(r.amount)}</span></td>
+        <td class="right"><span class="num">${fmtMule(r.unlockedAmount)}</span></td>
+        <td class="right"><span class="num" style="font-weight:600">${fmtMule(r.remaining)}</span></td>
+        <td class="num">${fmtDate(r.tgeDate)}</td>
+        <td>${r.qualifies ? `<span class="badge b-ok">计入</span>` : `<span class="badge b-no">不计</span>`}</td></tr>`).join("") +
+      `</tbody></table>` : `<div class="empty"><b>该地址还没有锁仓记录</b>先创建锁仓再回来查询。</div>`}`;
+    requestAnimationFrame(() => $("#tFill").style.width = Math.min(100, pct) + "%");
+    bindJoin();
+  } catch (e) { body.innerHTML = `<div class="empty"><b>查询失败</b>${esc(errReason(e))}</div>`; }
+}
+function bindJoin() {
+  const j = $("#btnJoin"), jw = $("#btnJoinNeedWallet"), rf = $("#btnRefreshW");
+  if (jw) jw.onclick = connect;
+  if (rf) rf.onclick = () => { refreshAll(); queryMe($("#qAddr").value.trim()); };
+  if (j) j.onclick = async () => {
+    if (!S.acct) return connect();
+    const addr = $("#qAddr").value.trim();
+    const go = await confirmModal({ title: "加入白名单", okText: "上链确认加入",
+      html: `将把 <span class="mono">${short(addr)}</span> 加入分红白名单。合约已链上核验其有效锁仓 ≥ 20 万 MULE。` });
+    if (!go) return;
+    const t = toast("wait", "加入交易已广播", "等待链上确认…");
+    try { const tx = await (await signerC()).addToWhitelist(addr);
+      t.innerHTML = `<b>加入交易已广播</b><a class="tx" href="${BSC.Explorer}/tx/${tx.hash}" target="_blank">${short(tx.hash)}</a>`;
+      await tx.wait(); toast("ok", "已加入白名单", "从下一轮发放起自动参与分成");
+      await refreshAll(); queryMe(addr);
+    } catch (e) { t.remove(); toast("err", "加入失败", errReason(e)); }
+  };
+}
+/* ================= 动态记录 ================= */
+const EVTXT = {
+  Whitelisted: l => `<span class="badge b-ok">加入名单</span> <b class="mono">${short(l.args.member)}</b> 权重 ${fmtMule(l.args.weight)} MULE`,
+  MemberRemoved: l => `<span class="badge b-warn">移出名单</span> <b class="mono">${short(l.args.member)}</b>`,
+  Deposit: l => `<span class="badge b-warn">充值</span> <b class="mono">${short(l.args.from)}</b> 转入 <b>${fmtBnb(l.args.amount)} BNB</b>`,
+  MemberPaid: l => `<span class="badge b-ok">发放到账</span> <b class="mono">${short(l.args.member)}</b> 收到 <b>${fmtBnb(l.args.amount)} BNB</b>（第 ${Number(l.args.round)+1} 轮）`,
+  MemberSkipped: l => `<span class="badge b-err">打款失败留池</span> <b class="mono">${short(l.args.member)}</b>（第 ${Number(l.args.round)+1} 轮 ${fmtBnb(l.args.share)} BNB 滚入下轮）`,
+  DistributionCompleted: l => `<span class="badge b-ok">发放完成</span> 第 ${Number(l.args.round)+1} 轮 · 总权重 ${fmtMule(l.args.totalWeight)} · 实发 <b>${fmtBnb(l.args.paid)} BNB</b>`,
+  BNBRescued: l => `<span class="badge b-err">BNB 救援</span> 提取至 <b class="mono">${short(l.args.to)}</b> 共 ${fmtBnb(l.args.amount)} BNB`,
+  ERC20Rescued: l => `<span class="badge b-err">代币救援</span> ${short(l.args.token)} 提取至 ${short(l.args.to)}（${fmtMule(l.args.amount)}）`,
+  OwnershipNominated: l => `<span class="badge b-warn">转让提名</span> → <b class="mono">${short(l.args.next)}</b>`,
+  OwnershipTransferred: l => `<span class="badge b-warn">管理权变更</span> → <b class="mono">${short(l.args.newOwner)}</b>`,
+};
+let actLoaded = false;
+const LOG_RPCS = ["https://bsc-rpc.publicnode.com", "https://bsc-dataseed.binance.org", "https://bsc-dataseed1.defibit.io", "https://bsc-dataseed1.bnbchain.org"];
+async function fetchLogsBest(rangeBlocks) {
+  const latest = await S.ro.getBlockNumber();
+  const fromB = Math.max(DEPLOY_BLOCK, latest - rangeBlocks);
+  for (const host of LOG_RPCS) {
+    try {
+      const p = new ethers.JsonRpcProvider(host, BSC.chainIdDec, { staticNetwork: { chainId: 56, name: "bsc" } });
+      p._priorityFee = []; // 避免 EIP-1559 估算
+      const logs = await Promise.race([p.getLogs({ address: ADDR, fromBlock: fromB, toBlock: latest }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000))]);
+      return { logs, fromB };
+    } catch (e) { continue; }
+  }
+  throw new Error("nodes");
+}
+async function loadActivity(force) {
+  if (actLoaded && !force) return; actLoaded = true;
+  const w = $("#actList"); w.innerHTML = `<div class="empty"><b>正在读取链上记录…</b></div>`;
+  try {
+    const { logs, fromB } = await fetchLogsBest(6900);
+    const iface = new ethers.Interface(abi.filter(e => e.type === "event"));
+    const rows = logs.map(lg => { try { return { lg, ev: iface.parseLog({ topics: [...lg.topics], data: lg.data }) }; } catch { return null; } })
+      .filter(r => r && r.ev && EVTXT[r.ev.name]).reverse().slice(0, 300);
+    if (!rows.length) { w.innerHTML = `<div class="empty"><b>近期还没有记录</b>${fromB > DEPLOY_BLOCK ? "（仅含最近 6900 个区块）" : "（合约部署以来的全部记录）"}加入名单、充值、发放等操作都会实时出现在这里。</div>`; return; }
+    w.innerHTML = `<table><tbody>` + rows.map(r =>
+      `<tr><td style="width:120px" class="num">#${r.lg.blockNumber.toLocaleString()}</td><td>${EVTXT[r.ev.name](r)}</td>
+       <td style="width:70px">${short(r.lg.blockHash)}…</td></tr>`).join("") + `</tbody></table>
+      <p class="field-note">展示最近 6900 个区块内与本合约相关的事件，最新在前。</p>`;
+    } catch (e) { actLoaded = false;
+    w.innerHTML = `<div class="empty"><b>暂时读不到事件流</b>公共 RPC 对日志查询有限速，稍后会自动重试；完整记录可在
+      <a href="${BSC.Explorer}/address/${ADDR}#events" target="_blank" rel="noopener">BscScan · Events</a> 查看。
+      <br><button class="btn btn-sm" id="actRetry" style="margin-top:12px">重试</button></div>`;
+    $("#actRetry").onclick = () => { w.innerHTML = `<div class="empty">…重新读取</div>`; loadActivity(true); }; }
+}
+/* ================= 管理面板 ================= */
+function renderAdminUI() {
+  const show = isOwnerNow() || canAccept();
+  $("nav.tabs button[data-t='admin']").classList.toggle("show", show);
+  if (!show) return;
+  const b = $("#ownerBanner"); b.style.display = "block";
+  b.innerHTML = `<h3>管理身份</h3><div class="hint" style="margin-bottom:10px">当前管理地址：${addrLink(S.owner)}${
+    S.pending && S.pending !== ethers.ZeroAddress ? ` · 待接受提名：<b class="mono">${short(S.pending)}</b>` : ""}</div>
+    ${canAccept() ? `<button class="btn btn-green" id="btnAccept">接受并接管管理权</button>` : ""}`;
+  const acc = $("#btnAccept"); if (acc) acc.onclick = async () => {
+    if (!await confirmModal({ title: "接管管理权", html: "确认后本钱包将成为合约唯一管理地址，原管理地址即刻失去管理权。" })) return;
+    await runTx(() => signerC().then(c => c.acceptOwnership()), "已接管管理权", refreshOwner);
+  };
+  $("#cardNominate").style.display = isOwnerNow() ? "block" : "none";
+  $("#cardMembers").style.display = isOwnerNow() ? "block" : "none";
+  $("#cardRescue").style.display = isOwnerNow() ? "block" : "none";
+  $("#pendingNote").textContent = S.pending && S.pending !== ethers.ZeroAddress ? `当前待接受提名：${S.pending}` : "尚无待接受提名";
+}
+$("#cardMembers").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-kick]"); if (!btn || !isOwnerNow()) return;
+  const addr = btn.dataset.kick;
+  const go = await confirmModal({ title: "移出白名单", okText: "确认移出", danger: true,
+    html: `把 <span class="mono">${short(addr)}</span> 移出分红名单。<br>不会触碰 TA 的锁仓；若其仍达标，任何人都可以再次把它加回来。` });
+  if (go) await runTx(() => signerC().then(c => c.removeFromWhitelist(addr)), "已移出名单", refreshAll);
+});
+$("#btnNominate").onclick = async () => {
+  const v = $("#inNominee").value.trim();
+  if (!ethers.isAddress(v)) return toast("err", "地址无效", "请粘贴 42 位 0x 地址");
+  if (!await confirmModal({ title: "提名新管理地址", html: `提名 <span class="mono">${v}</span>。<br>还需要 <b>对方主动接受</b> 才生效，且接受前可再次提名覆盖。` })) return;
+  await runTx(() => signerC().then(c => c.nominateTransferOwnership(v)), "提名成功，等待对方接受", async () => { await refreshOwner(); renderAdminUI(); });
+};
+$("#btnRescueBnb").onclick = async () => {
+  const to = $("#inBnbTo").value.trim() || S.acct || "";
+  if (!ethers.isAddress(to)) return toast("err", "接收地址无效", "请填写接收地址");
+  if (!await confirmModal({ title: "提取全部 BNB", danger: true, phrase: "确认提取", okText: "立即提取",
+    html: `将取走池内 <b>${fmtBnb(S.pool)} BNB</b> 到 <span class="mono">${short(to)}</span>。<br><b>包含尚未发放给成员的全部奖励</b>，请确实是紧急处置再执行。` })) return;
+  await runTx(() => signerC().then(c => c.rescueBNB(to)), "BNB 已救援提取", refreshAll);
+};
+const ERC20_ABI = ["function balanceOf(address) view returns(uint256)","function symbol() view returns(string)","function decimals() view returns(uint8)","function name() view returns(string)"];
+let peekTok = null;
+$("#btnTokPeek").onclick = async () => {
+  const v = $("#inTokAddr").value.trim();
+  const peek = $("#tokPeek"); $("#btnRescueTok").disabled = true; peekTok = null;
+  if (!ethers.isAddress(v)) { peek.innerHTML = `<span class="badge b-err">地址无效</span>`; return; }
+  peek.innerHTML = `<span class="field-note">读取代币信息…</span>`;
+  try {
+    const t = new ethers.Contract(v, ERC20_ABI, S.ro);
+    const [bal, sym, dec] = await Promise.all([t.balanceOf(ADDR), t.symbol().catch(()=>"???"), t.decimals().catch(()=>18)]);
+    if (bal === 0n) { peek.innerHTML = `<span class="badge b-no">合约内该代币余额为 0</span>`; return; }
+    peekTok = { addr: v, sym };
+    peek.innerHTML = `<span class="badge b-warn">${esc(sym)}</span> 合约内余额 <b class="mono">${Number(bal / 10n**BigInt(dec)).toLocaleString()}</b> → 可提取`;
+    const b = $("#btnRescueTok"); b.disabled = false; b.textContent = `提取全部 ${sym} 到…`;
+  } catch (e) { peek.innerHTML = `<span class="badge b-err">不是可识别的 ERC20 或读取失败</span>`; }
+};
+$("#btnRescueTok").onclick = async () => {
+  if (!peekTok) return;
+  const to = $("#inTokTo").value.trim() || S.acct || "";
+  if (!ethers.isAddress(to)) return toast("err", "接收地址无效", "请填写接收地址");
+  if (!await confirmModal({ title: `提取代币 ${peekTok.sym}`, danger: true, phrase: "确认提取", okText: "立即提取" })) return;
+  await runTx(() => signerC().then(c => c.rescueERC20(peekTok.addr, to)), `${peekTok.sym} 已提取`, refreshAll);
+};
+/* ================= 发放 / 充值 ================= */
+$("#btnDistribute").onclick = async () => {
+  if (!S.acct) return connect();
+  if (S.pool === 0n) return toast("err", "池内没有 BNB", "先有人转入才能发放");
+  if (!S.rows.length) return toast("err", "名单为空", "先让达标用户加入白名单");
+  const total = fmtBnb(S.pool);
+  const top = [...S.rows].filter(r => r.share > 0n).sort((a,b)=>b.share-a.share).slice(0, 5);
+  const go = await confirmModal({ title: "发放奖励", okText: `上链发放 ${total} BNB`,
+    html: `把池内 <b>${total} BNB</b> 按权重打给 <b>${S.rows.filter(r=>r.share>0n).length}</b> 位达标成员（另有 ${S.rows.filter(r=>r.share===0n).length} 位本轮为 0）。<br>` +
+      (top.length ? `示例前 5：${top.map(r => `${short(r.member)} ${fmtBnb(r.share)}`).join(" · ")}` : "") +
+      `<br><span class="field-note">执行即生效，任何人可再次点击发放下一轮。</span>` });
+  if (!go) return;
+  await runTx(() => signerC().then(c => c.distribute()), "发放完成", async () => {
+    await refreshAll(); await loadActivity(true); renderAdminUI();
+  });
+};
+$("#btnDeposit").onclick = async () => {
+  if (!S.acct) return connect();
+  confirmModal({ title: "转入 BNB 到奖励池", okText: "确认转入",
+    html: `<input type="text" id="amtIn" value="1" placeholder="例如 1.5" style="margin-bottom:6px"><p class="field-note">BNB 进入池内开始累计，下一次「发放奖励」时按全体达标成员权重分配。</p>`,
+    onOk: async () => {
+      const v = $("#amtIn").value.trim();
+      if (!/^\d+(\.\d{1,9})?$/.test(v) || Number(v) <= 0) { toast("err", "数量格式不对", "请输入如 1.5 的正数"); return false; }
+      let tx;
+      try { const si = await S.walletProv.getSigner();
+        tx = await si.sendTransaction({ to: ADDR, value: ethers.parseEther(v) }); }
+      catch (e) { toast("err", "转入未完成", errReason(e)); return !/user denied|rejected|用户拒绝/i.test(e.message||e.code||""); }
+      const t = toast("wait", `转入 ${v} BNB 已广播`, `等待链上确认 <a class="tx" href="${BSC.Explorer}/tx/${tx.hash}" target="_blank">${short(tx.hash)}</a>`);
+      (async () => { try { await tx.wait(); t.className = "toast ok";
+          t.innerHTML = `<b>${v} BNB 已入池</b>下一次「发放奖励」将按权重分配给达标成员`;
+          await refreshAll(); await loadActivity(true);
+        } catch (e) { t.remove(); toast("err", "转入交易失败", errReason(e)); await refreshAll(); } })();
+    } });
+};
+/* ================= 交易执行封装 ================= */
+async function runTx(makeTx, okMsg, after) {
+  const t = toast("wait", "交易已广播", "等待链上确认…");
+  try {
+    const tx = await makeTx();
+    t.innerHTML = `<b>交易已广播</b> <a class="tx" href="${BSC.Explorer}/tx/${tx.hash}" target="_blank">${short(tx.hash)}</a>`;
+    const rc = await tx.wait();
+    t.remove();
+    if (rc.status === 1) { toast("ok", okMsg, `gas ${rc.gasUsed.toLocaleString()}`); }
+    else { toast("err", "交易在链上失败", ""); }
+    if (after) await after();
+  } catch (e) { t.remove(); toast("err", "交易失败", errReason(e)); }
+}
+/* ================= tab 框架 ================= */
+function showTab(name) {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === name));
+  document.querySelectorAll("section.tab").forEach(s => s.classList.toggle("on", s.id === "tab-" + name));
+  if (name === "activity") loadActivity();
+  if (name === "admin") renderAdminUI();
+  if (name === "me" && S.acct && !$("#qAddr").value) $("#qAddr").value = S.acct;
+  if (name === "me" && !$("#meBody").innerHTML) {
+    const q = $("#qAddr").value.trim();
+    if (q) queryMe(q); else body0();
+  }
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => showTab(b.dataset.t));
+$("#btnQuery").onclick = () => queryMe($("#qAddr").value.trim());
+$("#btnConnect").onclick = () => { if (!S.acct) return connect();
+  showTab("me"); $("#qAddr").value = S.acct; queryMe(S.acct); };
+$("#btnConnect").oncontextmenu = async (e) => {
+  e.preventDefault();
+  if (!S.acct) return;
+  const go = await confirmModal({ title: "钱包", okText: "断开本页面连接", danger: false,
+    html: `已连接：<span class="mono">${S.acct}</span> <button class="mini-btn" data-copy="${S.acct}">复制</button><br>断开仅退出本页面（不影响你的钱包授权，如需彻底清除请在钱包里操作）。` });
+  if (go) { S.acct = null; S.walletProv = null; $("#btnConnect").textContent = "连接钱包";
+    $("#btnConnect").classList.remove("connected"); renderTabs(); showTab("vault"); }
+};
+$("#netChip").onclick = () => { if (window.ethers && S.ro) refreshAll(); else location.reload(); };
+if (window.ethereum) {
+  window.ethereum.on("accountsChanged", async (a) => { S.acct = a[0] || null; if (S.acct) await onWalletConnected(); else location.reload(); });
+  window.ethereum.on("chainChanged", () => location.reload());
+}
+(async function boot() {
+  await window.__ethersReady;
+  if (!window.ethers) { $("#netChip").classList.add("bad"); $("#netText").textContent = "脚本库加载失败，点击重试";
+    $("#btnConnect").disabled = true; toast("err", "网络受限", "ethers 库未能加载，请刷新或检查网络后重试"); return; }
+  S.ro = roProvider();
+  $("#netText").textContent = "BSC 主网 · 实时读取";
+  await refreshOwner();
+  await refreshAll();
+  const a0 = await (async () => { try { return (await window.ethereum?.request({method:"eth_accounts"}))?.[0]; } catch { return null; } })();
+  if (a0) { S.walletProv = new ethers.BrowserProvider(window.ethereum); S.acct = a0; await onWalletConnected(); }
+})();
+</script>
+</body>
+</html>
