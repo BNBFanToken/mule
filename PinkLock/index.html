@@ -335,6 +335,8 @@ const DEPLOY_BLOCK = 131570407;
 const BSC = { chainId: 0x38, chainIdDec: 56, name: "BNB Smart Chain", native: "BNB",
   rpc: "https://bsc-dataseed.binance.org",Explorer: "https://bscscan.com" };
 const RPCS = ["https://bsc-dataseed.binance.org", "https://bsc-dataseed1.defibit.io", "https://bsc-dataseed1.bnbchain.org"];
+const RPC_TIMEOUT = 12000;
+let rpcStart = 0;
 const MIN_LOCKED = 200000n, F = 10n ** 18n;
 const DEADLINE_TXT = "2027-11-01 00:00 UTC";
 const abi = JSON.parse(document.getElementById("abi").textContent);
@@ -342,6 +344,7 @@ const $ = (s) => document.querySelector(s);
 
 /* ================= 工具 ================= */
 const short = (a) => a ? a.slice(0, 6) + "…" + a.slice(-4) : "—";
+const compareDesc = (a, b) => a > b ? -1 : a < b ? 1 : 0;
 const fmtMule = (wei) => { const v = Number(wei / 10n ** 16n) / 100; return v.toLocaleString("zh-CN", {maximumFractionDigits: 2}); };
 const fmtBnb = (wei) => { const v = Number(wei) / 1e18; return v.toLocaleString("zh-CN", {maximumFractionDigits: v < 1 ? 6 : 4}); };
 const fmtDate = (ts) => { const d = new Date(Number(ts) * 1000);
@@ -372,8 +375,17 @@ function toast(kind, title, body, tx) {
 const S = { ro: null, walletProv: null, acct: null, owner: null, pending: null,
   consts: {}, pool: 0n, memCount: 0n, round: 0n, lastPaid: 0n, rows: [], loading: false };
 function roProvider() {
-  for (const r of RPCS) { try { const p = new ethers.JsonRpcProvider(r, BSC.chainIdDec, {staticNetwork: {chainId: BSC.chainIdDec, name: "bsc"}}); return p; } catch(e){} }
-  return new ethers.JsonRpcProvider(RPCS[0], BSC.chainIdDec);
+  const network = { chainId: BSC.chainIdDec, name: "bsc" };
+  const providers = RPCS.map((_, i) => {
+    const url = RPCS[(rpcStart + i) % RPCS.length];
+    const request = new ethers.FetchRequest(url);
+    request.timeout = RPC_TIMEOUT;
+    return {
+      provider: new ethers.JsonRpcProvider(request, network, { staticNetwork: true }),
+      priority: i + 1, weight: 1, stallTimeout: 1500
+    };
+  });
+  return new ethers.FallbackProvider(providers, network, { quorum: 1 });
 }
 const roC = () => new ethers.Contract(ADDR, abi, S.ro);
 async function signerC() { const si = await S.walletProv.getSigner(); return new ethers.Contract(ADDR, abi, si); }
@@ -445,6 +457,8 @@ function renderTabs() { $(".tabs button[data-t=admin]"); $("nav.tabs button[data
 /* ================= 数据刷新 ================= */
 async function refreshAll() {
   if (S.loading) return; S.loading = true;
+  let phase = "read";
+  $("#netText").textContent = "BSC 主网 · 读取中…";
   try {
     const c = roC();
     const [bal, mc, rd, lp, minLk, ua, mm, mll, tgeMule /* MULE address via constant */] = await Promise.all([
@@ -452,17 +466,23 @@ async function refreshAll() {
       c.MIN_LOCKED(), c.UNLOCK_AFTER(), c.MAX_MEMBERS(), c.MAX_LOCK_LOOKUPS(), c.MULE()]);
     S.pool = bal; S.memCount = mc; S.round = rd; S.lastPaid = lp;
     S.consts = { minLk, ua, mm, mll, mule: tgeMule };
-    $("#netChip").classList.remove("bad"); $("#netText").textContent = "BSC 主网 · 实时读取";
-    renderPoolHeader(); renderParams();
     if (mc > 0n) {
       const pv = await c.previewRewards(0, 1200);
       S.rows = pv[3].map(r => ({ member: r.member, weight: r.weight, qualified: r.qualified, share: r.expectedShare }));
       S.pvPool = pv[0]; S.pvTotal = pv[1]; S.pvQual = pv[2];
     } else S.rows = [];
+    phase = "render";
+    renderPoolHeader(); renderParams();
     renderStackBar(); renderPreviewCard(); renderMembersTable(); renderAdminMembers();
+    $("#netChip").classList.remove("bad"); $("#netText").textContent = "BSC 主网 · 实时读取";
+    $("#netChip").title = "公共 RPC 自动容错；点击重新连接。优先节点：" + RPCS[rpcStart];
   } catch (e) {
-    $("#netChip").classList.add("bad"); $("#netText").textContent = "节点连接异常，点击重试";
-    $("#poolBnb").textContent = "—"; $("#poolBnb").classList.remove?.("skel");
+    console.error(phase === "render" ? "页面渲染失败" : "链上数据读取失败", e);
+    $("#netChip").classList.add("bad");
+    $("#netText").textContent = phase === "render" ? "数据显示异常，点击重试" : "链上读取失败，点击重试";
+    $("#netChip").title = errReason(e);
+    toast("err", phase === "render" ? "数据显示异常" : "链上读取失败", errReason(e));
+    if (phase === "read") { $("#poolBnb").textContent = "—"; $("#poolBnb").classList.remove("skel"); }
   } finally { S.loading = false; }
 }
 /* ================= 渲染 ================= */
@@ -496,7 +516,7 @@ function renderParams() {
 const PAL = ["#C6902A","#2F7D5B","#8F630F","#B98118","#A47134","#5E8C6B","#D9A63F","#7A6A45","#B3402A","#94A98F","#5C5346","#E0BC72"];
 function renderStackBar() {
   const bar = $("#stackBar");
-  const rows = [...S.rows].sort((a, b) => b.share - a.share);
+  const rows = [...S.rows].sort((a, b) => compareDesc(a.share, b.share));
   if (!rows.length || S.pvPool === undefined || S.pvPool === 0n) { bar.innerHTML = '<i style="width:100%;background:var(--line-soft)"></i>'; return; }
   let html = "";
   const top = rows.slice(0, 11), rest = rows.slice(11);
@@ -524,7 +544,7 @@ function renderPreviewCard() {
       : `<div class="empty"><b>名单还是空的</b>让达标用户到「我的资格」页加入白名单，或先在「金库概览」点「转入 BNB」建立奖池。</div>`;
     return;
   }
-  const rows = [...S.rows].sort((a, b) => b.weight - a.weight).slice(0, 8);
+  const rows = [...S.rows].sort((a, b) => compareDesc(a.weight, b.weight)).slice(0, 8);
   w.innerHTML = previewRowsHtml(rows, false) +
     (S.rows.length > 8 ? `<p class="field-note" style="margin-top:10px">仅展示权重前 8 名，完整名单见「成员与分成」。共 ${S.rows.length} 位成员。</p>` : "");
 }
@@ -533,7 +553,7 @@ function renderMembersTable() {
   const w = $("#memTable"); const size = 10;
   if (!S.rows.length) { w.innerHTML = `<div class="empty"><b>还没有成员</b>达标用户可随时自主加入，无需审批：锁满 20 万枚 MULE 且到期日晚于 ${DEADLINE_TXT}。</div>`; return; }
   $("#memHint").textContent = `共 ${S.rows.length} 位成员 · 权重实时重算 · 执行一次发放即刷新一次预览`;
-  const rows = [...S.rows].sort((a, b) => b.weight - a.weight);
+  const rows = [...S.rows].sort((a, b) => compareDesc(a.weight, b.weight));
   const pages = Math.ceil(rows.length / size); mpage = Math.min(mpage, pages - 1);
   const page = rows.slice(mpage * size, mpage * size + size);
   w.innerHTML = `<table><thead><tr><th>#</th><th>成员地址</th><th class="right">剩余锁仓(MULE)</th><th class="right">占比</th><th class="right">预计 BNB</th><th>状态</th></tr></thead><tbody>` +
@@ -550,7 +570,7 @@ function renderMembersTable() {
 function renderAdminMembers() {
   const w = $("#adminMemTable"); if (!w) return;
   if (!S.rows.length) { w.innerHTML = `<div class="empty" style="padding:18px">暂无成员</div>`; return; }
-  w.innerHTML = previewRowsHtml([...S.rows].sort((a,b)=>b.weight-a.weight), true);
+  w.innerHTML = previewRowsHtml([...S.rows].sort((a,b)=>compareDesc(a.weight, b.weight)), true);
 }
 /* -------- 我的资格 -------- */
 function body0() { $("#meBody").innerHTML = `<div class="empty"><b>输入地址开始核查</b>连接钱包会自动填入你的地址；也可粘贴任意地址查询其锁仓资格明细。</div>`; }
@@ -732,7 +752,7 @@ $("#btnDistribute").onclick = async () => {
   if (S.pool === 0n) return toast("err", "池内没有 BNB", "先有人转入才能发放");
   if (!S.rows.length) return toast("err", "名单为空", "先让达标用户加入白名单");
   const total = fmtBnb(S.pool);
-  const top = [...S.rows].filter(r => r.share > 0n).sort((a,b)=>b.share-a.share).slice(0, 5);
+  const top = [...S.rows].filter(r => r.share > 0n).sort((a,b)=>compareDesc(a.share, b.share)).slice(0, 5);
   const go = await confirmModal({ title: "发放奖励", okText: `上链发放 ${total} BNB`,
     html: `把池内 <b>${total} BNB</b> 按权重打给 <b>${S.rows.filter(r=>r.share>0n).length}</b> 位达标成员（另有 ${S.rows.filter(r=>r.share===0n).length} 位本轮为 0）。<br>` +
       (top.length ? `示例前 5：${top.map(r => `${short(r.member)} ${fmtBnb(r.share)}`).join(" · ")}` : "") +
@@ -797,7 +817,15 @@ $("#btnConnect").oncontextmenu = async (e) => {
   if (go) { S.acct = null; S.walletProv = null; $("#btnConnect").textContent = "连接钱包";
     $("#btnConnect").classList.remove("connected"); renderTabs(); showTab("vault"); }
 };
-$("#netChip").onclick = () => { if (window.ethers && S.ro) refreshAll(); else location.reload(); };
+$("#netChip").onclick = async () => {
+  if (!window.ethers || !S.ro) { location.reload(); return; }
+  if (S.loading) return;
+  S.ro.destroy();
+  rpcStart = (rpcStart + 1) % RPCS.length;
+  S.ro = roProvider();
+  await refreshAll();
+  if (!$("#netChip").classList.contains("bad")) { await refreshOwner(); renderTabs(); }
+};
 if (window.ethereum) {
   window.ethereum.on("accountsChanged", async (a) => { S.acct = a[0] || null; if (S.acct) await onWalletConnected(); else location.reload(); });
   window.ethereum.on("chainChanged", () => location.reload());
